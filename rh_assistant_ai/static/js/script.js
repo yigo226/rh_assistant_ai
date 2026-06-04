@@ -35,11 +35,6 @@ async function loadComponent(placeholderId, filePath, callback) {
 }
 
 /** Initialise tous les composants puis démarre l'application */
-async function initComponents() {
-  await loadComponent('navbar-placeholder',  'components/navbar.html',  initNavbar);
-  await loadComponent('footer-placeholder',  'components/footer.html');
-}
-
 
 /* ----------------------------------------------------------------
    2. Sidebar toggle (mobile)

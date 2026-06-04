@@ -1,0 +1,64 @@
+<!-- ============================================================
+     COMPOSANT : Navbar latérale gauche
+     Inclusion : <div id="navbar-placeholder"></div>
+     Chargement : script.js → loadComponent()
+     ============================================================ -->
+
+<nav class="sidebar" id="sidebar">
+
+  <!-- <div class="sidebar-brand">
+    <span class="brand-dot"></span>
+    <span class="brand-name">rh_assistant</span>
+    <span class="brand-badge">IA active</span>
+  </div> -->
+  
+
+  <div class="sidebar-section-label">Analyse</div>
+
+  <button class="nav-btn active" data-action="analyser-cv">
+    <i class="nav-icon ti ti-file-text"></i>
+    <span>Analyser un CV</span>
+  </button>
+
+  <button class="nav-btn" data-action="analyser-offre">
+    <i class="nav-icon ti ti-briefcase"></i>
+    <span>Analyser une offre</span>
+  </button>
+
+  <button class="nav-btn" data-action="matching">
+    <i class="nav-icon ti ti-arrows-diff"></i>
+    <span>Matching CV / Offre</span>
+  </button>
+
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section-label">Outils RH</div>
+
+  <button class="nav-btn" data-action="grille-entretien">
+    <i class="nav-icon ti ti-list-check"></i>
+    <span>Grille d'entretien</span>
+  </button>
+
+  <button class="nav-btn" data-action="mail-rh">
+    <i class="nav-icon ti ti-mail"></i>
+    <span>Rédiger un mail RH</span>
+  </button>
+
+  <button class="nav-btn" data-action="rapport">
+    <i class="nav-icon ti ti-chart-bar"></i>
+    <span>Rapport de recrutement</span>
+  </button>
+
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section-label">Compte</div>
+
+  <button class="nav-btn" data-action="preferences">
+    <i class="nav-icon ti ti-settings"></i>
+    <span>Préférences</span>
+  </button>
+
+  <button class="nav-btn" data-action="deconnexion">
+    <i class="nav-icon ti ti-logout"></i>
+    <span>Déconnexion</span>
+  </button>
+
+</nav>

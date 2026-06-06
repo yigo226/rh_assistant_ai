@@ -17,10 +17,12 @@ from flask_login import (
 )
 
 from werkzeug.utils import secure_filename
+from services.cv_service import analyze_cv
 
 from config.database import db
 
 from models.cv import CV
+from services.cv_service import analyze_cv
 from services.file_service import extract_text_from_pdf
 
 cv_bp = Blueprint(
@@ -72,7 +74,11 @@ def upload_cv():
         extracted_text = extract_text_from_pdf(
             file_path
         )
+        
+        #analyse du CV
+        analysis = analyze_cv(extracted_text)
 
+        print("Analyse du CV : ", analysis)
         # création CV
         cv = CV(
             nom_fichier=filename,
@@ -92,7 +98,8 @@ def upload_cv():
 
         return render_template(
             "cv/result.html",
-            cv=cv
+            cv=cv,
+            analysis=analysis
         )
 
     return render_template(

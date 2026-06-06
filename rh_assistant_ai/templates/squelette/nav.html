@@ -5,7 +5,8 @@
 
   <div class="sidebar-section-label">Analyse</div>
 
-  <button class="nav-btn active" data-action="analyser-cv">
+  <button class="nav-btn active" 
+    onclick="window.location='{{url_for('cv.upload_cv') }}'">
     <i class="nav-icon ti ti-file-text"></i>
     <span>Analyser un CV</span>
   </button>
@@ -46,7 +47,7 @@
     <span>Préférences</span>
   </button>
 
-  <button class="nav-btn" d
+  <button class="nav-btn" 
     onclick="window.location='{{url_for('auth.logout') }}'">
     <i class="nav-icon ti ti-logout"></i>
     <span>Déconnexion</span>

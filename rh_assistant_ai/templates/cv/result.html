@@ -1,20 +1,48 @@
 {% extends "squelette/base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Résultat analyse CV</h2>
-    <hr>
-    <p>
-        <strong>Nom fichier :</strong>
-        {{ cv.nom_fichier }}
-    </p>
-    <hr>
+<div class="container-fluid d-flex flex-column" style="height: calc(100vh - 120px);">
+    <!-- Ajuste 120px selon la hauteur de ton header+footer -->
 
     <!-- Zone scrollable -->
-    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
-        <pre style="white-space: pre-wrap; word-wrap: break-word;">
+    <div class="flex-grow-1 overflow-auto p-4" style="border: 1px solid #ddd; background: #fff;">
+        <h2>Résultat analyse CV</h2>
+        <hr>
+        <p>
+            <strong>Nom fichier :</strong>
+            {{ cv.nom_fichier }}
+        </p>
+        <hr>
+
+        <!-- Affichage des résultats d'analyse -->
+        <h3>Compétences détectées</h3>
+        <ul class="list-group mb-3">
+        {% for skill in analysis.skills %}
+            <li class="list-group-item">{{ skill }}</li>
+        {% endfor %}
+        </ul>
+
+        <h3>Diplômes détectés</h3>
+        <ul class="list-group mb-3">
+        {% for diploma in analysis.diplomas %}
+            <li class="list-group-item">{{ diploma }}</li>
+        {% endfor %}
+        </ul>
+
+        <h3>Expérience détectée</h3>
+        <ul class="list-group mb-3">
+        {% for exp in analysis.experiences %}
+            <li class="list-group-item">{{ exp }} ans</li>
+        {% endfor %}
+        </ul>
+
+        <!-- Texte du CV -->
+        <h3>Texte complet du CV</h3>
+        <div class="border rounded p-3 bg-light" style="max-height: 400px; overflow-y: auto;">
+            <pre style="white-space: pre-wrap; word-wrap: break-word;">
 {{ cv.contenu_texte }}
-        </pre>
+            </pre>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -1,5 +1,8 @@
 from flask import Blueprint
-auth_bp = Blueprint( "auth", __name__, url_prefix="/auth" )
+auth_bp = Blueprint( 
+    "auth", 
+    __name__, 
+    url_prefix="/auth" )
 from flask import (
     render_template,
     request,
@@ -119,7 +122,8 @@ def logout():
         "Déconnexion réussie",
         "success"
     )
-
+ 
+ 
     return redirect(
         url_for("auth.login")
     )

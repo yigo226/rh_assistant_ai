@@ -1,9 +1,11 @@
 from flask import Flask, render_template
-
+from config.login_manager import login_manager
 from config.settings import Config
 from config.database import db, migrate
+from models.user import User
 
-# from models.user import User
+from auth.routes import auth_bp
+
 # from routes.cv_routes import cv_bp
 
 def create_app():
@@ -20,14 +22,15 @@ def create_app():
         return render_template('index.html')
     
     # Les autres routes  
-    # app.register_blueprint(cv_bp)
-    # print(app.url_map)
+    app.register_blueprint(auth_bp)
+    print(app.url_map)
 
     return app
 
 
 app = create_app()
 
+login_manager.init_app(app)
 
 if __name__ == "__main__":
     app.run(

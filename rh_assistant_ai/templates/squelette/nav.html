@@ -46,9 +46,11 @@
     <span>Préférences</span>
   </button>
 
-  <button class="nav-btn" data-action="deconnexion">
+  <button class="nav-btn" d
+    onclick="window.location='{{url_for('auth.logout') }}'">
     <i class="nav-icon ti ti-logout"></i>
     <span>Déconnexion</span>
+  
   </button>
 
 </nav>

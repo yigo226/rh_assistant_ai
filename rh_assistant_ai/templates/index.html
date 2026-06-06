@@ -1,110 +1,26 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rh_assistant — Assistant RH intelligent</title>
+{% extends "squelette/base.html" %}
 
-  <!-- Bootstrap 5.3 -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-    crossorigin="anonymous"
-  />
+{% block title %}Accueil — Assistant RH{% endblock %}
 
-  <!-- Tabler Icons -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"
-  />
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap"
-    rel="stylesheet"
-  />
-
-  <!-- Styles propres -->
-  <link rel="stylesheet" href="static/css/style.css" />
-</head>
-
-<body>
-
-  <!-- ░░ LAYOUT PRINCIPAL ░░ -->
-  <div class="app-wrapper">
-
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-inner">
-        <span class="header-dot"></span>
-        <span class="header-title">rh_assistant</span>
-        <span class="header-badge">IA active</span>
-      </div>
-      <!-- Bouton toggle sidebar mobile -->
-      <button class="sidebar-toggle d-md-none" id="sidebarToggle" aria-label="Ouvrir le menu">
-        <i class="ti ti-menu-2"></i>
-      </button>
-    </header>
-
-    <!-- Corps = Sidebar + Chat -->
-    <div class="app-body">
-
-      <!-- Navbar latérale (composant injecté) -->
-      <div id="navbar-placeholder">
-        {% include 'nav.html' %}
-      </div>
-
-      <!-- Zone principale : chat -->
-      <main class="chat-wrapper" id="chatWrapper">
-
-        <div class="chat-messages" id="chatMessages">
-          <!-- Message d'accueil bot -->
-          <div class="msg msg-bot">
-            <div class="msg-avatar avatar-bot">AI</div>
-            <div class="msg-content">
-              <div class="msg-bubble">
-                Bonjour&nbsp;! Je suis votre assistant RH. Sélectionnez une action
-                dans le menu ou posez-moi directement votre question.
-              </div>
-            </div>
-          </div>
+{% block content %}
+  <div class="chat-messages" id="chatMessages">
+    <div class="msg msg-bot">
+      <div class="msg-avatar avatar-bot">AI</div>
+      <div class="msg-content">
+        <div class="msg-bubble">
+          Bonjour ! Je suis votre assistant RH. Sélectionnez une action
+          dans le menu ou posez-moi directement votre question.
         </div>
-
-        <!-- Zone de saisie -->
-        <div class="chat-input-bar">
-          <label for="msgInput" class="visually-hidden">Votre message</label>
-          <input
-            type="text"
-            id="msgInput"
-            class="chat-input"
-            placeholder="Posez votre question ou collez un texte…"
-            autocomplete="off"
-          />
-          <button class="send-btn" id="sendBtn" aria-label="Envoyer le message">
-            <i class="ti ti-arrow-up"></i>
-          </button>
-        </div>
-
-      </main>
+      </div>
     </div>
+  </div>
 
-    <!-- Footer (composant injecté) -->
-    <div id="footer-placeholder"></div>
-
-  </div><!-- /.app-wrapper -->
-
-  <!-- Bootstrap Bundle JS -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmCt4bRa89Rz6htAHVtASopFIbNH"
-    crossorigin="anonymous"
-  ></script>
-
-  <!-- Script applicatif -->
-  <script src="static/js/script.js"></script>
-
-</body>
-</html>
+  <div class="chat-input-bar">
+    <label for="msgInput" class="visually-hidden">Votre message</label>
+    <input type="text" id="msgInput" class="chat-input"
+           placeholder="Posez votre question ou collez un texte…" autocomplete="off" />
+    <button class="send-btn" id="sendBtn" aria-label="Envoyer le message">
+      <i class="ti ti-arrow-up"></i>
+    </button>
+  </div>
+{% endblock %}

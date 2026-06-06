@@ -3,6 +3,8 @@ from flask import Flask, render_template
 from config.settings import Config
 from config.database import db, migrate
 
+# from models.user import User
+# from routes.cv_routes import cv_bp
 
 def create_app():
 
@@ -16,6 +18,10 @@ def create_app():
     @app.route("/")
     def home():
         return render_template('index.html')
+    
+    # Les autres routes  
+    # app.register_blueprint(cv_bp)
+    # print(app.url_map)
 
     return app
 

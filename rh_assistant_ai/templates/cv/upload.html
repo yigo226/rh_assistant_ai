@@ -1,0 +1,41 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Analyse de CV</h2>
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+    >
+
+        <div class="mb-3">
+
+            <label>
+                Choisir un CV PDF
+            </label>
+
+            <input
+                type="file"
+                name="cv"
+                class="form-control"
+                accept=".pdf"
+                required
+            >
+
+        </div>
+
+        <button
+            class="btn btn-primary"
+            type="submit"
+        >
+            Analyser
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

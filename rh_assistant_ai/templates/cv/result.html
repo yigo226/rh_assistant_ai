@@ -1,0 +1,20 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Résultat analyse CV</h2>
+    <hr>
+    <p>
+        <strong>Nom fichier :</strong>
+        {{ cv.nom_fichier }}
+    </p>
+    <hr>
+
+    <!-- Zone scrollable -->
+    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+        <pre style="white-space: pre-wrap; word-wrap: break-word;">
+{{ cv.contenu_texte }}
+        </pre>
+    </div>
+</div>
+{% endblock %}

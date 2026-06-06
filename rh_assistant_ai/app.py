@@ -5,8 +5,7 @@ from config.database import db, migrate
 from models.user import User
 
 from auth.routes import auth_bp
-
-# from routes.cv_routes import cv_bp
+from routes.cv_routes import cv_bp
 
 def create_app():
 
@@ -23,6 +22,8 @@ def create_app():
     
     # Les autres routes  
     app.register_blueprint(auth_bp)
+    app.register_blueprint(cv_bp)
+    
     print(app.url_map)
 
     return app

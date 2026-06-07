@@ -1,0 +1,47 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h2>Historique des analyses</h2>
+
+    {% for analysis in analyses %}
+
+        <div class="card mb-3">
+
+            <div class="card-body">
+
+                <h5>
+                    {{ analysis.cv.nom_fichier }}
+                </h5>
+
+                <p>
+                    Date :
+                    {{ analysis.created_at.strftime('%d/%m/%Y %H:%M') }}
+                </p>
+
+                <p>
+                    <strong>Compétences :</strong>
+                    {{ analysis.skills }}
+                </p>
+
+                <p>
+                    <strong>Diplômes :</strong>
+                    {{ analysis.diplomas }}
+                </p>
+
+                <p>
+                    <strong>Expériences :</strong>
+                    {{ analysis.experiences }}
+                </p>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}

@@ -24,13 +24,15 @@ from config.database import db
 from models.cv import CV
 from services.cv_service import analyze_cv
 from services.file_service import extract_text_from_pdf
-
+from models.cv_analysis import CVAnalysis
+# Blueprint pour les routes liées aux CV
 cv_bp = Blueprint(
     "cv",
     __name__,
     url_prefix="/cv"
 )
 
+# Route pour l'upload et l'analyse du CV
 @cv_bp.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_cv():
@@ -78,7 +80,6 @@ def upload_cv():
         #analyse du CV
         analysis = analyze_cv(extracted_text)
 
-        print("Analyse du CV : ", analysis)
         # création CV
         cv = CV(
             nom_fichier=filename,
@@ -91,6 +92,16 @@ def upload_cv():
 
         db.session.commit()
 
+        cv_analysis = CVAnalysis(
+            skills=", ".join(analysis["skills"]),
+            diplomas=", ".join(analysis["diplomas"]),
+            experiences=", ".join(analysis["experiences"]),
+            cv_id=cv.id
+        )
+
+        db.session.add(cv_analysis)
+        db.session.commit()
+
         flash(
             "CV analysé avec succès",
             "success"
@@ -99,9 +110,31 @@ def upload_cv():
         return render_template(
             "cv/result.html",
             cv=cv,
-            analysis=analysis
+            analysis=analysis,
+            saved_analysis=cv_analysis
         )
 
     return render_template(
         "cv/upload.html"
     )
+
+# Route pour afficher l'historique des analyses
+@cv_bp.route("/history")
+@login_required
+def history():
+
+    analyses = CVAnalysis.query\
+        .join(CV)\
+        .filter(
+            CV.user_id == current_user.id
+        )\
+        .order_by(
+            CVAnalysis.created_at.desc()
+        )\
+        .all()
+
+    return render_template(
+        "cv/history.html",
+        analyses=analyses
+    )
+

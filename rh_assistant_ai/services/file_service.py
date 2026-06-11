@@ -1,9 +1,28 @@
+"""
+Gestion des fichiers CV et Offres.
+
+Responsabilités :
+- Extraction du texte PDF
+- Extraction du texte DOCX
+- Extraction du texte TXT
+- Détection automatique du type de fichier
+"""
+
+from pathlib import Path
+
 import pdfplumber
+from docx import Document
 
 
 def extract_text_from_pdf(pdf_path):
     """
-    Extrait le texte d'un fichier PDF.
+    Extrait le texte d'un PDF.
+
+    Args:
+        pdf_path (str): chemin du PDF
+
+    Returns:
+        str
     """
 
     text = ""
@@ -17,4 +36,73 @@ def extract_text_from_pdf(pdf_path):
             if page_text:
                 text += page_text + "\n"
 
-    return text
+    return text.strip()
+
+
+def extract_text_from_docx(docx_path):
+    """
+    Extrait le texte d'un fichier DOCX.
+
+    Args:
+        docx_path (str)
+
+    Returns:
+        str
+    """
+
+    document = Document(docx_path)
+
+    paragraphs = []
+
+    for paragraph in document.paragraphs:
+        paragraphs.append(paragraph.text)
+
+    return "\n".join(paragraphs).strip()
+
+
+def extract_text_from_txt(txt_path):
+    """
+    Extrait le texte d'un fichier TXT.
+
+    Args:
+        txt_path (str)
+
+    Returns:
+        str
+    """
+
+    with open(txt_path, "r", encoding="utf-8") as file:
+        return file.read().strip()
+
+
+def extract_text(file_path):
+    """
+    Détermine automatiquement le type
+    de fichier et appelle le bon extracteur.
+
+    Formats supportés :
+    - pdf
+    - docx
+    - txt
+
+    Args:
+        file_path (str)
+
+    Returns:
+        str
+    """
+
+    extension = Path(file_path).suffix.lower()
+
+    if extension == ".pdf":
+        return extract_text_from_pdf(file_path)
+
+    elif extension == ".docx":
+        return extract_text_from_docx(file_path)
+
+    elif extension == ".txt":
+        return extract_text_from_txt(file_path)
+
+    raise ValueError(
+        f"Format non supporté : {extension}"
+    )

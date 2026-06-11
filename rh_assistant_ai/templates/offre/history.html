@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h2>Historique des offres</h2>
+
+    <table class="table">
+
+        <thead>
+
+            <tr>
+                <th>Titre</th>
+                <th>Date</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for offre in offres %}
+
+            <tr>
+
+                <td>
+                    {{ offre.titre }}
+                </td>
+
+                <td>
+                    {{ offre.date_creation }}
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

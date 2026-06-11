@@ -1,0 +1,43 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Importer une offre</h2>
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+    >
+
+        <div class="mb-3">
+
+            <label class="form-label">
+
+                Fichier Offre
+
+            </label>
+
+            <input
+                type="file"
+                name="offre_file"
+                class="form-control"
+                accept=".pdf,.docx,.txt"
+                required
+            >
+
+        </div>
+
+        <button
+            class="btn btn-primary"
+            type="submit"
+        >
+            Importer et analyser
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -23,8 +23,9 @@ from config.database import db
 
 from models.cv import CV
 from services.cv_service import analyze_cv
-from services.file_service import extract_text_from_pdf
+from services.file_service import extract_text, extract_text_from_pdf
 from models.cv_analysis import CVAnalysis
+
 # Blueprint pour les routes liées aux CV
 cv_bp = Blueprint(
     "cv",
@@ -73,7 +74,7 @@ def upload_cv():
         file.save(file_path)
 
         # extraction texte
-        extracted_text = extract_text_from_pdf(
+        extracted_text = extract_text(
             file_path
         )
         
@@ -81,6 +82,7 @@ def upload_cv():
         analysis = analyze_cv(extracted_text)
 
         # création CV
+        # ici on lie le CV à l'utilisateur connecté pour pouvoir afficher l'historique plus tard
         cv = CV(
             nom_fichier=filename,
             chemin_fichier=file_path,
@@ -89,9 +91,10 @@ def upload_cv():
         )
 
         db.session.add(cv)
-
         db.session.commit()
 
+        # sauvegarde analyse
+        # ici on lie l'analyse au CV créé pour pouvoir afficher les résultats plus tard
         cv_analysis = CVAnalysis(
             skills=", ".join(analysis["skills"]),
             diplomas=", ".join(analysis["diplomas"]),

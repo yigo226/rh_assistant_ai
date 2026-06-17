@@ -6,7 +6,7 @@
   <div class="sidebar-section-label">Analyse</div>
 
   <button class="nav-btn active" 
-    onclick="window.location='{{url_for('cv.upload_cv') }}'">
+    onclick="window.location='{{url_for('cv.matching') }}'">
     <i class="nav-icon ti ti-file-text"></i>
     <span>Analyser un CV</span>
   </button>
@@ -47,10 +47,12 @@
   </button>
 
 
-  <button class="nav-btn" data-action="matching">
+ <button class="nav-btn"
+        onclick="window.location='{{ url_for('match.start_match') }}'">
     <i class="nav-icon ti ti-arrows-diff"></i>
     <span>Matching CV / Offre</span>
-  </button>
+</button>
+
 
   <div class="sidebar-divider"></div>
   <div class="sidebar-section-label">Outils RH</div>

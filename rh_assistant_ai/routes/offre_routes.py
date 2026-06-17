@@ -21,10 +21,12 @@ from config.database import db
 from models.offre import Offre
 
 from werkzeug.utils import secure_filename
-from models.offre_analysis import OffreAnalysis
-from services.offre_service import analyze_offre
+from models.offre_analyser import OffreAnalyser
+from services.offre_service import analyseur_texte_extrait, save_offre
 
 from services.file_service import extract_text 
+
+
 
 offre_bp = Blueprint(
     "offre",
@@ -54,12 +56,12 @@ def create_offre():
         db.session.add(offre)
         db.session.commit()
 
-        analysis = analyze_offre(description)
+        informations_extraites = analyseur_texte_extrait(description)
 
         return render_template(
             "offre/result.html",
             offre=offre,
-            analysis=analysis,
+            analysis=informations_extraites ,
             saved_analysis=OffreAnalysis,
         )
 
@@ -72,104 +74,21 @@ def create_offre():
 @offre_bp.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_offre():
-
     if request.method == "POST":
-
         file = request.files.get("offre_file")
-
         if not file:
-            print("Aucun fichier sélectionné")
-            flash(
-                "Veuillez sélectionner un fichier",
-                "danger"
-            )
-
+            flash("Veuillez sélectionner un fichier", "danger")
             return redirect(request.url)
 
-        filename = secure_filename(
-            file.filename
-        )
+        offre, analysis, offre_analysis = save_offre(file, current_user)
 
-        upload_folder = "uploads/offres"
+        flash("Offre analysée avec succès", "success")
+        return render_template("offre/result.html", 
+                               offre=offre, 
+                               analysis=analysis, 
+                               saved_analysis=offre_analysis)
 
-        os.makedirs(
-            upload_folder,
-            exist_ok=True
-        )
-
-        file_path = os.path.join(
-            upload_folder,
-            filename
-        )
-
-        # sauvegarde physique
-        file.save(file_path)
-
-        # extraction texte
-        extracted_text = extract_text(file_path)
-
-
-        # analyse de l'offre
-        analysis = analyze_offre(
-            extracted_text
-        )
-
-        # création offre
-        # ici on lie l'offre à l'utilisateur connecté pour pouvoir afficher l'historique plus tard
-        offre = Offre(
-
-            titre=filename,
-
-            description=extracted_text[:500],
-
-            contenu_texte=extracted_text,
-
-            user_id=current_user.id
-        )
-
-        db.session.add(offre)
-        db.session.commit()
-
-        # sauvegarde analyse
-        # ici on lie l'analyse à l'offre créée pour pouvoir afficher les résultats plus tard
-        offre_analysis = OffreAnalysis(
-
-            skills=",".join(
-                analysis["skills"]
-            ),
-
-            diplomas=",".join(
-                analysis["diplomas"]
-            ),
-
-            experiences=",".join(
-                map( str,
-                    analysis["experiences"]
-                )
-            ),
-
-            offre_id=offre.id
-        )
-        print("offre_analysis: ", offre_analysis)
-        db.session.add(offre_analysis )
-        db.session.commit()
-
-        flash(
-            "Offre analysée avec succès",
-            "success"
-        )
-
-        return render_template(
-            "offre/result.html",
-
-            offre=offre,
-            analysis=analysis,
-            saved_analysis=offre_analysis
-        )
-
-    return render_template(
-        "offre/upload.html"
-    )
+    return render_template("offre/upload.html")
 
 # Historique des analyses d'offres
 @offre_bp.route("/history")

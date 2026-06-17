@@ -1,0 +1,92 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            {# ================= SITUATION 1 : L'UTILISATEUR A DÉJÀ UN CV ================= #}
+            {% if existing_cv %}
+                <div class="card shadow border-warning mb-4">
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="bi bi-file-earmark-check"></i> CV actuellement enregistré</h4>
+                        <span class="badge bg-dark text-white">Actif</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-3 bg-light rounded mb-4 border">
+                            <p class="mb-1"><strong>Nom du fichier :</strong> {{ existing_cv.nom_fichier }}</p>
+                            <p class="mb-0 text-muted small"><strong>Date d'importation :</strong> {{ existing_cv.date_upload.strftime('%d/%m/%Y à %H:%M') }}</p>
+                        </div>
+
+                        <div class="alert alert-info small" role="alert">
+                             Vous n'avez pas besoin de réimporter votre CV à chaque fois. Vous pouvez consulter directement vos résultats d'analyse archivés ou choisir de le mettre à jour ci-dessous.
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-between mt-3">
+                            <!-- Bouton pour voir l'analyse existante sans refaire de traitement -->
+                            <a href="{{ url_for('cv.history') }}" class="btn btn-primary">
+                                <i class="bi bi-eye"></i> Voir mon analyse actuelle
+                            </a>
+                            
+                            <!-- Bouton pour afficher/déplier le formulaire de modification -->
+                            <button class="btn btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUpdateForm" aria-expanded="false" aria-controls="collapseUpdateForm">
+                                <i class="bi bi-pencil-square"></i> Remplacer par un autre CV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire masqué par défaut, s'affiche uniquement si l'utilisateur clique sur "Remplacer" -->
+                <div class="collapse" id="collapseUpdateForm">
+                    <div class="card shadow border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">⚠️ Remplacement de votre CV</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-danger small fw-bold">Attention : Envoyer un nouveau fichier écrasera définitivement votre CV actuel ainsi que toutes les analyses et correspondances d'offres liées.</p>
+                            
+                            <form action="{{ url_for('cv.upload_cv') }}" method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="cv" class="form-label">Sélectionnez le nouveau fichier PDF :</label>
+                                    <input type="file" class="form-control" id="cv" name="cv" accept=".pdf" required>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-light border" data-bs-toggle="collapse" data-bs-target="#collapseUpdateForm">Annuler</button>
+                                    <button type="submit" class="btn btn-danger">Confirmer le remplacement et analyser</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            {# ================= SITUATION 2 : L'UTILISATEUR N'A PAS ENCORE DE CV ================= #}
+            {% else %}
+                <div class="card shadow border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-cloud-upload"></i> Ajouter votre premier CV</h4>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="text-center mb-4">
+                            <p class="text-muted">Vous n'avez pas encore téléversé de document. Ajoutez votre CV au format PDF pour bénéficier des fonctionnalités d'analyse et de matching IA.</p>
+                        </div>
+
+                        <form action="{{ url_for('cv.upload_cv') }}" method="POST" enctype="multipart/form-data">
+                            <div class="mb-4">
+                                <label for="cv" class="form-label fw-bold">Sélectionnez votre document (Format PDF uniquement)</label>
+                                <input type="file" class="form-control form-control-lg" id="cv" name="cv" accept=".pdf" required>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-lightning-charge"></i> Lancer l'analyse initiale
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

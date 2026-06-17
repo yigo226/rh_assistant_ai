@@ -1,0 +1,341 @@
+/* ================================================================
+   rh_assistant — matching.css
+   Page : Comparer mon CV à une offre (matching.html)
+   Organisation :
+     1.  Layout général
+     2.  Carte de bloc (match-card)
+     3.  En-tête de carte + icônes
+     4.  Badge de statut
+     5.  CV déjà chargé (vue lecture)
+     6.  Champ d'upload (input file)
+     7.  Bouton de soumission
+     8.  Responsive
+   ================================================================ */
+
+
+/* ----------------------------------------------------------------
+   1. Layout général
+   ---------------------------------------------------------------- */
+.matching-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+.matching-header {
+  margin-bottom: 24px;
+}
+
+.matching-header h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--clr-text-primary);
+  margin: 0 0 6px;
+}
+
+.matching-subtitle {
+  font-size: 13px;
+  color: var(--clr-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+
+/* ----------------------------------------------------------------
+   2. Carte de bloc
+   ---------------------------------------------------------------- */
+.match-card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+
+/* ----------------------------------------------------------------
+   3. En-tête de carte + icônes
+   ---------------------------------------------------------------- */
+.match-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.match-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.match-card-icon--teal   { background: var(--clr-accent-light); color: var(--clr-accent-dark); }
+.match-card-icon--purple { background: var(--clr-purple-bg);    color: var(--clr-purple-text); }
+
+.match-card-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.match-card-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--clr-text-primary);
+  margin: 0 0 2px;
+}
+
+.match-card-sub {
+  font-size: 12px;
+  color: var(--clr-text-muted);
+  margin: 0;
+}
+
+
+/* ----------------------------------------------------------------
+   4. Badge de statut
+   ---------------------------------------------------------------- */
+.match-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.match-status-badge i { font-size: 13px; }
+
+.match-status-badge--ok {
+  background: var(--clr-accent-light);
+  color: var(--clr-accent-text);
+}
+
+.match-status-badge--warn {
+  background: var(--clr-warning-light);
+  color: var(--clr-warning);
+}
+
+
+/* ----------------------------------------------------------------
+   5. CV déjà chargé (vue lecture)
+   ---------------------------------------------------------------- */
+.match-card-body {
+  padding: 16px 18px;
+}
+
+.match-file-loaded {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.match-file-chip {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--clr-sidebar-bg);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+}
+
+.match-file-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-accent-light);
+  color: var(--clr-accent-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.match-file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.match-file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--clr-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match-file-meta {
+  font-size: 11px;
+  color: var(--clr-text-muted);
+}
+
+.match-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--clr-text-secondary);
+  border: 1px solid var(--clr-border-md);
+  background: var(--clr-surface);
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.match-edit-btn:hover {
+  background: var(--clr-sidebar-bg);
+  color: var(--clr-text-primary);
+}
+
+.match-edit-btn i { font-size: 15px; }
+
+/* État actif lorsqu'on est en train de modifier */
+.match-edit-btn.active {
+  background: var(--clr-accent);
+  color: #fff;
+  border-color: transparent;
+}
+.match-edit-btn.active:hover { background: var(--clr-accent-dark); }
+
+
+/* ----------------------------------------------------------------
+   6. Champ d'upload (input file)
+   ---------------------------------------------------------------- */
+.match-file-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.match-file-input-wrap .form-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--clr-text-secondary);
+  margin-bottom: 0;
+}
+
+.match-file-input-wrap .form-control {
+  font-size: 13px;
+  border: 1px solid var(--clr-border-md);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  background: var(--clr-surface);
+  color: var(--clr-text-primary);
+}
+
+.match-file-input-wrap .form-control:focus {
+  border-color: var(--clr-accent);
+  box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.12);
+}
+
+/* Style du bouton "Parcourir" généré par le navigateur (Chrome/Edge) */
+.match-file-input-wrap .form-control::file-selector-button {
+  margin-right: 12px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--clr-sidebar-bg);
+  color: var(--clr-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background var(--transition);
+}
+
+.match-file-input-wrap .form-control::file-selector-button:hover {
+  background: var(--clr-border-md);
+}
+
+.match-help-text {
+  font-size: 11.5px;
+  color: var(--clr-text-muted);
+  margin: 0;
+  transition: color var(--transition);
+}
+
+/* État "fichier sélectionné" */
+.match-help-text.has-file {
+  color: var(--clr-accent-dark);
+  font-weight: 500;
+}
+
+/* État "erreur de format" */
+.match-help-text.has-error {
+  color: var(--clr-danger);
+  font-weight: 500;
+}
+
+
+/* ----------------------------------------------------------------
+   7. Bouton de soumission
+   ---------------------------------------------------------------- */
+.match-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 46px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--clr-accent);
+  color: #fff;
+  border: none;
+  transition: background var(--transition), opacity var(--transition), transform var(--transition);
+}
+
+.match-submit-btn i { font-size: 18px; }
+
+.match-submit-btn:hover:not(:disabled) {
+  background: var(--clr-accent-dark);
+}
+
+.match-submit-btn:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.match-submit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+/* ----------------------------------------------------------------
+   8. Responsive
+   ---------------------------------------------------------------- */
+@media (max-width: 600px) {
+  .match-file-loaded {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .match-edit-btn {
+    justify-content: center;
+  }
+  .match-card-header {
+    flex-wrap: wrap;
+  }
+  .match-status-badge {
+    margin-left: 48px; /* aligne sous le titre, après l'icône */
+  }
+}

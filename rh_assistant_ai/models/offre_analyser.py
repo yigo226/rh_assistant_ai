@@ -3,9 +3,9 @@ from datetime import datetime
 from config.database import db
 
 
-class CVAnalysis(db.Model):
+class OffreAnalyser(db.Model):
 
-    __tablename__ = "cv_analyses"
+    __tablename__ = "offre_analysis"
 
     id = db.Column(
         db.Integer,
@@ -27,26 +27,13 @@ class CVAnalysis(db.Model):
         nullable=True
     )
 
-    score = db.Column(
-        db.Float,
-        nullable=True
-    )
-
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow
     )
 
-    cv_id = db.Column(
+    offre_id = db.Column(
         db.Integer,
-        db.ForeignKey("cvs.id"),
+        db.ForeignKey("offres.id"),
         nullable=False
-    )
-
-    cv = db.relationship(
-        "CV",
-        backref=db.backref(
-            "analyses",
-            lazy=True
-        )
     )

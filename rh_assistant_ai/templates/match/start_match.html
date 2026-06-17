@@ -1,0 +1,16 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Matching entre CV et Offre</h2>
+    <hr>
+
+    <p><strong>CV :</strong> {{ cv.nom_fichier }}</p>
+    <p><strong>Offre :</strong> {{ offre.titre }}</p>
+
+    <button class="btn btn-primary"
+            onclick="window.location='{{ url_for('match.calculate', cv_id=cv.id, offer_id=offre.id) }}'">
+        Lancer le matching
+    </button>
+</div>
+{% endblock %}

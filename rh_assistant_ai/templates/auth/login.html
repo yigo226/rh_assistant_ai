@@ -1,23 +1,91 @@
-<form method="POST">
+{% extends "squelette/base.html" %}
 
-    <h2>Connexion</h2>
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      
+      <div class="match-card p-4 shadow-sm">
+        
+        <!-- En-tête du formulaire -->
+        <div class="text-center mb-4">
+          <span class="match-card-icon match-card-icon--teal mb-3 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.5rem;">
+            <i class="ti ti-lock"></i>
+          </span>
+          <h2 class="mt-2">Connexion</h2>
+          <p class="text-muted small">Accédez à votre espace d'analyse de CV et recrutement</p>
+        </div>
 
-    <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        required
-    >
+        <!-- Formulaire de connexion -->
+        <form method="POST" id="loginForm" autocomplete="on">
+          
+          <!-- Champ Email -->
+          <div class="mb-3">
+            <label class="form-label font-weight-bold small text-secondary" for="emailInput">
+              Adresse e-mail
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-right-0">
+                <i class="ti ti-mail text-muted"></i>
+              </span>
+              <input
+                type="email"
+                name="email"
+                id="emailInput"
+                class="form-control border-left-0"
+                placeholder="exemple@email.com"
+                required
+              >
+            </div>
+          </div>
 
-    <input
-        type="password"
-        name="password"
-        placeholder="Mot de passe"
-        required
-    >
+          <!-- Champ Mot de passe -->
+          <div class="mb-4">
+            <label class="form-label font-weight-bold small text-secondary" for="passwordInput">
+              Mot de passe
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-right-0">
+                <i class="ti ti-key text-muted"></i>
+              </span>
+              <input
+                type="password"
+                name="password"
+                id="passwordInput"
+                class="form-control border-left-0"
+                placeholder="••••••••"
+                required
+              >
+            </div>
+          </div>
 
-    <button type="submit">
-        Se connecter
-    </button>
+          <!-- Bouton de soumission global -->
+          <button type="submit" class="match-submit-btn w-100 d-flex align-items-center justify-content-center gap-2" id="loginSubmitBtn">
+            <i class="ti ti-login"></i>
+            Se connecter
+          </button>
 
-</form>
+          <!-- ============================================================
+               LIENS DE REDIRECTION (si n'a pas de compte)
+               ============================================================ -->
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 mt-3 pt-2 border-top">
+            <span class="small text-muted">
+              Vous n'avez pas de compte ? 
+              <a href="register" class="text-primary font-weight-bold text-decoration-none">
+                <i class="ti ti-register"></i> S'inscrire 
+              </a>
+            </span>
+            <a href="/forgot-password" class="small text-secondary text-decoration-none">
+              <i class="ti ti-help"></i> Mot de passe oublié ?
+            </a>
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

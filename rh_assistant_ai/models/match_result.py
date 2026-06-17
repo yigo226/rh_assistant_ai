@@ -3,26 +3,31 @@ from datetime import datetime
 from config.database import db
 
 
-class OffreAnalysis(db.Model):
+class MatchResult(db.Model):
 
-    __tablename__ = "offre_analysis"
+    __tablename__ = "match_results"
 
     id = db.Column(
         db.Integer,
         primary_key=True
     )
 
-    skills = db.Column(
+    score = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    matching_skills = db.Column(
         db.Text,
         nullable=True
     )
 
-    diplomas = db.Column(
+    missing_skills = db.Column(
         db.Text,
         nullable=True
     )
 
-    experiences = db.Column(
+    recommendation = db.Column(
         db.Text,
         nullable=True
     )
@@ -30,6 +35,12 @@ class OffreAnalysis(db.Model):
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow
+    )
+
+    cv_id = db.Column(
+        db.Integer,
+        db.ForeignKey("cvs.id"),
+        nullable=False
     )
 
     offre_id = db.Column(

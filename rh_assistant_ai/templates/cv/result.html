@@ -10,28 +10,30 @@
         <hr>
         <p>
             <strong>Nom fichier :</strong>
-            {{ cv.nom_fichier }}
+                    {{ cv_utilisateur.nom_fichier }}       
         </p>
         <hr>
 
         <!-- Affichage des résultats d'analyse -->
         <h3>Compétences détectées</h3>
         <ul class="list-group mb-3">
-        {% for skill in analysis.skills %}
-            <li class="list-group-item">{{ skill }}</li>
+        {% for skill in informations_extraites.skills %}
+            <li class="list-group-item">
+                {{ skill }}
+            </li>
         {% endfor %}
         </ul>
 
         <h3>Diplômes détectés</h3>
         <ul class="list-group mb-3">
-        {% for diploma in analysis.diplomas %}
-            <li class="list-group-item">{{ diploma }}</li>
-        {% endfor %}
+            {% for diploma in informations_extraites.diplomas %}
+                <li class="list-group-item">{{ diploma }}</li>
+            {% endfor %}
         </ul>
 
         <h3>Expérience détectée</h3>
         <ul class="list-group mb-3">
-        {% for exp in analysis.experiences %}
+        {% for exp in informations_extraites.experiences %}
             <li class="list-group-item">{{ exp }} ans</li>
         {% endfor %}
         </ul>
@@ -40,7 +42,7 @@
         <h3>Texte complet du CV</h3>
         <div class="border rounded p-3 bg-light" style="max-height: 400px; overflow-y: auto;">
             <pre style="white-space: pre-wrap; word-wrap: break-word;">
-{{ cv.contenu_texte }}
+                {{ cv_utilisateur.contenu_texte }}
             </pre>
         </div>
     </div>

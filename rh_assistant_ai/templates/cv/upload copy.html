@@ -1,0 +1,150 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="matching-page">
+
+    <div class="matching-header">
+      <h2>Comparer mon CV à une offre</h2>
+      <p class="matching-subtitle">
+        Importez une offre d'emploi (PDF) trouvée sur une plateforme pour évaluer
+        sa compatibilité avec votre profil.
+      </p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="matchingForm">
+
+      <!-- ============================================================
+           BLOC 1 — CV
+           Si l'utilisateur a déjà un CV en session (variable `cv`
+           passée par le backend), on affiche le fichier chargé avec
+           un bouton "Modifier". Sinon, champ d'upload classique.
+           ============================================================ -->
+      <div class="match-card">
+
+        <div class="match-card-header">
+          <span class="match-card-icon match-card-icon--teal">
+            <i class="ti ti-file-text"></i>
+          </span>
+          <div class="match-card-heading">
+            <h3 class="match-card-title">Votre CV</h3>
+            <p class="match-card-sub">Obligatoire pour lancer la comparaison</p>
+          </div>
+
+          {% if cv and cv.nom_fichier %}
+          <span class="match-status-badge match-status-badge--ok">
+            <i class="ti ti-circle-check"></i> Chargé
+          </span>
+          {% else %}
+          <span class="match-status-badge match-status-badge--warn">
+            <i class="ti ti-alert-circle"></i> Requis
+          </span>
+          {% endif %}
+        </div>
+
+        <div class="match-card-body">
+
+          {% if cv and cv.nom_fichier %}
+            <!-- ── CV déjà chargé : aperçu + bouton Modifier ── -->
+            <div class="match-file-loaded" id="cvLoadedView">
+              <div class="match-file-chip">
+                <i class="ti ti-file-text match-file-icon"></i>
+                <div class="match-file-info">
+                  <span class="match-file-name">{{ cv.nom_fichier }}</span>
+                  <span class="match-file-meta">
+                    {{ cv.taille_affichee | default("PDF") }}
+                  </span>
+                </div>
+              </div>
+              <button type="button" class="match-edit-btn" id="cvEditBtn">
+                <i class="ti ti-edit"></i> Modifier
+              </button>
+            </div>
+
+            <!-- Champ d'upload caché, affiché si l'utilisateur clique sur "Modifier" -->
+            <div class="match-file-input-wrap" id="cvInputWrap" style="display:none">
+              <label class="form-label" for="cvFileInput">Choisir un nouveau CV (PDF)</label>
+              <input
+                type="file"
+                name="cv"
+                id="cvFileInput"
+                class="form-control"
+                accept=".pdf"
+              >
+              <p class="match-help-text" id="cvFileLabel">
+                Aucun nouveau fichier sélectionné — le CV actuel sera utilisé
+              </p>
+            </div>
+
+          {% else %}
+            <!-- ── Aucun CV en session : upload classique ── -->
+            <div class="match-file-input-wrap" id="cvInputWrap">
+              <label class="form-label" for="cvFileInput">Choisir un CV (PDF)</label>
+              <input
+                type="file"
+                name="cv"
+                id="cvFileInput"
+                class="form-control"
+                accept=".pdf"
+                required
+              >
+              <p class="match-help-text" id="cvFileLabel">
+                Aucun fichier n'a été sélectionné
+              </p>
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+      <!-- ============================================================
+           BLOC 2 — Offre d'emploi
+           ============================================================ -->
+      <div class="match-card">
+
+        <div class="match-card-header">
+          <span class="match-card-icon match-card-icon--purple">
+            <i class="ti ti-briefcase"></i>
+          </span>
+          <div class="match-card-heading">
+            <h3 class="match-card-title">Offre d'emploi</h3>
+            <p class="match-card-sub">Importez l'offre trouvée sur une plateforme (PDF)</p>
+          </div>
+          <span class="match-status-badge match-status-badge--warn" id="offreStatusBadge">
+            <i class="ti ti-alert-circle"></i> Requis
+          </span>
+        </div>
+
+        <div class="match-card-body">
+          <div class="match-file-input-wrap">
+            <!-- commentaire : on ne peut pas pré-remplir ce champ même si l'utilisateur a déjà une offre en session, car l'offre doit être choisie par l'utilisateur à chaque comparaison (contrairement au CV qui est un document de référence que l'utilisateur peut vouloir garder en session) -->
+            <label class="form-label" for="offreFileInput">Charger une offre (PDF)</label>
+            <input
+              type="file"
+              name="offre"
+              id="offreFileInput"
+              class="form-control"
+              accept=".pdf"
+              required
+            >
+            <p class="match-help-text" id="offreFileLabel">
+              Aucun fichier n'a été sélectionné
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           ACTION
+           ============================================================ -->
+      <button type="submit" class="match-submit-btn" id="matchSubmitBtn">
+        <i class="ti ti-arrows-diff"></i>
+        Comparer cette offre à mon CV
+      </button>
+
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+

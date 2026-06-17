@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>
+        Résultat du Matching
+    </h2>
+
+    <hr>
+
+    <h3>
+
+        Score :
+        {{ result.score }} %
+
+    </h3>
+
+    <hr>
+
+    <h4>
+        Compétences correspondantes
+    </h4>
+
+    <ul>
+
+        {% for skill in result.matching_skills %}
+
+        <li>
+            {{ skill }}
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+    <h4>
+        Compétences manquantes
+    </h4>
+
+    <ul>
+
+        {% for skill in result.missing_skills %}
+
+        <li>
+            {{ skill }}
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+    <div
+        class="alert alert-info"
+    >
+
+        {{ recommendation }}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -9,11 +9,17 @@ Responsabilités :
 """
 
 from pathlib import Path
-
 import pdfplumber
 from docx import Document
 
+from services.nlp.preprocessing import clean_text
+from services.nlp.skill_extractor import extract_skills
 
+from services.nlp.diploma_extractor import extract_diplomas
+from services.nlp.experience_extractor import extract_experience
+
+from werkzeug.utils import secure_filename
+# Fonctions d'extraction de texte pour différents formats de fichiers
 def extract_text_from_pdf(pdf_path):
     """
     Extrait le texte d'un PDF.
@@ -38,7 +44,7 @@ def extract_text_from_pdf(pdf_path):
 
     return text.strip()
 
-
+# Fonctions d'extraction de texte pour différents formats de fichiers
 def extract_text_from_docx(docx_path):
     """
     Extrait le texte d'un fichier DOCX.
@@ -59,7 +65,7 @@ def extract_text_from_docx(docx_path):
 
     return "\n".join(paragraphs).strip()
 
-
+# Fonctions d'extraction de texte pour différents formats de fichiers
 def extract_text_from_txt(txt_path):
     """
     Extrait le texte d'un fichier TXT.
@@ -74,7 +80,7 @@ def extract_text_from_txt(txt_path):
     with open(txt_path, "r", encoding="utf-8") as file:
         return file.read().strip()
 
-
+# extrateur de texte
 def extract_text(file_path):
     """
     Détermine automatiquement le type
@@ -106,3 +112,17 @@ def extract_text(file_path):
     raise ValueError(
         f"Format non supporté : {extension}"
     )
+
+
+# Analyseur de texte 
+def analyseur_texte_extrait(text):
+    text = clean_text(text)
+    skills = extract_skills(text)
+    diplomas = extract_diplomas(text)
+    experiences = extract_experience(text)
+
+    return {
+        "skills": skills,
+        "diplomas": diplomas,
+        "experiences": experiences
+    }

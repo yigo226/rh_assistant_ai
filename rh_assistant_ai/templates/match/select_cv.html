@@ -1,0 +1,43 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+
+{% for cv in cvs %}
+
+<div class="card mb-3">
+
+<div class="card-body">
+
+<h5>
+
+{{ cv.filename }}
+
+</h5>
+
+<a
+
+class="btn btn-primary"
+
+href="{{ url_for(
+
+'match.match',
+
+cv_id=cv.id,
+
+offer_id=offer.id
+
+) }}"
+
+>
+
+Comparer
+
+</a>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+{% endblock %}

@@ -118,6 +118,8 @@ def view_result(analysis_id):
     offre_utilisateur = informations_extraites.offre
     print("Le contenu de offre_utilisateur dans offre_route : ", offre_utilisateur)
     
+    print(type(informations_extraites.skills))
+    print(informations_extraites.skills)
     return render_template(
         "offre/result.html",
         offre_utilisateur=offre_utilisateur,

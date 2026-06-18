@@ -58,50 +58,17 @@ def save_offre(file, user):
 
     # Sauvegarder l'analyse dans la base de données
     synthese_competences_offre = OffreAnalyser(
-        skills=", ".join(informations_extraites["skills"]),
-        diplomas=", ".join(informations_extraites["diplomas"]),
-        experiences=", ".join(map(str, informations_extraites["experiences"])),
+        #On envoie de la  liste de compétences directement dans le champ skills de l'analyse de l'offre
+        diplomas=informations_extraites["diplomas"],    # Idem
+        skills=informations_extraites["skills"],        
+        experiences=informations_extraites["experiences"], # Idem
         offre_id=offre.id
     )
+
+    # Ajouter l'analyse de l'offre dans la base de données
     db.session.add(synthese_competences_offre)
     db.session.commit()
 
     # CORRECTION 2 : Alignement parfait de l'ordre du triplet retourné avec votre route (Object, Analyse, Data)
     return offre, synthese_competences_offre, informations_extraites
-
-
-# def save_offre(file, user):
-#     filename = secure_filename(file.filename)
-#     upload_folder = "uploads/offres"
-#     os.makedirs(upload_folder, exist_ok=True)
-#     file_path = os.path.join(upload_folder, filename)
-#     file.save(file_path)
-
-#     extracted_text = extract_text(file_path)
-
-#     offre = Offre(
-#         titre=filename,
-#         description=extracted_text[:500],
-#         contenu_texte=extracted_text,
-#         user_id=user.id
-#     )
-#     db.session.add(offre)
-#     db.session.commit()
-
-#     # Analyser le texte de l'offre
-#     # Les données sont des dictionnaires contenant les compétences, diplômes et expériences extraites
-#     informations_extraites = analyseur_texte_extrait(extracted_text)
-
-#     # Sauvegarder l'analyse dans la base de données
-#     # les données sont des chaînes de caractères séparées par des virgules pour les compétences et les diplômes, et une chaîne de caractères pour les expériences
-#     synthese_competences_offre = OffreAnalyser(
-#         skills=", ".join(informations_extraites["skills"]),
-#         diplomas=", ".join(informations_extraites["diplomas"]),
-#         experiences=", ".join(map(str, informations_extraites["experiences"])),
-#         offre_id=offre.id
-#     )
-#     db.session.add(synthese_competences_offre)
-#     db.session.commit()
-
-#     return offre, informations_extraites, synthese_competences_offre
 

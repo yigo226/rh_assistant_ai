@@ -46,6 +46,7 @@ def save_cv(file, user):
 
     # sauvegarder l'analyse dans la base de données
     synthese_competences_cv = CVAnalyser(
+        # On envoie de la  liste de compétences directement dans le champ skills de l'analyse du cv
         skills=informations_extraites["skills"],
         diplomas=informations_extraites["diplomas"],
         experiences=informations_extraites["experiences"],

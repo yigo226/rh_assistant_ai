@@ -8,6 +8,7 @@ from routes.auth_routes import auth_bp
 from routes.cv_routes import cv_bp
 from routes.offre_routes import offre_bp
 from routes.match_routes import match_bp
+from routes.routes_global import global_bp  
 
 def create_app():
 
@@ -27,8 +28,9 @@ def create_app():
     app.register_blueprint(cv_bp)
     app.register_blueprint(offre_bp)
     app.register_blueprint(match_bp)
+    app.register_blueprint(global_bp)
     
-    #print("app.url_map: \n", app.url_map)
+    print("app.url_map: \n", app.url_map)
 
     return app
 

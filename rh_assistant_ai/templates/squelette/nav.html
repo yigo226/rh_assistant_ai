@@ -6,12 +6,14 @@
   <div class="sidebar-section-label">Analyse</div>
 
   <button class="nav-btn active" 
-    onclick="window.location='{{url_for('cv.matching') }}'">
+    onclick="window.location='{{url_for('global.matching') }}'">
     <i class="nav-icon ti ti-file-text"></i>
     <span>Analyser un CV</span>
   </button>
 
-  <button class="nav-btn" onclick="afficherOptions()">
+  <button class="nav-btn"
+      onclick="window.location='{{url_for('offre.upload_offre') }}'">
+
       <i class="nav-icon ti ti-briefcase"></i>
       <span>Analyser une offre</span>
   </button>
@@ -19,21 +21,6 @@
   <!-- Conteneur où les boutons vont apparaître -->
   <div id="options-offre" class="mt-3"></div>
   <!-- script pour afficher les options d'offre -->
-  <script>
-  function afficherOptions() {
-      const container = document.getElementById("options-offre");
-      container.innerHTML = `
-          <button class="btn btn-success me-2"
-              onclick="window.location='{{ url_for('offre.create_offre') }}'">
-              <i class="ti ti-plus"></i> Créer une offre
-          </button>
-          <button class="btn btn-primary"
-              onclick="window.location='{{ url_for('offre.upload_offre') }}'">
-              <i class="ti ti-upload"></i> Charger une offre
-          </button>
-      `;
-  }
-  </script>
 
   <button class="nav-btn" 
     onclick="window.location='{{url_for('cv.history') }}'">

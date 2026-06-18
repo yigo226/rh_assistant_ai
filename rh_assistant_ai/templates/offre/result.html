@@ -8,25 +8,28 @@
     <div class="flex-grow-1 overflow-auto p-4" style="border: 1px solid #ddd; background: #fff;">
         <h2>Résultat analyse Offre</h2>
         <hr>
-
+        <p>
+            <strong>Nom fichier :</strong>
+                    {{ offre_utilisateur.nom_fichier }}       
+        </p>
         <!-- Affichage des résultats d'analyse -->
         <h3>Compétences requises</h3>
         <ul class="list-group mb-3">
-        {% for skill in analysis.skills %}
+        {% for skill in informations_extraites.skills %}
             <li class="list-group-item">{{ skill }}</li>
         {% endfor %}
         </ul>
 
         <h3>Diplômes recherchés</h3>
         <ul class="list-group mb-3">
-        {% for diploma in analysis.diplomas %}
+        {% for diploma in informations_extraites.diplomas %}
             <li class="list-group-item">{{ diploma }}</li>
         {% endfor %}
         </ul>
 
         <h3>Expérience demandée</h3>
         <ul class="list-group mb-3">
-        {% for exp in analysis.experiences %}
+        {% for exp in informations_extraites.experiences %}
             <li class="list-group-item">{{ exp }} ans</li>
         {% endfor %}
         </ul>
@@ -35,7 +38,7 @@
         <h3>Texte complet de l'offre</h3>
         <div class="border rounded p-3 bg-light" style="max-height: 400px; overflow-y: auto;">
             <pre style="white-space: pre-wrap; word-wrap: break-word;">
-                {{ offre.contenu_texte }}
+                {{ offre_utilisateur.contenu_texte }}
             </pre>
         </div>
     </div>

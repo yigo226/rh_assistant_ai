@@ -34,6 +34,7 @@ class CV(db.Model):
         )
     )
 
+    # relation bidirectionnel avec CVAnalyser
     analyse = db.relationship(
         "CVAnalyser",
         back_populates="cv",

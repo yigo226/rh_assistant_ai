@@ -17,7 +17,7 @@
 
       <!-- ============================================================
            BLOC 1 — CV
-           ============================================================ -->
+      ============================================================ -->
       <div class="match-card">
         <div class="match-card-header">
           <span class="match-card-icon match-card-icon--teal">
@@ -99,7 +99,7 @@
 
       <!-- ============================================================
            BLOC 2 — Offre d'emploi
-           ============================================================ -->
+      ============================================================ -->
       <div class="match-card">
         <div class="match-card-header">
           <span class="match-card-icon match-card-icon--purple">
@@ -107,40 +107,76 @@
           </span>
           <div class="match-card-heading">
             <h3 class="match-card-title">Offre d'emploi</h3>
-            <p class="match-card-sub">Importez l'offre trouvée sur une plateforme (PDF)</p>
+            <p class="match-card-sub">Obligatoire pour lancer la comparaison</p>
           </div>
-          <span class="match-status-badge match-status-badge--warn" id="offreStatusBadge">
-            <i class="ti ti-alert-circle"></i> Requis
+
+          <span class="match-status-badge {% if existing_offre %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="offreStatusBadge">
+            {% if existing_offre %}
+              <i class="ti ti-circle-check"></i> Chargé
+            {% else %}
+              <i class="ti ti-alert-circle"></i> Requis
+            {% endif %}
           </span>
         </div>
 
         <div class="match-card-body">
-          <div class="match-file-input-wrap">
-            <label class="form-label" for="offreFileInput">Charger une offre (PDF)</label>
-            <div class="input-group">
-              <input type="file" id="offreFileInput" class="form-control" accept=".pdf">
-              
-              <!-- Ici nous avons le bouton de chargement et lancement de l'analyse  -->
-              <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="offre">
-                <i class="ti ti-upload"></i> Uploader
+          {% if existing_offre %}
+            <!-- Offre déjà chargée : aperçu -->
+            <div class="match-file-loaded" id="offreLoadedView">
+              <div class="match-file-chip">
+                <i class="ti ti-briefcase match-file-icon"></i>
+                <div class="match-file-info">
+                  <span class="match-file-name" id="offreCurrentName">{{ existing_offre.nom_fichier }}</span>
+                  <span class="match-file-meta">{{ existing_offre.titre | default("PDF") }}</span>
+                </div>
+              </div>
+              <button type="button" class="match-edit-btn" id="offreEditBtn">
+                <i class="ti ti-edit"></i> Charger un autre
               </button>
-
-              <!-- button pour voir les resulat de analyse  -->
               <!-- Bouton pour voir les résultats de l'analyse -->
-                <button type="button" class="btn btn-outline-secondary" id="btnVoirAnalyse">
+              <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" 
+                      data-type="offre"
+                      data-analysis-id="{{ existing_offre.analyse.id if existing_offre.analyse else '' }}">
+                <i class="ti ti-eye"></i> Voir
+              </button>
+            </div>
+
+            <!-- Input masqué initialement si déjà chargé -->
+            <div class="match-file-input-wrap" id="offreInputWrap" style="display:none">
+              <label class="form-label" for="offreFileInput">Choisir une nouvelle offre (PDF)</label>
+              <div class="input-group">
+                <input type="file" id="offreFileInput" class="form-control" accept=".pdf">
+                <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="offre">
+                  <i class="ti ti-upload"></i> Uploader
+                </button>
+                <!-- Bouton pour voir les résultats de l'analyse -->
+                <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" data-type="offre">
                   <i class="ti ti-eye"></i> Voir
                 </button>
-
-
+              </div>
+              <p class="match-help-text" id="offreFileLabel">Aucun nouveau fichier sélectionné</p>
             </div>
-            <p class="match-help-text" id="offreFileLabel">Aucun fichier sélectionné</p>
-          </div>
+
+          {% else %}
+            <!-- Aucune offre : Input direct avec bouton Uploader -->
+            <div class="match-file-input-wrap" id="offreInputWrap">
+              <label class="form-label" for="offreFileInput">Choisir une offre (PDF)</label>
+              <div class="input-group">
+                <input type="file" id="offreFileInput" class="form-control" accept=".pdf">
+                <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="offre">
+                  <i class="ti ti-upload"></i> Uploader
+                </button>
+              </div>
+              <p class="match-help-text" id="offreFileLabel">Aucun fichier sélectionné</p>
+            </div>
+          {% endif %}
         </div>
       </div>
 
+
       <!-- ============================================================
            ACTION GLOBALE
-           ============================================================ -->
+      ============================================================ -->
       <button type="submit" class="match-submit-btn" id="matchSubmitBtn">
         <i class="ti ti-arrows-diff"></i>
         Comparer cette offre à mon CV
@@ -154,120 +190,148 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    const cvInput = document.getElementById("cvFileInput");
-    const cvLabel = document.getElementById("cvFileLabel");
-    const cvBadge = document.getElementById("cvStatusBadge");
+    // INITIALISATION DES STATUTS INITIALS (Basé sur vos badges Jinja existants)
+    ['cv', 'offre'].forEach(type => {
+        const badge = document.getElementById(`${type}StatusBadge`);
+        if (badge) {
+            // Si le badge a déjà la classe verte de Jinja, on le marque loaded, sinon empty
+            const hasFile = badge.classList.contains('match-status-badge--ok');
+            badge.setAttribute('data-status', hasFile ? 'loaded' : 'empty');
+        }
+    });
 
-    // Affichage du nom du fichier
-    if (cvInput) {
-        cvInput.addEventListener("change", () => {
+    // ============================================================
+    // 1. GESTION DU NOM DES FICHIERS ET CHANGEMENT DE STATUT
+    // ============================================================
+    ['cv', 'offre'].forEach(type => {
+        const fileInput = document.getElementById(`${type}FileInput`);
+        const fileLabel = document.getElementById(`${type}FileLabel`);
+        const badge = document.getElementById(`${type}StatusBadge`);
 
-            if (cvInput.files.length > 0) {
-                cvLabel.textContent = cvInput.files[0].name;
-            }
-
-        });
-    }
-
-    // Upload AJAX
-    document.querySelectorAll('.btn-upload-ajax[data-target="cv"]')
-        .forEach(button => {
-
-            button.addEventListener("click", async function() {
-
-                if (!cvInput.files.length) {
-                    alert("Veuillez sélectionner un CV.");
-                    return;
+        if (fileInput) {
+            fileInput.addEventListener("change", () => {
+                if (fileInput.files.length > 0) {
+                    fileLabel.textContent = fileInput.files[0].name;
+                    // L'utilisateur change le fichier -> le statut devient non-synchronisé (dirty)
+                    badge.setAttribute('data-status', 'dirty');
                 }
-
-                const file = cvInput.files[0];
-
-                const formData = new FormData();
-                formData.append("cv", file);
-
-                try {
-
-                    this.disabled = true;
-                    this.innerHTML =
-                        '<i class="ti ti-loader"></i> Analyse...';
-
-                    const response = await fetch("/cv/upload", {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    const data = await response.json();
-
-                    if (!data.success) {
-                        alert(data.message);
-                        return;
-                    }
-
-                    // Badge vert
-                    cvBadge.classList.remove(
-                        "match-status-badge--warn"
-                    );
-
-                    cvBadge.classList.add(
-                        "match-status-badge--ok"
-                    );
-
-                    cvBadge.innerHTML =
-                        '<i class="ti ti-circle-check"></i> Chargé';
-
-                    // Sauvegarde de l'id de l'analyse
-                    document
-                        .querySelectorAll('.btnVoirAnalyse[data-type="cv"]')
-                        .forEach(btn => {
-                            btn.dataset.analysisId =
-                                data.analysis_id;
-                        });
-
-                    alert("CV analysé avec succès");
-
-                } catch (error) {
-
-                    console.error(error);
-                    alert("Erreur serveur.");
-
-                } finally {
-
-                    this.disabled = false;
-                    this.innerHTML =
-                        '<i class="ti ti-upload"></i> Uploader';
-
-                }
-
             });
+        }
 
-        });
+        // Bouton Modifier / Charger un autre
+        const editBtn = document.getElementById(`${type}EditBtn`);
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                document.getElementById(`${type}LoadedView`).style.display = 'none';
+                document.getElementById(`${type}InputWrap`).style.display = 'block';
+                badge.setAttribute('data-status', 'dirty');
+            });
+        }
+    });
 
-});
-</script>
+    // ============================================================
+    // 2. LOGIQUE D'UPLOAD AJAX UNIQUE (FACTORISÉE)
+    // ============================================================
+    document.querySelectorAll('.btn-upload-ajax').forEach(button => {
+        button.addEventListener("click", async function() {
+            const targetType = this.getAttribute('data-target'); // 'cv' ou 'offre'
+            const fileInput = document.getElementById(`${targetType}FileInput`);
+            const badge = document.getElementById(`${targetType}StatusBadge`);
 
-<script>
-document.querySelectorAll(".btnVoirAnalyse")
-    .forEach(btn => {
-
-        btn.addEventListener("click", function() {
-
-            const analysisId = this.dataset.analysisId;
-            
-
-            if (!analysisId) {
-
-                alert(
-                    "Aucune analyse disponible pour le moment."
-                );
-
+            if (!fileInput || !fileInput.files.length) {
+                alert(`Veuillez sélectionner un fichier pour : ${targetType.toUpperCase()}.`);
                 return;
             }
 
-            window.location.href =
-                `/cv/result/${analysisId}`;
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            
+            // Sécurité Clé Backend : "cv" pour le CV, "file" pour l'offre (comme vu dans votre route offre_route)
+            const formKey = (targetType === 'cv') ? 'cv' : 'file';
+            formData.append(formKey, file);
 
+            try {
+                this.disabled = true;
+                this.innerHTML = '<i class="ti ti-loader"></i> Analyse...';
+
+                // URL dynamique : /cv/upload ou /offre/upload
+                const response = await fetch(`/${targetType}/upload`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    alert(data.message);
+                    return;
+                }
+
+                // Passage du badge au Vert
+                badge.classList.remove("match-status-badge--warn");
+                badge.classList.add("match-status-badge--ok");
+                badge.innerHTML = '<i class="ti ti-circle-check"></i> Chargé';
+                badge.setAttribute('data-status', 'loaded'); // Sécurise la soumission finale
+
+                // Sauvegarde de l'ID de l'analyse dans le dataset
+                document.querySelectorAll(`.btnVoirAnalyse[data-type="${targetType}"]`)
+                    .forEach(btn => {
+                        btn.dataset.analysisId = data.analysis_id;
+                    });
+
+                alert(`${targetType === 'cv' ? 'CV' : "L'offre"} analysé(e) avec succès.`);
+
+            } catch (error) {
+                console.error(error);
+                alert("Erreur serveur.");
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="ti ti-upload"></i> Uploader';
+            }
         });
-
     });
+
+    // ============================================================
+    // 3. LOGIQUE UNIQUE POUR LES BOUTONS "VOIR" (FACTORISÉE)
+    // ============================================================
+    document.querySelectorAll(".btnVoirAnalyse").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const analysisId = this.dataset.analysisId;
+            const targetType = this.getAttribute('data-type'); // 'cv' ou 'offre'
+
+            if (!analysisId) {
+                alert("Aucune analyse disponible pour le moment.");
+                return;
+            }
+
+            // Redirige vers /cv/result/ID ou /offre/result/ID selon le bloc
+            window.location.href = `/${targetType}/result/${analysisId}`;
+        });
+    });
+
+    // ============================================================
+    // 4. SÉCURITÉ DE SOUMISSION DU FORMULAIRE GLOBAL
+    // ============================================================
+    const matchingForm = document.getElementById('matchingForm');
+    if (matchingForm) {
+        matchingForm.addEventListener('submit', function (event) {
+            const cvStatus = document.getElementById('cvStatusBadge').getAttribute('data-status');
+            const offreStatus = document.getElementById('offreStatusBadge').getAttribute('data-status');
+            let errors = [];
+
+            if (cvStatus === 'empty') errors.push("Votre CV est requis.");
+            if (cvStatus === 'dirty') errors.push("Un nouveau CV est sélectionné. Cliquez sur 'Uploader' avant de comparer.");
+
+            if (offreStatus === 'empty') errors.push("L'offre d'emploi est requise.");
+            if (offreStatus === 'dirty') errors.push("Une nouvelle offre est sélectionnée. Cliquez sur 'Uploader' avant de comparer.");
+
+            if (errors.length > 0) {
+                event.preventDefault(); // Bloque la comparaison globale si un fichier n'est pas envoyé
+                alert("Action impossible :\n\n" + errors.join("\n"));
+            }
+        });
+    }
+});
+  
 </script>
 {% endblock %}

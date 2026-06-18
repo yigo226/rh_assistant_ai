@@ -146,5 +146,128 @@
 
   </div>
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const cvInput = document.getElementById("cvFileInput");
+    const cvLabel = document.getElementById("cvFileLabel");
+    const cvBadge = document.getElementById("cvStatusBadge");
+
+    // Affichage du nom du fichier
+    if (cvInput) {
+        cvInput.addEventListener("change", () => {
+
+            if (cvInput.files.length > 0) {
+                cvLabel.textContent = cvInput.files[0].name;
+            }
+
+        });
+    }
+
+    // Upload AJAX
+    document.querySelectorAll('.btn-upload-ajax[data-target="cv"]')
+        .forEach(button => {
+
+            button.addEventListener("click", async function() {
+
+                if (!cvInput.files.length) {
+                    alert("Veuillez sélectionner un CV.");
+                    return;
+                }
+
+                const file = cvInput.files[0];
+
+                const formData = new FormData();
+                formData.append("cv", file);
+
+                try {
+
+                    this.disabled = true;
+                    this.innerHTML =
+                        '<i class="ti ti-loader"></i> Analyse...';
+
+                    const response = await fetch("/cv/upload", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        alert(data.message);
+                        return;
+                    }
+
+                    // Badge vert
+                    cvBadge.classList.remove(
+                        "match-status-badge--warn"
+                    );
+
+                    cvBadge.classList.add(
+                        "match-status-badge--ok"
+                    );
+
+                    cvBadge.innerHTML =
+                        '<i class="ti ti-circle-check"></i> Chargé';
+
+                    // Sauvegarde de l'id de l'analyse
+                    document
+                        .querySelectorAll('.btnVoirAnalyse[data-type="cv"]')
+                        .forEach(btn => {
+                            btn.dataset.analysisId =
+                                data.analysis_id;
+                        });
+
+                    alert("CV analysé avec succès");
+
+                } catch (error) {
+
+                    console.error(error);
+                    alert("Erreur serveur.");
+
+                } finally {
+
+                    this.disabled = false;
+                    this.innerHTML =
+                        '<i class="ti ti-upload"></i> Uploader';
+
+                }
+
+            });
+
+        });
+
+});
+</script>
+
+<script>
+document.querySelectorAll(".btnVoirAnalyse")
+    .forEach(btn => {
+
+        btn.addEventListener("click", function() {
+
+            const analysisId = this.dataset.analysisId;
+            
+
+            if (!analysisId) {
+
+                alert(
+                    "Aucune analyse disponible pour le moment."
+                );
+
+                return;
+            }
+
+            window.location.href =
+                `/cv/result/${analysisId}`;
+
+        });
+
+    });
+</script>
+
+
 {% endblock %}
 

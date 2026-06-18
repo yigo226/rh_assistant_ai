@@ -4,9 +4,8 @@ from flask import (
     Blueprint,
     render_template,
     request,
-    flash,
-    redirect,
-    url_for
+    session,
+    jsonify,
 )
 
 from flask_login import (
@@ -35,73 +34,93 @@ offre_bp = Blueprint(
 )
 
 
-# Route pour créer une offre manuellement
-@offre_bp.route("/create", methods=["GET", "POST"])
-@login_required
-def create_offre():
+# ❌ ON NE SUPPRIME PLUS L'ANCIENNE OFFRE ICI 
 
-    if request.method == "POST":
-
-        titre = request.form.get("titre")
-        description = request.form.get(
-            "description")
-
-        offre = Offre(
-            titre=titre,
-            description=description,
-            contenu_texte=description,
-            user_id=current_user.id
-        )
-
-        db.session.add(offre)
-        db.session.commit()
-
-        informations_extraites = analyseur_texte_extrait(description)
-
-        return render_template(
-            "offre/result.html",
-            offre=offre,
-            analysis=informations_extraites ,
-            saved_analysis=OffreAnalysis,
-        )
-
-    return render_template(
-        "offre/create.html"
-    )
-
-# Route pour l'upload et l'analyse d'une offre
-
-@offre_bp.route("/upload", methods=["GET", "POST"])
+@offre_bp.route("/upload", methods=["POST"])
 @login_required
 def upload_offre():
-    if request.method == "POST":
-        file = request.files.get("offre_file")
-        if not file:
-            flash("Veuillez sélectionner un fichier", "danger")
-            return redirect(request.url)
+    file = request.files.get("file") 
 
-        offre, analysis, offre_analysis = save_offre(file, current_user)
+    if not file:
+        return jsonify({"success": False, "message": "Aucun fichier sélectionné"}), 400
 
-        flash("Offre analysée avec succès", "success")
-        return render_template("offre/result.html", 
-                               offre=offre, 
-                               analysis=analysis, 
-                               saved_analysis=offre_analysis)
+    # Chaque upload crée une nouvelle entrée indépendante dans l'historique de l'utilisateur
+    
+    # Traiter et sauvegarder la nouvelle offre
+    offre, synthese_criteres_offre, informations_extraites = save_offre(file, current_user)
 
-    return render_template("offre/upload.html")
+    # On stocke l'ID de cette offre précise en session pour savoir sur laquelle 
+    # l'utilisateur travaille actuellement
+    session['current_offre_id'] = offre.id
 
-# Historique des analyses d'offres
-@offre_bp.route("/history")
+    return jsonify({
+        "success": True,
+        "message": "Offre ajoutée à votre historique et analysée",
+        "offre_id": offre.id,
+        "analysis_id": synthese_criteres_offre.id,
+        "filename": offre.nom_fichier
+    })
+
+# ❌ ici on SUPPRIME L'ANCIENNE OFFRE 
+
+# @offre_bp.route("/upload", methods=["GET", "POST"])
+# @login_required
+# def upload_offre():
+#     # 1. Rechercher si l'utilisateur a déjà une offre enregistrée
+#     existing_offre = Offre.query.filter_by(user_id=current_user.id).first()
+
+#     # Récupération du fichier via la clé définie dans le script JS du template
+#     file = request.files.get("file") 
+
+#     if not file:
+#         return jsonify({
+#             "success": False,
+#             "message": "Aucun fichier sélectionné"
+#         }), 400
+
+#     # 2. Nettoyer l'ancienne offre et son fichier physique si elle existe
+#     if existing_offre:
+#         if existing_offre.chemin_fichier and os.path.exists(existing_offre.chemin_fichier):
+#             try:
+#                 os.remove(existing_offre.chemin_fichier)
+#             except Exception as e:
+#                 print(f"Erreur lors de la suppression du fichier physique : {e}")
+
+#         db.session.delete(existing_offre)
+#         db.session.commit()
+    
+#     # 3. Traiter et sauvegarder la nouvelle offre
+#     # Aligné sur le triplet retourné par votre logique (Objet, Analyse_Objet, Données_brutes)
+#     offre, synthese_criteres_offre, informations_extraites = save_offre(file, current_user)
+
+#     print("type synthese_criteres_offre dans offre_route :", type(synthese_criteres_offre))
+#     print(f"ID Analyse Offre : {synthese_criteres_offre.id}")
+#     print("Fin d'affichage du type synthese_criteres_offre dans offre_route")
+
+#     # 4. Retourner la réponse JSON attendue par le script AJAX du formulaire
+#     return jsonify({
+#         "success": True,
+#         "message": "Offre analysée avec succès dans le système",
+#         "offre_id": offre.id,
+#         "analysis_id": synthese_criteres_offre.id,
+#         "filename": offre.nom_fichier
+#     })
+
+
+@offre_bp.route("/result/<int:analysis_id>")
 @login_required
-def history():
+def view_result(analysis_id):
+    # Récupérer les critères extraits de l'offre ou renvoyer une erreur 404
+    informations_extraites = OffreAnalyser.query.get_or_404(analysis_id)
+    print("Le contenu de informations_extraites dans offre_route : ", informations_extraites)
 
-    offres = Offre.query.filter_by(
-        user_id=current_user.id
-    ).order_by(
-        Offre.date_creation.desc()
-    ).all()
-
+    # Accès à l'offre parente via la relation back_populates du modèle
+    offre_utilisateur = informations_extraites.offre
+    print("Le contenu de offre_utilisateur dans offre_route : ", offre_utilisateur)
+    
     return render_template(
-        "offre/history.html",
-        offre=offres
+        "offre/result.html",
+        offre_utilisateur=offre_utilisateur,
+        informations_extraites=informations_extraites
     )
+

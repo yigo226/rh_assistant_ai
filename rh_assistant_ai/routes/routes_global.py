@@ -1,0 +1,138 @@
+from flask import (
+    Blueprint,
+    jsonify,
+    render_template,
+    request,
+    flash,
+    redirect,
+    url_for
+)
+
+import os
+from config.database import db
+
+# Blueprint pour les routes liées aux CV
+from flask import Blueprint
+from flask_login import current_user, login_required
+from models.cv import CV
+
+from services.cv_service import save_cv
+
+
+global_bp = Blueprint(
+    "global",
+    __name__,
+    url_prefix="/global"
+)
+
+from flask import request, render_template, redirect, url_for, session, flash, jsonify
+from flask_login import login_required, current_user
+from config.database import db
+from models.cv import CV
+from models.offre import Offre
+
+@global_bp.route("/matching", methods=["GET", "POST"])
+@login_required
+def matching():
+    # ============================================================
+    # COMPORTEMENT SÉCURISÉ — MÉTHODE POST (Lancement du Matching)
+    # ============================================================
+    if request.method == "POST":
+        # 1. Récupérer le CV unique de l'utilisateur
+        existing_cv = CV.query.filter_by(user_id=current_user.id).first()
+        if not existing_cv or not existing_cv.analyse:
+            flash("Action impossible : Votre CV n'est pas chargé ou analysé dans le système.", "danger")
+            return redirect(url_for('global_bp.matching'))
+
+        # 2. Récupérer l'offre active sélectionnée dans la session de l'utilisateur
+        current_offre_id = session.get('current_offre_id')
+        existing_offre = None
+        
+        if current_offre_id:
+            existing_offre = Offre.query.get(current_offre_id)
+
+        # Sécurité : Si aucune offre en session ou pas d'analyse rattachée
+        if not existing_offre or not existing_offre.analyse:
+            flash("Action impossible : Aucune offre d'emploi n'est sélectionnée ou analysée.", "danger")
+            return redirect(url_for('global_bp.matching'))
+
+        # 3. Récupération des données extraites (JSON) pour l'algorithme de comparaison
+        donnees_cv = existing_cv.analyse       # Contient skills, diplomas, experiences du CV
+        donnees_offre = existing_offre.analyse # Contient skills, diplomas, experiences de l'offre
+
+        # ------------------------------------------------------------
+        # ICI : Insérez l'appel à votre algorithme ou IA de Matching
+        # Exemple basique pour le rendu final :
+        # score_matching = votre_fonction_matching(donnees_cv, donnees_offre)
+        # ------------------------------------------------------------
+        score_matching = 85 # Score de simulation pour l'exemple
+
+        # Redirection vers la page de rapport global finale
+        return render_template(
+            "matching/rapport.html", 
+            cv=existing_cv, 
+            offre=existing_offre,
+            score=score_matching
+        )
+
+    # ============================================================
+    # COMPORTEMENT ENTRÉE — MÉTHODE GET (Affichage de l'interface)
+    # ============================================================
+    
+    # 1. Récupérer le CV de référence unique de l'utilisateur
+    existing_cv = CV.query.filter_by(user_id=current_user.id).first()
+
+    # 2. Récupérer l'offre active via la session (Plan A - Historique)
+    existing_offre = None
+    current_offre_id = session.get('current_offre_id')
+    
+    if current_offre_id:
+        existing_offre = Offre.query.get(current_offre_id)
+    
+    # Sécurité Plan A : Si la session s'est vidée mais que l'utilisateur a un historique, 
+    # on sélectionne automatiquement la toute dernière offre qu'il a analysée.
+    if not existing_offre:
+        existing_offre = Offre.query.filter_by(user_id=current_user.id).order_by(Offre.id.desc()).first()
+        if existing_offre:
+            session['current_offre_id'] = existing_offre.id
+
+    # Rendu final du formulaire de comparaison
+    return render_template(
+        "cv/upload.html",  # Remplacez par le nom exact de votre template global de matching
+        existing_cv=existing_cv, 
+        existing_offre=existing_offre
+    )
+
+
+# @global_bp.route("/matching", methods=["GET", "POST"])
+# @login_required
+# def matching():
+#     # 1. Vérifier si l'utilisateur a déjà un CV en base de données
+#     existing_cv = CV.query.filter_by(user_id=current_user.id).first()
+
+#     if request.method == "POST":
+#         file = request.files.get("cv")
+#         if not file:
+#             print("Aucun fichier sélectionné", "danger")
+#             return redirect(request.url)
+        
+#         # Si l'utilisateur veut remplacer son CV existant
+#         if existing_cv:
+
+#             #  Supprimer proprement l'ancien pour valider la contrainte avant le save_cv
+#             # Supprimer le fichier physique sur le disque s'il existe
+#             if os.path.exists(existing_cv.chemin_fichier):
+#                 os.remove(existing_cv.chemin_fichier)
+                
+#             # Supprimer l'entrée en BDD
+#             db.session.delete(existing_cv)
+#             db.session.commit() # On valide la suppression pour libérer la contrainte unique
+
+#         # 2. Maintenant qu'il n'y a plus de doublon possible, on peut sauvegarder le nouveau
+#         cv, synthese_competences_cv, informations_extraites = save_cv(file, current_user)
+
+
+#         return render_template("cv/result.html", cv=cv, informations_extraites=informations_extraites, synthese_competences_cv=synthese_competences_cv)
+    
+#     return render_template("cv/upload.html", existing_cv=existing_cv)
+

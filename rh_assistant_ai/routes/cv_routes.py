@@ -40,7 +40,7 @@ cv_bp = Blueprint(
 @cv_bp.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_cv():
-    existing_cv = CV.query.filter_by(user_id=current_user.id).first()
+    existing_cv = CV.query.filter_by(user_id=current_user.id, est_actif = True).first()
 
     file = request.files.get("cv")
 
@@ -50,13 +50,10 @@ def upload_cv():
             "message": "Aucun fichier sélectionné"
         }), 400
 
+    # On archive l'ancien CV en le rendant inactif
     if existing_cv:
-
-        if os.path.exists(existing_cv.chemin_fichier):
-            os.remove(existing_cv.chemin_fichier)
-
-        db.session.delete(existing_cv)
-        db.session.commit()
+        existing_cv.est_actif = False
+        db.session.commit() 
     
     cv, synthese_competences_cv, informations_extraites = save_cv(file, current_user)
 

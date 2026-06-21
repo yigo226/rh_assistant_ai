@@ -98,41 +98,9 @@ def matching():
 
     # Rendu final du formulaire de comparaison
     return render_template(
-        "cv/upload.html",  # Remplacez par le nom exact de votre template global de matching
+        "upload.html",  # Remplacez par le nom exact de votre template global de matching
         existing_cv=existing_cv, 
         existing_offre=existing_offre
     )
 
-
-# @global_bp.route("/matching", methods=["GET", "POST"])
-# @login_required
-# def matching():
-#     # 1. Vérifier si l'utilisateur a déjà un CV en base de données
-#     existing_cv = CV.query.filter_by(user_id=current_user.id).first()
-
-#     if request.method == "POST":
-#         file = request.files.get("cv")
-#         if not file:
-#             print("Aucun fichier sélectionné", "danger")
-#             return redirect(request.url)
-        
-#         # Si l'utilisateur veut remplacer son CV existant
-#         if existing_cv:
-
-#             #  Supprimer proprement l'ancien pour valider la contrainte avant le save_cv
-#             # Supprimer le fichier physique sur le disque s'il existe
-#             if os.path.exists(existing_cv.chemin_fichier):
-#                 os.remove(existing_cv.chemin_fichier)
-                
-#             # Supprimer l'entrée en BDD
-#             db.session.delete(existing_cv)
-#             db.session.commit() # On valide la suppression pour libérer la contrainte unique
-
-#         # 2. Maintenant qu'il n'y a plus de doublon possible, on peut sauvegarder le nouveau
-#         cv, synthese_competences_cv, informations_extraites = save_cv(file, current_user)
-
-
-#         return render_template("cv/result.html", cv=cv, informations_extraites=informations_extraites, synthese_competences_cv=synthese_competences_cv)
-    
-#     return render_template("cv/upload.html", existing_cv=existing_cv)
 

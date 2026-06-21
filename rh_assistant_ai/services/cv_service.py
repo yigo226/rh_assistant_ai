@@ -5,18 +5,7 @@ from models.cv_analyser import CVAnalyser
 from services.file_service import analyseur_texte_extrait, extract_text
 import os
 
-# # Ces fonctions  d'nalyse cv
-# def analyze_cv(text):
-#     text = clean_text(text)
-#     skills = extract_skills(text)
-#     diplomas = extract_diplomas(text)
-#     experiences = extract_experience(text)
 
-#     return {
-#         "skills": skills,
-#         "diplomas": diplomas,
-#         "experiences": experiences
-#     }
 
 def save_cv(file, user): 
     filename = secure_filename(file.filename)

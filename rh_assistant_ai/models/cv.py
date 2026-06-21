@@ -20,7 +20,7 @@ class CV(db.Model):
         db.Integer,
         db.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
-        unique=True  
+        unique=False  
     )
 
     # 2. USELIST=FALSE transforme la liste d'objets en un objet unique côté Python
@@ -40,6 +40,12 @@ class CV(db.Model):
         back_populates="cv",
         uselist=False,
         cascade="all, delete-orphan"
+    )
+
+    est_actif = db.Column(
+        db.Boolean,
+        default= True,
+        nullable= False
     )
 
     def __repr__(self):

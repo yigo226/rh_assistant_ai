@@ -14,21 +14,7 @@ from models.offre_analyser import OffreAnalyser
 from services.file_service import extract_text
 from services.file_service import analyseur_texte_extrait, extract_text
 
-# def analyze_offre(text):
 
-#     text = clean_text(text)
-
-#     return {
-#         "skills": extract_skills(text),
-#         "diplomas": extract_diplomas(text),
-#         "experiences": extract_experience(text)
-#     }
-
-import os
-from werkzeug.utils import secure_filename
-from config.database import db
-from models.offre import Offre
-from models.offre_analyser import OffreAnalyser
 # Importez votre fonction d'extraction et d'analyse de texte ici si nécessaire
 # from services.votre_module import extract_text, analyseur_texte_extrait
 

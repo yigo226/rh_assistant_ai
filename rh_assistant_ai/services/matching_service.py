@@ -1,93 +1,194 @@
+from models import MatchResult
+from config.database import db
 
 
 
-# matching_service.py
-# ici nous allons implémenter la logique de calcul du score de compatibilité entre un CV et une offre d'emploi
-# Nous allons comparer les compétences extraites du CV avec celles de l'offre et calculer un score basé sur le nombre de compétences correspondantes par rapport au nombre total de compétences requises par l'offre.
-# Nous allons également identifier les compétences manquantes pour le candidat.
-# Le résultat de cette comparaison sera stocké dans la base de données pour pouvoir être affiché à l'utilisateur.
-def calculate_match_score(
-        cv_skills,
-        offre_skills
-):
+
+
+"""
+matching_service.py
+
+Ce service contient toute la logique métier permettant de comparer
+les compétences extraites d'un CV avec celles d'une offre d'emploi.
+
+Le matching repose actuellement uniquement sur les compétences
+(skills), mais cette logique pourra évoluer plus tard pour intégrer :
+
+- les années d'expérience
+- les diplômes
+- les langues
+- les certifications
+- les soft skills
+- un score pondéré
+"""
+
+
+def calculer_matching(analyse_cv, analyse_offre):
     """
-    Calcule le score de compatibilité.
+    Compare les compétences d'un CV avec celles d'une offre.
+
+    Paramètres
+    ----------
+    analyse_cv : CVAnalyser
+        Résultat de l'analyse du CV.
+
+    analyse_offre : OffreAnalyser
+        Résultat de l'analyse de l'offre.
+
+    Retour
+    ------
+    dict contenant :
+
+        score
+        matching_skills
+        missing_skills
+        extra_skills
+        recommendation
     """
 
-    cv_set = set(
-        skill.lower()
-        for skill in cv_skills
-    )
+    competences_cv = {
+        skill.lower().strip()
+        for skill in (analyse_cv.skills or [])
+    }
 
-    offre_set = set(
-        skill.lower()
-        for skill in offre_skills
-    )
+    competences_offre = {
+        skill.lower().strip()
+        for skill in (analyse_offre.skills or [])
+    }
 
-    matching = list(
-        cv_set.intersection(
-            offre_set
+    if not competences_offre:
+
+        return {
+
+            "score": 0,
+
+            "matching_skills": [],
+
+            "missing_skills": [],
+
+            "extra_skills": [],
+
+            "recommendation":
+                "Impossible de calculer un matching : "
+                "aucune compétence n'a été détectée dans l'offre."
+        }
+    # Calcul des compétences communes
+    matching_skills = sorted(
+        competences_cv.intersection(
+            competences_offre
         )
     )
-
-    missing = list(
-        offre_set.difference(
-            cv_set
+    # Compétences manquantes
+    missing_skills = sorted(
+        competences_offre.difference(
+            competences_cv
         )
     )
+    # Compétences supplémentaires du candidat
+    extra_skills = sorted(
+        competences_cv.difference(
+            competences_offre
+        )
+    )
+    # Calcul du score
+    score = round(
+        (
+            len(matching_skills)
+            /
+            len(competences_offre)
+        ) * 100,
 
-    if len(offre_set) == 0:
+        2
+    )
+    # Génération de la recommandation
+    if score >= 80:
 
-        score = 0
+        recommendation = (
+            "Excellent profil. "
+            "Le candidat possède la majorité "
+            "des compétences recherchées."
+        )
+
+    elif score >= 60:
+
+        recommendation = (
+            "Bon profil. "
+            "Quelques compétences restent "
+            "à renforcer mais le candidat "
+            "mérite un entretien."
+        )
+
+    elif score >= 40:
+
+        recommendation = (
+            "Profil intermédiaire. "
+            "Des écarts importants existent "
+            "sur certaines compétences."
+        )
 
     else:
 
-        score = round(
-            (
-                len(matching)
-                /
-                len(offre_set)
-            ) * 100,
-            2
+        recommendation = (
+            "Compatibilité faible. "
+            "Le profil ne correspond pas "
+            "aux exigences principales du poste."
         )
+
+    # ---------------------------------------
+    # Résultat du matching
+    # ---------------------------------------
 
     return {
 
         "score": score,
 
-        "matching_skills": matching,
+        "matching_skills": matching_skills,
 
-        "missing_skills": missing
+        "missing_skills": missing_skills,
+
+        "extra_skills": extra_skills,
+
+        "recommendation": recommendation,
+
+        "matching_count": len(matching_skills),
+
+        "missing_count": len(missing_skills),
+
+        "required_count": len(competences_offre),
+
+        "candidate_count": len(competences_cv)
     }
 
-# en fonction du score calculé, nous allons générer une recommandation pour le candidat sur la base de seuils prédéfinis.
-# Par exemple, un score supérieur à 80% pourrait être considéré comme excellent, entre 60% et 80% comme bon, entre 40% et 60% comme acceptable, et en dessous de 40% comme faible.
 
-def generate_recommendation(score):
+# Enregistrement du résultat du matching en base de données
+# Cette fonction prend en charge la création d'une nouvelle entrée MatchResult
+def enregistrer_match_result(analyse_cv, analyse_offre, metriques, user):
+    """
+    Prend en charge l'instanciation et la sauvegarde du résultat du matching
+    en incluant l'utilisateur et toutes les métriques de compétences JSON.
+    """
+    try:
+        # Création de l'entité avec TOUTES les données requises par votre table SQL
+        nouveau_match = MatchResult(
+            user_id=int(user.id),
+            cv_analyser_id=int(analyse_cv.id),       
+            offre_analyser_id=int(analyse_offre.id),
 
-    if score >= 80:
-
-        return (
-            "Excellent profil. "
-            "Candidat fortement recommandé."
+            score=metriques["score"],
+            
+            # Toutes les listes de compétences JSON calculées par le service
+            matching_skills=metriques["matching_skills"],
+            missing_skills=metriques["missing_skills"],
+            extra_skills=metriques["extra_skills"], # ✅ Ajouté (Manquait)
+            
+            recommendation=metriques["recommendation"]
         )
+        
+        db.session.add(nouveau_match)
+        db.session.commit()
+        
+        return nouveau_match
 
-    elif score >= 60:
-
-        return (
-            "Bon profil. "
-            "Entretien recommandé."
-        )
-
-    elif score >= 40:
-
-        return (
-            "Profil acceptable "
-            "mais certaines compétences "
-            "sont manquantes."
-        )
-
-    return (
-        "Compatibilité faible."
-    )
-
+    except Exception as e:
+        db.session.rollback()
+        raise e

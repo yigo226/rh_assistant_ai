@@ -11,13 +11,7 @@ class User(UserMixin, db.Model):
 
     nom = db.Column(db.String(100), nullable=False)
     prenom = db.Column(db.String(100), nullable=False)
-
-    email = db.Column(
-        db.String(150),
-        unique=True,
-        nullable=False
-    )
-
+    email = db.Column(db.String(150), unique=True, nullable=False )
     mot_de_passe = db.Column(
         db.String(255),
         nullable=False
@@ -27,18 +21,10 @@ class User(UserMixin, db.Model):
         db.String(20),
         nullable=True
     )
-
-    role = db.Column(
-        db.String(20),
-        nullable=False,
-        default="candidat"
-    )
-
     actif = db.Column(
         db.Boolean,
         default=True
     )
-
     date_creation = db.Column(
         db.DateTime,
         default=datetime.utcnow
@@ -58,6 +44,15 @@ class User(UserMixin, db.Model):
         db.Text,
         nullable=True
     )
+
+    role = db.Column(db.String(20), default="candidat", nullable=False) 
+   
+    def est_admin(self):
+        return self.role == "admin"
+    def est_recruteur(self):
+        return self.role == "recruteur"
+    def est_candidat(self):
+        return self.role == "candidat"
 
     def __repr__(self):
         return f"<User {self.email}>"

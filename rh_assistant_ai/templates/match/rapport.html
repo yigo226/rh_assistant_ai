@@ -1,0 +1,146 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+  
+  <!-- En-tête du Rapport -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center border-bottom pb-3 mb-4 gap-3">
+    <div>
+      <h2 class="font-weight-bold">Rapport d'adéquation Profil / Offre</h2>
+      <p class="text-muted small mb-0">
+        Généré le {{ resultat.created_at.strftime('%d/%m/%Y à %H:%M') }}
+      </p>
+    </div>
+    <a href="/global/matching" class="btn btn-outline-secondary">
+      <i class="ti ti-arrow-left"></i> Nouvelle comparaison
+    </a>
+  </div>
+
+  <div class="row">
+    
+    <!-- PANNEAU GAUCHE : Score et Recommandation -->
+    <div class="col-lg-4 mb-4">
+      
+      <!-- Carte Score -->
+      <div class="match-card text-center p-4 mb-4">
+        <h4 class="text-secondary small font-weight-bold text-uppercase tracking-wider mb-3">Score de Matching</h4>
+        
+        <!-- Jauge Visuelle Circulaire Simplifiée -->
+        <div class="position-relative d-inline-flex align-items-center justify-content-center mb-3" style="width: 140px; height: 140px;">
+          <div class="position-absolute w-100 h-100 rounded-circle border d-flex align-items-center justify-content-center" 
+               style="border-width: 10px !important; border-color: {% if resultat.score >= 75 %}#0d9488{% elif resultat.score >= 50 %}#eab308{% else %}#ef4444{% endif %} !important;">
+            <span class="h2 font-weight-bold mb-0 text-dark">{{ resultat.score | int }}%</span>
+          </div>
+        </div>
+
+        <p class="small text-muted mt-2">
+          Basé sur les critères obligatoires de l'offre
+        </p>
+      </div>
+
+      <!-- Carte Recommandation de l'IA -->
+      <div class="match-card p-4">
+        <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
+          <i class="ti ti-message-chatbot h4 mb-0 text-teal"></i>
+          <h4 class="h5 mb-0 font-weight-bold">Synthèse de l'assistant</h4>
+        </div>
+        <p class="card-text text-dark" style="line-height: 1.6;">
+          {{ resultat.recommendation }}
+        </p>
+      </div>
+
+    </div>
+
+    <!-- PANNEAU DROIT : Détail des Documents et Compétences -->
+    <div class="col-lg-8">
+      
+      <!-- Rappel des fichiers comparés -->
+      <div class="row mb-4">
+        <div class="col-sm-6 mb-3 mb-sm-0">
+          <div class="p-3 bg-light rounded d-flex align-items-center gap-3">
+            <i class="ti ti-file-text text-teal h3 mb-0"></i>
+            <div>
+              <span class="small text-muted d-block">Source Profil</span>
+              <strong class="text-truncate d-inline-block" style="max-width: 200px;">
+                {{ cv.nom_fichier if cv else "CV Candidat" }}
+              </strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="p-3 bg-light rounded d-flex align-items-center gap-3">
+            <i class="ti ti-briefcase text-purple h3 mb-0"></i>
+            <div>
+              <span class="small text-muted d-block">Source Offre</span>
+              <strong class="text-truncate d-inline-block" style="max-width: 200px;">
+                {{ offre.nom_fichier if offre else "Offre d'emploi" }}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANALYSE DES COMPÉTENCES -->
+      <div class="match-card p-4">
+        <h3 class="h4 font-weight-bold border-bottom pb-2 mb-4">Cartographie des compétences</h3>
+
+        <!-- 1. Compétences en commun -->
+        <div class="mb-4">
+          <h5 class="text-success font-weight-bold small text-uppercase mb-2">
+            <i class="ti ti-circle-check"></i> Compétences Validées ({{ resultat.matching_skills | length }})
+          </h5>
+          <div class="d-flex flex-wrap gap-2">
+            {% if resultat.matching_skills %}
+              {% for skill in resultat.matching_skills %}
+                <span class="badge bg-success-lt px-3 py-2 rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                  {{ skill }}
+                </span>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted small italic">Aucune correspondance détectée.</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- 2. Compétences manquantes -->
+        <div class="mb-4">
+          <h5 class="text-danger font-weight-bold small text-uppercase mb-2">
+            <i class="ti ti-circle-x"></i> Compétences Manquantes ({{ resultat.missing_skills | length }})
+          </h5>
+          <div class="d-flex flex-wrap gap-2">
+            {% if resultat.missing_skills %}
+              {% for skill in resultat.missing_skills %}
+                <span class="badge bg-danger-lt px-3 py-2 rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca;">
+                  {{ skill }}
+                </span>
+              {% endfor %}
+            {% else %}
+              <span class="text-success small fw-bold">Parfait ! Aucune compétence requise ne manque.</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- 3. Compétences bonus -->
+        <div class="mb-2">
+          <h5 class="text-primary font-weight-bold small text-uppercase mb-2">
+            <i class="ti ti-plus"></i> Compétences Bonus / Extra ({{ resultat.extra_skills | length }})
+          </h5>
+          <div class="d-flex flex-wrap gap-2">
+            {% if resultat.extra_skills %}
+              {% for skill in resultat.extra_skills %}
+                <span class="badge bg-primary-lt px-3 py-2 rounded text-primary" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
+                  {{ skill }}
+                </span>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted small italic">Aucune compétence bonus détectée.</span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

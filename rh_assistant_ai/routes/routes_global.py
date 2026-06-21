@@ -39,7 +39,7 @@ def matching():
     # ============================================================
     if request.method == "POST":
         # 1. Récupérer le CV unique de l'utilisateur
-        existing_cv = CV.query.filter_by(user_id=current_user.id).first()
+        existing_cv = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
         if not existing_cv or not existing_cv.analyse:
             flash("Action impossible : Votre CV n'est pas chargé ou analysé dans le système.", "danger")
             return redirect(url_for('global_bp.matching'))
@@ -80,7 +80,7 @@ def matching():
     # ============================================================
     
     # 1. Récupérer le CV de référence unique de l'utilisateur
-    existing_cv = CV.query.filter_by(user_id=current_user.id).first()
+    existing_cv = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
 
     # 2. Récupérer l'offre active via la session (Plan A - Historique)
     existing_offre = None

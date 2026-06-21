@@ -6,6 +6,17 @@ from services.matching_service import calculer_matching, enregistrer_match_resul
 from flask import render_template, session
 from models.cv import CV
 from models.offre import Offre
+from models.match_result import MatchResult
+
+from flask import (
+    Blueprint,
+    jsonify,
+    render_template,
+    request,
+    flash,
+    redirect,
+    url_for
+)
 
 
 matching_bp = Blueprint(
@@ -104,39 +115,29 @@ def run_matching():
         }), 500
 
 
-# @matching_bp.route("/run", methods=["POST"])
-# @login_required
-# def run_matching():
 
-#     data = request.get_json()
-
-#     cv_id = data.get("cv_id")
-#     offre_id = data.get("offre_id")
-
-#     if not cv_id or not offre_id:
-#         return jsonify({
-#             "success": False,
-#             "message": "cv_id et offre_id sont obligatoires."
-#         }), 400
-
-#     try:
-
-#         result = calculer_matching(
-#             cv_id=cv_id,
-#             offre_id=offre_id,
-#             user_id=current_user.id
-#         )
-
-#         return jsonify({
-#             "success": True,
-#             "data": result
-#         }), 200
-
-#     except Exception as e:
-
-#         return jsonify({
-#             "success": False,
-#             "message": str(e)
-#         }), 500
+@matching_bp.route("/rapport/<int:match_id>", methods=["GET"])
+@login_required
+def rapport(match_id):
+    # Récupérer le résultat du matching ou renvoyer une erreur 404
+    resultat = MatchResult.query.get_or_404(match_id)
     
-# Note: Le résultat retourné par calculer_matching est déjà un dict prêt à être JSONifié,
+    # Sécurité : S'assurer que le rapport appartient bien à l'utilisateur connecté
+    if resultat.user_id != current_user.id:
+        flash("Vous n'êtes pas autorisé à consulter ce rapport.", "danger")
+        return redirect(url_for('global_bp.matching'))
+
+    # Extraction des documents d'origine via les relations de clé étrangère
+    analyse_cv = resultat.cv_analyser
+    analyse_offre = resultat.offre_analyser
+    
+    # Accès aux objets parents (CV et Offre) pour récupérer les métadonnées (titres, fichiers)
+    cv_brut = analyse_cv.cv if analyse_cv else None
+    offre_brut = analyse_offre.offre if analyse_offre else None
+
+    return render_template(
+        "match/rapport.html",
+        resultat=resultat,
+        cv=cv_brut,
+        offre=offre_brut
+    )

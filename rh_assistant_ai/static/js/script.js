@@ -259,6 +259,6 @@ function delay(ms) {
    Démarrage
    ---------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', async () => {
-  await initComponents();   // charge navbar + footer
+  //await initComponents();   // charge navbar + footer
   initChat();               // lie les événements du chat
 });

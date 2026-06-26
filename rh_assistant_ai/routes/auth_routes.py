@@ -141,7 +141,7 @@ def login_post():
 
     # Si les identifiants sont incorrects
     flash("Identifiants incorrects", "danger")
-    return redirect(url_for("auth_bp.login")) 
+    return redirect(url_for("candidat.espace_candidat")) 
 
 # Déconnexion
 @auth_bp.route("/logout")

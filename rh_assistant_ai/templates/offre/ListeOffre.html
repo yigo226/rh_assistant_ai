@@ -1,6 +1,15 @@
 {% extends "squelette/base.html" %}
 
 {% block content %}
+<style>
+  /* Petit effet de survol sur les cartes d'offres */
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  }
+</style>
+
+
 <div class="container mt-4 mb-5">
 
   <!-- En-tête de la plateforme d'offres -->
@@ -39,17 +48,35 @@
           <div class="card h-100 border-0 shadow-sm p-3 position-relative d-flex flex-column justify-content-between" style="border-radius: 12px; transition: transform 0.2s; background: #ffffff;">
             
             <div>
-              <!-- En-tête de la carte : Logo d'entreprise / Initiale -->
+              <!-- En-tête de la carte -->
               <div class="d-flex align-items-center justify-content-between mb-3">
                 <div class="d-flex align-items-center gap-3">
                   <div class="d-flex align-items-center justify-content-center bg-light text-purple font-weight-bold rounded-circle" style="width: 45px; height: 45px; font-size: 1.2rem;">
                     <i class="ti ti-briefcase"></i>
                   </div>
                   <div>
-                    <h5 class="font-weight-bold text-dark mb-0 text-truncate" style="max-width: 180px;">{{ offre.titre }}</h5>
-                    <span class="text-muted small"><i class="ti ti-building"></i> {{ offre.entreprise or "Entreprise Anonyme" }}</span>
+                    <h5 class="font-weight-bold text-dark mb-0 text-truncate" style="max-width: 150px;">{{ offre.titre }}</h5>
+                    <!-- Changement structurel : Lien dynamique vers le nom de l'entreprise associée -->
+                    <span class="text-muted small">
+                      <i class="ti ti-building"></i> {{ offre.departement.entreprise.nom if offre.departement else "Entreprise Anonyme" }}
+                    </span>
                   </div>
                 </div>
+
+                <!-- Bouton "Voir l'offre" (Pop-up PDF) placé en haut à droite -->
+                <button
+                    type="button"
+                    class="btn btn-icon btn-light rounded-circle btn-voir-pdf"
+
+                    data-pdf-url="{{ url_for('offre.voir_pdf', offre_id=offre.id) }}"
+
+                    data-offre-titre="{{ offre.titre }}">
+
+                    <i class="ti ti-eye"></i>
+
+                </button>
+
+              </div>
 
                 <!-- Indicateur de Score Dynamique si déjà testé -->
                 {% if offre.id in scores_deja_calcules %}
@@ -62,7 +89,7 @@
                     <i class="ti ti-percentage"></i> Match : {{ score | int }}%
                   </span>
                 {% endif %}
-              </div>
+
 
               <!-- Description courte tronquée -->
               <p class="text-secondary small mb-4" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; min-height: 4.5em;">
@@ -70,23 +97,34 @@
               </p>
             </div>
 
-            <!-- Pied de page de la carte : Métadonnées et Actions -->
+            <!-- Pied de page de la carte : Métadonnées et Actions Alternatives -->
             <div class="border-top pt-3 d-flex align-items-center justify-content-between mt-auto">
               <span class="text-muted" style="font-size: 0.75rem;">
                 <i class="ti ti-calendar"></i> {{ offre.date_creation.strftime('%d/%m/%Y') }}
               </span>
               
-              <!-- Bouton d'action pour envoyer l'offre en session et aller la comparer -->
-              <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-pill btn-analyser-offre" 
-                      data-offre-id="{{ offre.id }}"
-                      style="color: #0d9488; border-color: #0d9488; font-weight: 500;">
-                <i class="ti ti-arrows-diff"></i> Comparer à mon CV
-              </button>
+              <!-- AFFICHAGE CONDITIONNEL DES ACTIONS -->
+              {% if offre.id in scores_deja_calcules %}
+                <!-- Cas 1 : L'offre est DÉJÀ comparée -> Bouton Voir les détails de l'analyse -->
+                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill btn-details-analyse" 
+                        data-offre-id="{{ offre.id }}"
+                        style="font-weight: 500;">
+                  <i class="ti ti-report-analytics"></i> Détails de l'analyse
+                </button>
+              {% else %}
+                <!-- Cas 2 : L'offre n'a PAS ENCORE été testée -> Bouton standard Comparer à mon CV -->
+                <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-pill btn-analyser-offre" 
+                        data-offre-id="{{ offre.id }}"
+                        style="color: #0d9488; border-color: #0d9488; font-weight: 500;">
+                  <i class="ti ti-arrows-diff"></i> Comparer à mon CV
+                </button>
+              {% endif %}
             </div>
 
           </div>
         </div>
       {% endfor %}
+
     {% else %}
       <!-- Cas où aucune offre ne correspond à la recherche -->
       <div class="col-12 text-center py-5">
@@ -101,32 +139,46 @@
   </div>
 </div>
 
-<!-- Script d'interaction pour charger l'offre sélectionnée -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll('.btn-analyser-offre').forEach(button => {
-        button.addEventListener('click', async function() {
-            const offreId = this.dataset.offreId;
-            
-            // On informe le backend via une requête rapide que le candidat 
-            // sélectionne cette offre pour son prochain matching global
-            try {
-                // Route utilitaire légère à créer ou à lier vers votre route start_match 
-                // qui met simplement l'ID en session
-                window.location.href = `/matching?select_offre_id=${offreId}`;
-            } catch (error) {
-                console.error(error);
-            }
-        });
-    });
-});
-</script>
 
-<style>
-  /* Petit effet de survol e-commerce sur les cartes d'offres */
-  .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-  }
-</style>
+
+<!-- FENÊTRE MODALE (POP-UP) POUR L'APERÇU DU PDF DE L'OFFRE -->
+<!-- ============================================================
+     POP-UP 1 : APERÇU DU PDF DE L'OFFRE
+     ============================================================ -->
+<div class="modal fade" id="modalApercuOffre" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header bg-light border-0 py-3">
+        <h5 class="modal-title font-weight-bold text-dark" id="modalOffreTitre">Fiche de poste</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" style="height: 75vh;">
+        <iframe id="iframePdfViewer" src="" width="100%" height="100%" style="border: none;"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     POP-UP 2 : DÉTAILS DE L'ANALYSE DE MATCHING
+     ============================================================ -->
+<div class="modal fade" id="modalDetailsAnalyse" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+      <div class="modal-header bg-light border-0 py-3">
+        <h5 class="modal-title font-weight-bold text-dark"><i class="ti ti-report-analytics text-teal"></i> Résultats de votre compatibilité</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4" id="modalAnalyseContenu">
+        <!-- Le contenu du rapport (score, compétences) sera injecté dynamiquement ici par l'AJAX -->
+        <div class="text-center py-4">
+          <i class="ti ti-loader text-spin display-4 text-muted"></i>
+          <p class="text-muted mt-2">Chargement de l'analyse comparative...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 {% endblock %}

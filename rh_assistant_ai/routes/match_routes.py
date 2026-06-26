@@ -144,3 +144,51 @@ def rapport(match_id):
         cv=cv_brut,
         offre=offre_brut
     )
+
+
+@matching_bp.route("/recuperer-id-resultat/<int:offre_id>", methods=["GET"])
+@login_required
+def obtenir_id_matching(offre_id):
+    """
+    Route utilitaire permettant au catalogue de retrouver l'identifiant du rapport
+    de matching associé à l'utilisateur connecté pour une offre donnée.
+    """
+    # Recherche du dernier résultat de matching pour ce couple utilisateur/offre
+    resultat = MatchResult.query.join(MatchResult.offre_analyser)\
+                                .filter(MatchResult.user_id == current_user.id, OffreAnalyser.offre_id == offre_id)\
+                                .order_by(MatchResult.created_at.desc())\
+                                .first()
+    
+    if not resultat:
+        return jsonify({"success": False, "message": "Aucun rapport trouvé pour cette offre d'emploi."}), 404
+        
+    return jsonify({
+        "success": True,
+        "match_result_id": resultat.id
+    }), 200
+
+@matching_bp.route("/recuperer-details-json/<int:offre_id>", methods=["GET"])
+@login_required
+def obtenir_details_matching_json(offre_id):
+    """
+    Retourne les scores et listes de compétences au format JSON 
+    pour affichage direct dans la fenêtre modale du candidat.
+    """
+    resultat = MatchResult.query.join(MatchResult.offre_analyser)\
+                                .filter(MatchResult.user_id == current_user.id, OffreAnalyser.offre_id == offre_id)\
+                                .order_by(MatchResult.created_at.desc())\
+                                .first()
+    
+    if not resultat:
+        return jsonify({"success": False, "message": "Aucun rapport trouvé."}), 404
+        
+    return jsonify({
+        "success": True,
+        "score": resultat.score,
+        "matching_skills": resultat.matching_skills or [],
+        "missing_skills": resultat.missing_skills or [],
+        "extra_skills": resultat.extra_skills or [],
+        "recommendation": resultat.recommendation or "Aucune synthèse disponible."
+    }), 200
+
+

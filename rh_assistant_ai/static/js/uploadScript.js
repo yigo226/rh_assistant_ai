@@ -143,4 +143,52 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
-  
+
+/* ----------------------------------------------------------------
+  Chargement de l'offre ( PDF)
+   ---------------------------------------------------------------- */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+
+    const boutons = document.querySelectorAll(".btn-voir-pdf");
+    console.log(boutons.length);
+
+    const modalElement = document.getElementById("modalApercuOffre");
+
+    const modal = new bootstrap.Modal(modalElement);
+
+    const iframe = document.getElementById("iframePdfViewer");
+
+    const titre = document.getElementById("modalOffreTitre");
+
+    document.querySelectorAll(".btn-voir-pdf")
+        .forEach(btn => {
+
+            btn.addEventListener("click", function () {
+
+                const pdfUrl = this.dataset.pdfUrl;
+
+                const offreTitre = this.dataset.offreTitre;
+
+                titre.textContent = offreTitre;
+
+                iframe.src = pdfUrl;
+
+                modal.show();
+
+            });
+
+        });
+    
+    document.querySelectorAll(".btn-voir-pdf").forEach(btn => {
+
+
+    });
+    modalElement.addEventListener("hidden.bs.modal", function () {
+
+        iframe.src = "";
+
+    });
+
+});

@@ -7,6 +7,8 @@ from flask import Blueprint, request, render_template
 from flask_login import current_user, login_required
 from config.decorateurs import role_required
 from models.offre import Offre
+from models.candidature import Candidature
+from models.offre_analyser import OffreAnalyser
 from services.cv_service import save_cv
 from models.match_result import MatchResult
 
@@ -39,8 +41,19 @@ def espace_candidat():
     scores_deja_calcules = {m.offre_analyser.offre_id: m.score for m in matchings_utilisateur if m.offre_analyser}
 
     return render_template(
-        "ListeOffre.html",
+        "offre/ListeOffre.html",
         offres=offres,
         scores_deja_calcules=scores_deja_calcules,
         recherche=recherche
     )
+
+
+def obtenir_classement_recrutement(id_de_loffre):
+    """
+    Retourne la liste de tous les candidats ayant postulé à une offre,
+    classés par ordre décroissant de score de matching (IA).
+    """
+    return Candidature.query.join(Candidature.offre_analyse)\
+                            .filter(OffreAnalyser.offre_id == id_de_loffre)\
+                            .order_by(Candidature.score.desc())\
+                            .all()

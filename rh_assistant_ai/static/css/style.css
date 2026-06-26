@@ -161,6 +161,7 @@ button {
 /* Corps */
 .app-body {
   display: flex;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -268,8 +269,31 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
+
   background: var(--clr-surface);
-  overflow: hidden;
+
+  height: calc(100vh - var(--header-h) - var(--footer-h));
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 20px;
+}
+
+.chat-wrapper::-webkit-scrollbar {
+    width:8px;
+}
+
+.chat-wrapper::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+.chat-wrapper::-webkit-scrollbar-thumb{
+    background:#d7d7d7;
+    border-radius:20px;
+}
+
+.chat-wrapper::-webkit-scrollbar-thumb:hover{
+    background:#bdbdbd;
 }
 
 .chat-messages {

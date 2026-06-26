@@ -9,7 +9,8 @@ from routes.cv_routes import cv_bp
 from routes.offre_routes import offre_bp
 from routes.match_routes import matching_bp
 from routes.routes_global import global_bp  
-
+from routes.recruteur_route import recruteur_bp
+from routes.candidat_route import candidat_bp
 def create_app():
 
     app = Flask(__name__)
@@ -29,6 +30,8 @@ def create_app():
     app.register_blueprint(offre_bp)
     app.register_blueprint(matching_bp)
     app.register_blueprint(global_bp)
+    app.register_blueprint(recruteur_bp)
+    app.register_blueprint(candidat_bp)
     
     #print("app.url_map: \n", app.url_map)
 

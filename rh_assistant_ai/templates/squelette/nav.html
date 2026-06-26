@@ -1,15 +1,12 @@
 
 <nav class="sidebar" id="sidebar">
 
-
-
-  <div class="sidebar-section-label">Analyse</div>
-
-  <button class="nav-btn active" 
-    onclick="window.location='{{url_for('global.matching') }}'">
-    <i class="nav-icon ti ti-file-text"></i>
-    <span>Analyser un CV</span>
+    <!-- Bouton commun (Recruteur et Candidat) -->
+  <button class="nav-btn active" onclick="window.location='{{ url_for('global.matching') }}'">
+        <i class="nav-icon ti ti-file-text"></i>
+        <span>Analyser</span>
   </button>
+
 
   <button class="nav-btn"
       onclick="window.location='{{url_for('offre.upload_offre') }}'">

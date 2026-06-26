@@ -28,8 +28,8 @@
             <p class="match-card-sub">Obligatoire pour lancer la comparaison</p>
           </div>
 
-          <span class="match-status-badge {% if cv and cv.nom_fichier %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="cvStatusBadge">
-            {% if existing_cv %}
+<!-- ✅ LIGNE CORRIGÉE POUR CORRESPONDRE AU RESTE DU BLOC : -->
+          <span class="match-status-badge {% if existing_cv %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="cvStatusBadge">            {% if existing_cv %}
               <i class="ti ti-circle-check"></i> Chargé
             {% else %}
               <i class="ti ti-alert-circle"></i> Requis
@@ -44,7 +44,7 @@
               <div class="match-file-chip">
                 <i class="ti ti-file-text match-file-icon"></i>
                 <div class="match-file-info">
-                  <span class="match-file-name" id="cvCurrentName">{{ existing_cv }}</span>
+                  <span class="match-file-name" id="cvCurrentName">{{ existing_cv.nom_fichier }}</span>
                   <span class="match-file-meta">{{ existing_cv| default("PDF") }}</span>
                 </div>
               </div>

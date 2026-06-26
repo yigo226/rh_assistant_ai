@@ -16,10 +16,12 @@ class Offre(db.Model):
 
     # Correction de la date avec fuseau horaire UTC moderne
     date_creation = db.Column(
-        db.DateTime,
+        db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
+
+    date_limite = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Clé étrangère sécurisée avec suppression en cascade
     user_id = db.Column(
@@ -27,7 +29,12 @@ class Offre(db.Model):
         db.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
-
+    #  Ajout de la clé  vers la table 'departements'
+    departement_id = db.Column(
+        db.Integer, 
+        db.ForeignKey("departements.id", ondelete="CASCADE"), 
+        nullable=False 
+    )
     # Un utilisateur peut avoir PLUSIEURS offres (contrairement au CV qui est unique)
     # On garde uselist=True implicite (pas besoin de le spécifier), mais on gère les orphelins.
     user = db.relationship(

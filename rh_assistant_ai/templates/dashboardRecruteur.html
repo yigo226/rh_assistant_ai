@@ -1,0 +1,307 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+
+<div class="container mt-4 mb-5">
+
+  <!-- ============================================================
+       EN-TÊTE DU DASHBOARD & INFOS ENTREPRISE
+       ============================================================ -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center border-bottom pb-4 mb-4 gap-3">
+    <div>
+      <span class="badge bg-purple-lt px-3 py-1 rounded-pill mb-2" style="background-color: #f3e8ff; color: #a855f7; font-weight: 600;">
+        <i class="ti ti-building"></i> {{ current_user.entreprise.nom if current_user.entreprise else "Entreprise Partenaire" }}
+      </span>
+      <h2 class="font-weight-bold mb-1">Ravi de vous revoir, {{ current_user.prenom }} 👋</h2>
+      <p class="text-muted small mb-0">Pilotez vos campagnes de recrutement et analysez les candidatures par IA.</p>
+    </div>
+    
+    <!-- Boutons d'actions rapides supérieurs -->
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-primary d-flex align-items-center gap-2" style="background-color: #0d9488; border-color: #0d9488;" data-bs-toggle="modal" data-bs-target="#modalNouvelleOffre">
+        <i class="ti ti-plus"></i> Publier une offre
+      </button>
+      <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNouveauDept">
+        <i class="ti ti-folder-plus"></i> Ajouter un service
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       BLOC DES STATISTIQUES EN CARTES (KPIs)
+       ============================================================ -->
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-4">
+    <!-- Stat 1 : Offres Actives -->
+    <div class="col">
+      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Offres Actives</span>
+            <h3 class="font-weight-bold text-dark mb-0">{{ offres | length if offres else 0 }}</h3>
+          </div>
+          <div class="p-3 bg-light text-primary rounded-circle" style="background-color: #eff6ff !important; color: #3b82f6 !important;">
+            <i class="ti ti-briefcase h3 mb-0"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat 2 : Total Candidatures Évaluées -->
+    <div class="col">
+      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Analyses IA</span>
+            <h3 class="font-weight-bold text-dark mb-0">{{ total_matchings if total_matchings else 0 }}</h3>
+          </div>
+          <div class="p-3 bg-light text-teal rounded-circle" style="background-color: #f0fdfa !important; color: #0d9488 !important;">
+            <i class="ti ti-arrows-diff h3 mb-0"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat 3 : Employés / Candidats Retenus -->
+    <div class="col">
+      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Talents Retenus</span>
+            <h3 class="font-weight-bold text-dark mb-0">{{ total_employes if total_employes else 0 }}</h3>
+          </div>
+          <div class="p-3 bg-light text-success rounded-circle" style="background-color: #f0fdf4 !important; color: #22c55e !important;">
+            <i class="ti ti-user-check h3 mb-0"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat 4 : Nombre de départements -->
+    <div class="col">
+      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Services Internes</span>
+            <h3 class="font-weight-bold text-dark mb-0">{{ departements | length if departements else 0 }}</h3>
+          </div>
+          <div class="p-3 bg-light text-purple rounded-circle" style="background-color: #f3e8ff !important; color: #a855f7 !important;">
+            <i class="ti ti-hierarchy h3 mb-0"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- ============================================================
+         SECTION PRINCIPALE GAUCHE : LISTE DES OFFRES EN COURS
+         ============================================================ -->
+    <div class="col-lg-8 mb-4">
+      <div class="match-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h3 class="h4 font-weight-bold mb-0"><i class="ti ti-list text-teal"></i> Vos campagnes de recrutement</h3>
+          <span class="text-muted small">Trier par date</span>
+        </div>
+
+        {% if offres %}
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table table-hover">
+              <thead>
+                <tr>
+                  <th>Intitulé du poste</th>
+                  <th>Service</th>
+                  <th>Candidats</th>
+                  <th class="w-1">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for offre in offres %}
+                <tr>
+                  <td class="font-weight-bold text-dark">
+                    {{ offre.titre }}
+                    <span class="d-block text-muted small mt-1">Créé le {{ offre.date_creation.strftime('%d/%m/%Y') }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-secondary border">
+                      {{ offre.departement.nom if offre.departement else "Général" }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="text-dark font-weight-bold">
+                      <i class="ti ti-users text-muted"></i> {{ offre.matchings | length }} testé(s)
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group">
+                      <!-- Bouton d'action central : Lancer ou voir le classement de cette offre -->
+                      <a href="/recruteur/session-matching/{{ offre.id }}" class="btn btn-sm btn-white d-flex align-items-center gap-1 text-teal" style="border-color: #0d9488;">
+                        <i class="ti ti-layout-dashboard"></i> Piloter
+                      </a>
+                      <button type="button" class="btn btn-sm btn-white text-danger" title="Supprimer l'offre" onclick="confirmerSuppression('{{ offre.id }}')">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <!-- État vide si aucune offre créée -->
+          <div class="text-center py-5">
+            <i class="ti ti-briefcase text-muted display-4 mb-3 d-block"></i>
+            <h5 class="font-weight-bold text-secondary">Aucune offre d'emploi publiée</h5>
+            <p class="text-muted small px-4">Commencez dès maintenant en publiant la première offre de votre entreprise pour y soumettre des CV.</p>
+            <button type="button" class="btn btn-sm btn-primary mt-2" style="background-color: #0d9488; border-color: #0d9488;" data-bs-toggle="modal" data-bs-target="#modalNouvelleOffre">
+              Créer un poste
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ============================================================
+         SECTION LATÉRALE DROITE : RECRUTEURS & SERVICES DE L'ENTREPRISE
+         ============================================================ -->
+    <div class="col-lg-4">
+      
+      <!-- Liste des Départements / Services -->
+      <div class="match-card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="h5 font-weight-bold mb-0"><i class="ti ti-hierarchy text-purple"></i> Services internes</h4>
+          <i class="ti ti-settings text-muted cursor-pointer" data-bs-toggle="modal" data-bs-target="#modalNouveauDept"></i>
+        </div>
+        <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+          {% if departements %}
+            {% for dept in departements %}
+              <div class="p-2 bg-white border rounded d-flex justify-content-between align-items-center shadow-xs">
+                <span class="font-weight-bold small text-dark"><i class="ti ti-folder text-muted"></i> {{ dept.nom }}</span>
+                <span class="badge bg-purple-lt rounded-pill" style="background-color: #f3e8ff; color: #a855f7; font-size: 0.75rem;">
+                  {{ dept.employes | length }} collaborateurs
+                </span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <span class="text-muted small italic p-2 text-center border border-dashed rounded">Aucun service enregistré.</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Liste des Collaborateurs de la même équipe -->
+     
+      <!-- Liste des Collaborateurs de la même équipe -->
+<div class="match-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="h5 font-weight-bold mb-0">
+            <i class="ti ti-users-group text-primary"></i>
+            Équipe Recrutement
+        </h4>
+
+        <span class="badge bg-light text-secondary">
+            {{ equipe|length if equipe else 0 }}
+        </span>
+    </div>
+
+    <div
+        class="d-flex flex-column gap-3"
+        style="max-height: 250px; overflow-y: auto;"
+    >
+
+        {% if equipe %}
+
+            {% for membre in equipe %}
+
+                <div class="d-flex align-items-center justify-content-between border rounded p-2">
+
+                    <div class="d-flex align-items-center">
+
+                        <div
+                            class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2"
+                            style="width:40px;height:40px;"
+                        >
+                            <i class="ti ti-user"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold">
+                                {{ membre.prenom }}
+                                {{ membre.nom }}
+                            </div>
+
+                            <small class="text-muted">
+                                {{ membre.role }}
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <span class="badge bg-success-lt">
+                        Actif
+                    </span>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="text-center py-3">
+                <i class="ti ti-users text-muted"></i>
+                <p class="small text-muted mb-0">
+                    Aucun collaborateur enregistré.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+<div class="match-card p-4 mt-4">
+
+    <h4 class="h5 font-weight-bold mb-3">
+        <i class="ti ti-clock-hour-4 text-warning"></i>
+        Activités récentes
+    </h4>
+
+    {% if derniers_matchings %}
+
+        <div class="d-flex flex-column gap-3">
+
+            {% for matching in derniers_matchings %}
+
+                <div class="border-bottom pb-2">
+
+                    <div class="fw-bold">
+                        Matching CV ↔ Offre
+                    </div>
+
+                    <small class="text-muted">
+                        Score :
+                        {{ matching.score }}%
+                    </small>
+
+                    <br>
+
+                    <small class="text-muted">
+                        {{ matching.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    </small>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <p class="text-muted small mb-0">
+            Aucune activité récente.
+        </p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

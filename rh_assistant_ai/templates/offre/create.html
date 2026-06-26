@@ -2,35 +2,152 @@
 
 {% block content %}
 
-<div class="container">
+<div class="container mt-4">
+  <div class="matching-page">
 
-    <h2>Nouvelle offre</h2>
+    <!-- En-tête de la page -->
+    <div class="matching-header">
+      <h2>Nouvelle offre d'emploi</h2>
+      <p class="matching-subtitle">
+        Publication au nom de : <span class="font-semibold text-blue-600">{{ current_user.entreprise.nom }}</span>
+      </p>
+    </div>
 
-    <form method="POST">
+    <form action="{{ url_for('offre.creer_offre') }}" method="POST" enctype="multipart/form-data" id="creationOffreForm">
+      
+      <!-- ============================================================
+           BLOC 1 — Informations Générales
+      ============================================================ -->
+      <div class="match-card">
+        <div class="match-card-header">
+          <span class="match-card-icon match-card-icon--teal">
+            <i class="ti ti-file-text"></i>
+          </span>
+          <div class="match-card-heading">
+            <h3 class="match-card-title">Détails de l'annonce</h3>
+            <p class="match-card-sub">Renseignez le titre et l'affectation du poste</p>
+          </div>
+        </div>
 
-        <input
-            type="text"
-            name="titre"
-            class="form-control mb-3"
-            placeholder="Titre du poste"
-        >
+        <div class="match-card-body" style="display: flex; flex-direction: column; gap: 1.5rem;">
+          <!-- Titre de l'offre -->
+          <div class="form-group">
+            <label for="titre" class="form-label" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Titre de l'offre *</label>
+            <input type="text" id="titre" name="titre" required maxlength="255"
+                   placeholder="Ex: Ingénieur Logiciel Python / Flask"
+                   class="form-control">
+          </div>
 
-        <textarea
-            name="description"
-            rows="10"
-            class="form-control"
-            placeholder="Description du poste"
-        ></textarea>
+          <!-- Grille à deux colonnes utilisant la structure CSS native -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <!-- Département lié à l'entreprise -->
+            <div class="form-group">
+              <label for="departement_id" class="form-label" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Département concerné *</label>
+              <select id="departement_id" name="departement_id" required class="form-control" style="background-color: white;">
+                <option value="" disabled selected>Choisir un département</option>
+                {% for dept in departements %}
+                  <option value="{{ dept.id }}">{{ dept.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <button
-            class="btn btn-primary mt-3"
-            type="submit"
-        >
-            Analyser
+            <!-- Date Limite -->
+            <div class="form-group">
+              <label for="date_limite" class="form-label" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Date limite de réception *</label>
+              <input type="datetime-local" id="date_limite" name="date_limite" required class="form-control">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           BLOC 2 — Contenu de la Mission
+      ============================================================ -->
+      <div class="match-card">
+        <div class="match-card-header">
+          <span class="match-card-icon match-card-icon--purple">
+            <i class="ti ti-align-left"></i>
+          </span>
+          <div class="match-card-heading">
+            <h3 class="match-card-title">Descriptif du poste</h3>
+            <p class="match-card-sub">Détaillez les missions et les prérequis</p>
+          </div>
+        </div>
+
+        <div class="match-card-body">
+          <div class="form-group">
+            <label for="description" class="form-label" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Description détaillée *</label>
+            <textarea id="description" name="description" rows="5" required
+                      placeholder="Décrivez le rôle, les compétences requises et l'environnement de travail..."
+                      class="form-control" style="resize: vertical; min-height: 120px;"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           BLOC 3 — Fichier Joint PDF
+      ============================================================ -->
+      <div class="match-card">
+        <div class="match-card-header">
+          <span class="match-card-icon match-card-icon--purple">
+            <i class="ti ti-briefcase"></i>
+          </span>
+          <div class="match-card-heading">
+            <h3 class="match-card-title">Document PDF officiel</h3>
+            <p class="match-card-sub">Obligatoire pour les algorithmes d'analyse</p>
+          </div>
+          <span class="match-status-badge match-status-badge--warn" id="offreStatusBadge">
+            <i class="ti ti-alert-circle"></i> Requis
+          </span>
+        </div>
+
+        <div class="match-card-body">
+          <!-- Vue non chargée / sélecteur (Copie conforme de l'architecture du matching) -->
+          <div class="match-file-input-wrap" id="offreInputWrap">
+            <label class="form-label" for="fichier_pdf">Sélectionner la fiche de poste (PDF)</label>
+            <div class="input-group">
+              <input type="file" id="fichier_pdf" name="fichier_pdf" class="form-control" accept=".pdf" required onchange="updateFileStatus(this)">
+            </div>
+            <p class="match-help-text" id="offreFileLabel">Aucun fichier sélectionné (Max. 5 Mo)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           ZONE D'ACTION FINALE
+      ============================================================ -->
+      <div class="match-action-zone mt-5" style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center;">
+        <a href="{{ url_for('recruteur.dashboard') }}" class="match-edit-btn" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 46px; padding: 0 1.5rem; font-weight: 500;">
+          Annuler
+        </a>
+        <button type="submit" class="btn-launch-match" style="margin: 0; width: auto; min-width: 180px;">
+          <i class="ti ti-rocket"></i> Publier l'offre
         </button>
+      </div>
 
     </form>
-
+  </div>
 </div>
 
+<script>
+function updateFileStatus(input) {
+    const badge = document.getElementById('offreStatusBadge');
+    const label = document.getElementById('offreFileLabel');
+    
+    if (input.files && input.files.length > 0) {
+        const fileName = input.files[0].name;
+        label.textContent = `Fichier sélectionné : ${fileName}`;
+        
+        // On bascule le badge en mode succès vert
+        badge.className = "match-status-badge match-status-badge--ok";
+        badge.innerHTML = `<i class="ti ti-circle-check"></i> Prêt`;
+    } else {
+        label.textContent = "Aucun fichier sélectionné (Max. 5 Mo)";
+        // On remet le badge en avertissement orange
+        badge.className = "match-status-badge match-status-badge--warn";
+        badge.innerHTML = `<i class="ti ti-alert-circle"></i> Requis`;
+    }
+}
+</script>
 {% endblock %}
+

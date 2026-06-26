@@ -36,6 +36,7 @@ def start_match():
         .order_by(CV.id.desc())
         .first()
     )
+    print(" le cv dans start_match : ", existing_cv)
 
     # 2. Récupération de l'offre active via la session (Plan A — Historique)
     existing_offre = None
@@ -63,6 +64,8 @@ def start_match():
     )
 
 
+
+# Exécution de la comparaison 
 @matching_bp.route("/run", methods=["POST"])
 @login_required
 def run_matching():
@@ -115,7 +118,7 @@ def run_matching():
         }), 500
 
 
-
+# Afficher le resultat de la comparaison
 @matching_bp.route("/rapport/<int:match_id>", methods=["GET"])
 @login_required
 def rapport(match_id):

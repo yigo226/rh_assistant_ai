@@ -14,6 +14,7 @@ from config.database import db
 # Blueprint pour les routes liées aux CV
 from flask import Blueprint
 from flask_login import current_user, login_required
+from config.decorateurs import role_required
 from models.cv import CV
 
 from services.cv_service import save_cv
@@ -30,6 +31,7 @@ from flask_login import login_required, current_user
 from config.database import db
 from models.cv import CV
 from models.offre import Offre
+
 
 @global_bp.route("/matching", methods=["GET", "POST"])
 @login_required
@@ -61,6 +63,7 @@ def matching():
         donnees_offre = existing_offre.analyse # Contient skills, diplomas, experiences de l'offre
 
         # ------------------------------------------------------------
+        # Simulation de score (votre logique d'algorithme / IA prend le relais ici)
         # ICI : Insérez l'appel à votre algorithme ou IA de Matching
         # Exemple basique pour le rendu final :
         # score_matching = votre_fonction_matching(donnees_cv, donnees_offre)
@@ -78,7 +81,17 @@ def matching():
     # ============================================================
     # COMPORTEMENT ENTRÉE — MÉTHODE GET (Affichage de l'interface)
     # ============================================================
-    
+
+    # 1. INTERCEPTION DE L'OFFRE SÉLECTIONNÉE DEPUIS L'ESPACE CANDIDAT
+    url_offre_id = request.args.get('select_offre_id')
+    if url_offre_id:
+        # On vérifie que l'offre existe bien dans le catalogue public
+        offre_selectionnee = Offre.query.get(url_offre_id)
+        if offre_selectionnee:
+            # On écrase l'offre en session pour faire de celle-ci l'offre active
+            session['current_offre_id'] = offre_selectionnee.id
+            flash(f"Offre « {offre_selectionnee.titre} » chargée avec succès pour la comparaison.", "success")
+
     # 1. Récupérer le CV de référence unique de l'utilisateur
     existing_cv = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
 
@@ -102,5 +115,7 @@ def matching():
         existing_cv=existing_cv, 
         existing_offre=existing_offre
     )
+
+
 
 

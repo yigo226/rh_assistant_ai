@@ -11,6 +11,7 @@ from flask import (
     request,
     flash,
     redirect,
+    session,
     url_for
 )
 
@@ -37,6 +38,85 @@ cv_bp = Blueprint(
 )
 
 
+@cv_bp.route("/chargement", methods=["GET", "POST"])
+@login_required
+def chargement_cv():
+
+    if request.method == "POST":
+        # 1. Récupération du fichier depuis le formulaire
+        file = request.files.get("cv")
+
+        if not file or file.filename == '':
+            flash("Aucun fichier sélectionné ou le fichier est obligatoire", "danger")
+            return redirect(request.url)
+
+        # 2. Recherche et désactivation de l'ancien CV actuellement actif
+        ancien_cv = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
+        if ancien_cv:
+            ancien_cv.est_actif = False
+            db.session.commit()
+
+        # 3. Appel de la logique unifiée (Sauvegarde + Extraction + Analyse IA)
+        cv, synthese_cv, infos_ia = save_cv(
+            file=file, 
+            user=current_user
+        )
+
+        # 4. Activation explicite du nouveau CV
+        cv.est_actif = True
+        db.session.commit()
+
+        # 5. Enregistrement en session pour le matching
+        session['current_cv_id'] = cv.id
+
+        flash("Votre nouveau CV a été chargé et activé avec succès !", "success")
+
+        # 6. 🔄 REDIRECTION VERS L'ESPACE CANDIDAT AU LIEU D'UN TEMPLATE FIXE
+        return redirect(url_for("candidat.espace_candidat"))
+    
+    
+    # En méthode GET (Affichage de la page de dépôt)
+    # On récupère le CV actif actuel pour l'afficher dans le template si besoin
+    existing_cv = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
+    return render_template("cv/upload.html", existing_cv=existing_cv)
+
+# # chargement du cv de l'utilisateur
+# @cv_bp.route("/chargement", methods=["GET", "POST"])
+# @login_required
+# def chargement_cv():
+#     if request.method == "POST":
+#         # 1. Récupération du fichier depuis le formulaire (name="cv")
+#         file = request.files.get("cv")
+
+#         if not file or file.filename == '':
+#             flash("Aucun fichier sélectionné ou le fichier est obligatoire", "danger")
+#             return redirect(request.url)
+
+#         # 2. Appel de la logique unifiée (Sauvegarde + Extraction + Analyse IA)
+#         # Reçoit le triplet : l'objet CV, l'analyse SQL, et le dictionnaire brut
+#         cv, synthese_cv, infos_ia = save_cv(
+#             file=file, 
+#             user=current_user
+#         )
+
+#         # 3. Enregistrement de l'ID du CV en session (Optionnel, utile pour le matching)
+#         session['current_cv_id'] = cv.id
+
+#         flash("Votre CV a été téléversé, enregistré et analysé par l'IA avec succès !", "success")
+
+#         # 4. Affichage de la page de résultats en passant l'objet CV et ses analyses
+#         return render_template(
+#             "cv/result.html",
+#             cv=cv,
+#             synthese=synthese_cv,
+#             details=infos_ia
+#         )
+
+#     # En méthode GET : Affichage simple du formulaire d'upload
+#     return render_template("cv/upload.html")
+
+
+# pour le script (ancien sur une seule page)
 @cv_bp.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_cv():

@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             
-            {# ================= SITUATION 1 : L'UTILISATEUR A DÉJÀ UN CV ================= #}
+            {# ================= SITUATION 1 : L'UTILISATEUR A DÉJÀ UN CV ACTIF ================= #}
             {% if existing_cv %}
                 <div class="card shadow border-warning mb-4">
                     <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
@@ -15,51 +15,54 @@
                     <div class="card-body">
                         <div class="p-3 bg-light rounded mb-4 border">
                             <p class="mb-1"><strong>Nom du fichier :</strong> {{ existing_cv.nom_fichier }}</p>
-                            <p class="mb-0 text-muted small"><strong>Date d'importation :</strong> {{ existing_cv.date_upload.strftime('%d/%m/%Y à %H:%M') }}</p>
+                            <!-- Correction ici : Vérification que date_upload existe, sinon repli sécurisé sur date_creation -->
+                            <p class="mb-0 text-muted small"><strong>Date d'importation :</strong> {{ (existing_cv.date_upload or existing_cv.date_creation).strftime('%d/%m/%Y à %H:%M') }}</p>
                         </div>
 
                         <div class="alert alert-info small" role="alert">
-                             Vous n'avez pas besoin de réimporter votre CV à chaque fois. Vous pouvez consulter directement vos résultats d'analyse archivés ou choisir de le mettre à jour ci-dessous.
+                             Vous n'avez pas besoin de charger votre CV à chaque fois. Vous pouvez consulter directement vos résultats ou choisir d'ajouter un nouveau document ci-dessous.
                         </div>
 
                         <div class="d-flex gap-2 justify-content-between mt-3">
-                            <!-- Bouton pour voir l'analyse existante sans refaire de traitement -->
-                            <a href="{{ url_for('cv.history') }}" class="btn btn-primary">
-                                <i class="bi bi-eye"></i> Voir mon analyse actuelle
+                            <!-- Bouton pour voir l'historique ou les résultats du CV actif -->
+                            <a href="{{ url_for('cv.chargement_cv') }}" class="btn btn-primary">
+                                <i class="bi bi-eye"></i> Voir mon document actuel
                             </a>
                             
-                            <!-- Bouton pour afficher/déplier le formulaire de modification -->
+                            <!-- Bouton pour afficher le formulaire d'archivage/remplacement -->
                             <button class="btn btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUpdateForm" aria-expanded="false" aria-controls="collapseUpdateForm">
-                                <i class="bi bi-pencil-square"></i> Remplacer par un autre CV
+                                <i class="bi bi-pencil-square"></i> Charger un autre CV
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Formulaire masqué par défaut, s'affiche uniquement si l'utilisateur clique sur "Remplacer" -->
+                <!-- Formulaire masqué par défaut -->
                 <div class="collapse" id="collapseUpdateForm">
                     <div class="card shadow border-danger">
                         <div class="card-header bg-danger text-white">
-                            <h5 class="mb-0">⚠️ Remplacement de votre CV</h5>
+                            <h5 class="mb-0">⚠️ Archivage automatique de votre ancien CV</h5>
                         </div>
                         <div class="card-body">
-                            <p class="text-danger small fw-bold">Attention : Envoyer un nouveau fichier écrasera définitivement votre CV actuel ainsi que toutes les analyses et correspondances d'offres liées.</p>
+                            <!-- Texte adapté à la réalité : le CV n'est pas détruit, il passe en mode inactif -->
+                            <p class="text-danger small fw-bold">Note : L'envoi de ce nouveau document va automatiquement archiver (désactiver) votre CV actuel pour faire place au nouveau dans vos matchings.</p>
                             
-                            <form action="{{ url_for('cv.upload_cv') }}" method="POST" enctype="multipart/form-data">
+                            <!-- Action corrigée vers cv.chargement_cv -->
+                            <form action="{{ url_for('cv.chargement_cv') }}" method="POST" enctype="multipart/form-data">
                                 <div class="mb-3">
                                     <label for="cv" class="form-label">Sélectionnez le nouveau fichier PDF :</label>
                                     <input type="file" class="form-control" id="cv" name="cv" accept=".pdf" required>
                                 </div>
                                 <div class="d-flex justify-content-end gap-2">
                                     <button type="button" class="btn btn-light border" data-bs-toggle="collapse" data-bs-target="#collapseUpdateForm">Annuler</button>
-                                    <button type="submit" class="btn btn-danger">Confirmer le remplacement et analyser</button>
+                                    <button type="submit" class="btn btn-danger">Confirmer le chargement</button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
 
-            {# ================= SITUATION 2 : L'UTILISATEUR N'A PAS ENCORE DE CV ================= #}
+            {# ================= SITUATION 2 : L'UTILISATEUR N'A PAS ENCORE DE CV ACTIF ================= #}
             {% else %}
                 <div class="card shadow border-primary">
                     <div class="card-header bg-primary text-white">
@@ -67,10 +70,11 @@
                     </div>
                     <div class="card-body py-4">
                         <div class="text-center mb-4">
-                            <p class="text-muted">Vous n'avez pas encore téléversé de document. Ajoutez votre CV au format PDF pour bénéficier des fonctionnalités d'analyse et de matching IA.</p>
+                            <p class="text-muted">Vous n'avez pas encore téléversé de document. Chargez votre CV au format PDF pour bénéficier des fonctionnalités d'analyse et de matching IA.</p>
                         </div>
 
-                        <form action="{{ url_for('cv.upload_cv') }}" method="POST" enctype="multipart/form-data">
+                        <!-- Action corrigée vers cv.chargement_cv -->
+                        <form action="{{ url_for('cv.chargement_cv') }}" method="POST" enctype="multipart/form-data">
                             <div class="mb-4">
                                 <label for="cv" class="form-label fw-bold">Sélectionnez votre document (Format PDF uniquement)</label>
                                 <input type="file" class="form-control form-control-lg" id="cv" name="cv" accept=".pdf" required>
@@ -78,7 +82,7 @@
 
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-lightning-charge"></i> Lancer l'analyse initiale
+                                    <i class="bi bi-lightning-charge"></i> Confirmer le chargement
                                 </button>
                             </div>
                         </form>

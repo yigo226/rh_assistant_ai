@@ -7,6 +7,7 @@ from flask import Blueprint, request, render_template
 from flask_login import current_user, login_required
 from config.decorateurs import role_required
 from models.offre import Offre
+from models.cv import CV
 from models.candidature import Candidature
 from models.offre_analyser import OffreAnalyser
 from services.cv_service import save_cv
@@ -23,6 +24,9 @@ candidat_bp = Blueprint(
 @login_required
 @role_required("candidat")
 def espace_candidat():
+
+    cv_existant = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
+
     # 1. Récupération du filtre de recherche (si l'utilisateur tape un mot-clé)
     recherche = request.args.get('search', '').strip()
     
@@ -44,7 +48,8 @@ def espace_candidat():
         "offre/ListeOffre.html",
         offres=offres,
         scores_deja_calcules=scores_deja_calcules,
-        recherche=recherche
+        recherche=recherche,
+        cv_existant=cv_existant
     )
 
 

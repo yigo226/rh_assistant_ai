@@ -14,6 +14,10 @@
 
     <!-- Le formulaire global ne gère plus l'upload direct mais la soumission finale -->
     <form method="POST" action="/matching/run" id="matchingForm">
+      
+      <!-- 🟢 SOLUTIONS AUX BUGS : Injection des IDs masqués nécessaires pour matching.js -->
+      <input type="hidden" name="cv_id" id="hiddenCvId" value="{{ existing_cv.id if existing_cv else '' }}">
+      <input type="hidden" name="offre_id" id="hiddenOffreId" value="{{ existing_offre.id if existing_offre else '' }}">
 
       <!-- ============================================================
            BLOC 1 — CV
@@ -28,8 +32,8 @@
             <p class="match-card-sub">Obligatoire pour lancer la comparaison</p>
           </div>
 
-<!-- ✅ LIGNE CORRIGÉE POUR CORRESPONDRE AU RESTE DU BLOC : -->
-          <span class="match-status-badge {% if existing_cv %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="cvStatusBadge">            {% if existing_cv %}
+          <span class="match-status-badge {% if existing_cv %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="cvStatusBadge">            
+            {% if existing_cv %}
               <i class="ti ti-circle-check"></i> Chargé
             {% else %}
               <i class="ti ti-alert-circle"></i> Requis
@@ -45,20 +49,18 @@
                 <i class="ti ti-file-text match-file-icon"></i>
                 <div class="match-file-info">
                   <span class="match-file-name" id="cvCurrentName">{{ existing_cv.nom_fichier }}</span>
-                  <span class="match-file-meta">{{ existing_cv| default("PDF") }}</span>
+                  <span class="match-file-meta">PDF</span>
                 </div>
               </div>
               <button type="button" class="match-edit-btn" id="cvEditBtn">
                 <i class="ti ti-edit"></i> Modifier
               </button>
               <!-- Bouton pour voir les résultats de l'analyse -->
-                  <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" 
-                    data-type="cv"
-                    data-analysis-id="{{ existing_cv.analyse.id if existing_cv.analyse else '' }}">
-                    <i class="ti ti-eye"></i>
-                    Voir
-                </button>
-
+              <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" 
+                      data-type="cv"
+                      data-analysis-id="{{ existing_cv.analyse.id if existing_cv.analyse else '' }}">
+                <i class="ti ti-eye"></i> Voir
+              </button>
             </div>
 
             <!-- Input masqué initialement si déjà chargé -->
@@ -69,12 +71,9 @@
                 <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="cv">
                   <i class="ti ti-upload"></i> Uploader
                 </button>
-                <!-- Bouton pour voir les résultats de l'analyse -->
-                  <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" data-type="cv">
-                    <i class="ti ti-eye"></i>
-                    Voir
+                <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" data-type="cv">
+                  <i class="ti ti-eye"></i> Voir
                 </button>
-
               </div>
               <p class="match-help-text" id="cvFileLabel">Aucun nouveau fichier sélectionné</p>
             </div>
@@ -88,7 +87,6 @@
                 <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="cv">
                   <i class="ti ti-upload"></i> Uploader
                 </button>
-      
               </div>
               <p class="match-help-text" id="cvFileLabel">Aucun fichier sélectionné</p>
             </div>
@@ -97,7 +95,7 @@
       </div>
 
       <!-- ============================================================
-           BLOC 2 — Offre d'emploi
+           BLOC 2 — Offre d'emploi (Sélection dynamique catalogue)
       ============================================================ -->
       <div class="match-card">
         <div class="match-card-header">
@@ -106,79 +104,58 @@
           </span>
           <div class="match-card-heading">
             <h3 class="match-card-title">Offre d'emploi</h3>
-            <p class="match-card-sub">Obligatoire pour lancer la comparaison</p>
+            <p class="match-card-sub">Sélectionnez une offre publiée pour lancer la comparaison</p>
           </div>
 
+          <!-- Badge d'état dynamique -->
           <span class="match-status-badge {% if existing_offre %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="offreStatusBadge">
             {% if existing_offre %}
-              <i class="ti ti-circle-check"></i> Chargé
+              <i class="ti ti-circle-check"></i> Sélectionnée
             {% else %}
-              <i class="ti ti-alert-circle"></i> Requis
+              <i class="ti ti-alert-circle"></i> Requise
             {% endif %}
           </span>
         </div>
 
         <div class="match-card-body">
-          {% if existing_offre %}
-            <!-- Offre déjà chargée : aperçu -->
-            <div class="match-file-loaded" id="offreLoadedView">
-              <div class="match-file-chip">
-                <i class="ti ti-briefcase match-file-icon"></i>
-                <div class="match-file-info">
-                  <span class="match-file-name" id="offreCurrentName">{{ existing_offre.nom_fichier }}</span>
-                  <span class="match-file-meta">{{ existing_offre.titre | default("PDF") }}</span>
-                </div>
-              </div>
-              <button type="button" class="match-edit-btn" id="offreEditBtn">
-                <i class="ti ti-edit"></i> Charger un autre
-              </button>
-              <!-- Bouton pour voir les résultats de l'analyse -->
-              <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" 
-                      data-type="offre"
-                      data-analysis-id="{{ existing_offre.analyse.id if existing_offre.analyse else '' }}">
-                <i class="ti ti-eye"></i> Voir
-              </button>
+          <div class="form-group">
+            <label class="form-label" for="offreSelectInput" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+              Choisir un poste parmi le catalogue officiel *
+            </label>
+            
+            <div class="input-group">
+              <select id="offreSelectInput" class="form-control" style="background-color: white; height: 46px;" onchange="updateOffreSelection(this)">
+                <option value="" disabled {% if not existing_offre %}selected{% endif %}>-- Sélectionnez une offre d'emploi --</option>
+                {% for o in offres_publiees %}
+                  <option value="{{ o.id }}" 
+                          data-titre="{{ o.titre }}" 
+                          data-entreprise="{{ o.entreprise or (o.departement.entreprise.nom if o.departement else 'Entreprise') }}"
+                          {% if existing_offre and existing_offre.id == o.id %}selected{% endif %}>
+                    {{ o.titre }} — {{ o.entreprise or (o.departement.entreprise.nom if o.departement else 'Entreprise') }}
+                  </option>
+                {% endfor %}
+              </select>
             </div>
-
-            <!-- Input masqué initialement si déjà chargé -->
-            <div class="match-file-input-wrap" id="offreInputWrap" style="display:none">
-              <label class="form-label" for="offreFileInput">Choisir une nouvelle offre (PDF)</label>
-              <div class="input-group">
-                <input type="file" id="offreFileInput" class="form-control" accept=".pdf">
-                <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="offre">
-                  <i class="ti ti-upload"></i> Uploader
-                </button>
-                <!-- Bouton pour voir les résultats de l'analyse -->
-                <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" data-type="offre">
-                  <i class="ti ti-eye"></i> Voir
-                </button>
-              </div>
-              <p class="match-help-text" id="offreFileLabel">Aucun nouveau fichier sélectionné</p>
-            </div>
-
-          {% else %}
-            <!-- Aucune offre : Input direct avec bouton Uploader -->
-            <div class="match-file-input-wrap" id="offreInputWrap">
-              <label class="form-label" for="offreFileInput">Choisir une offre (PDF)</label>
-              <div class="input-group">
-                <input type="file" id="offreFileInput" class="form-control" accept=".pdf">
-                <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="offre">
-                  <i class="ti ti-upload"></i> Uploader
-                </button>
-              </div>
-              <p class="match-help-text" id="offreFileLabel">Aucun fichier sélectionné</p>
-            </div>
-          {% endif %}
+            
+            <p class="match-help-text mt-2" id="offreSelectLabel">
+              {% if existing_offre %}
+                Poste sélectionné actuellement : <strong>{{ existing_offre.titre }}</strong>
+              {% else %}
+                Aucune offre sélectionnée pour le moment.
+              {% endif %}
+            </p>
+          </div>
         </div>
       </div>
+
 
       <!-- ============================================================
           ACTIONS GLOBALES
       ============================================================ -->
       <div class="d-flex flex-wrap gap-3 mt-4">
         
-        <!-- Bouton pour lancer le calcul -->
-        <button type="button" class="match-submit-btn flex-grow-1" id="matchSubmitBtn">
+        <!-- Bouton pour lancer le calcul (ID harmonisé pour correspondre au script d'autorun) -->
+        <button type="button" class="match-submit-btn flex-grow-1" id="btnLaunchMatch" {% if not existing_cv or not existing_offre %}disabled{% endif %}>
           <i class="ti ti-arrows-diff"></i>
           Comparer cette offre à mon CV
         </button>
@@ -193,7 +170,14 @@
         </button>
 
       </div>
-      <!-- ====================================================== -->
+
+      <p class="match-help-text text-center mt-2" id="formValidationMessage">
+        {% if not existing_cv or not existing_offre %}
+          Veuillez posséder un CV chargé et sélectionner un poste pour exécuter le matching.
+        {% else %}
+          Prêt à lancer l'analyse comparative !
+        {% endif %}
+      </p>
 
     </form>
   </div>

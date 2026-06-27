@@ -7,7 +7,19 @@
     transform: translateY(-4px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
   }
-</style>
+  /* Style d'animation pour le clignotement (À placer idéalement dans vos CSS ou ici) */
+ 
+    @keyframes blink-alert {
+      0% { border-color: #ef4444; box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
+      50% { border-color: #fca5a5; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); background-color: #fef2f2; }
+      100% { border-color: #ef4444; box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
+    }
+    .animate-blink {
+      animation: blink-alert 2s infinite ease-in-out;
+      border: 2px solid #ef4444 !important;
+    }
+  </style>
+
 
 
 <div class="container mt-4 mb-5">
@@ -19,8 +31,12 @@
       <p class="text-muted small mb-0">Explorez les offres d'emploi disponibles et évaluez votre compatibilité</p>
     </div>
     
-    <!-- Barre de recherche style E-commerce -->
-    <div class="col-md-6">
+    <!-- Barre de recherche  -->
+
+  <div class="col-md-6">
+    {% if cv_existant %}
+      
+      <!-- CAS 1 : Le CV existe -> On affiche la barre de recherche normale -->
       <form method="GET" action="{{ url_for('candidat.espace_candidat') }}" class="input-group shadow-sm rounded">
         <span class="input-group-text bg-white border-end-0">
           <i class="ti ti-search text-muted"></i>
@@ -36,10 +52,29 @@
           Filtrer
         </button>
       </form>
-    </div>
+
+    {% else %}
+      
+      <!-- CAS 2 : Aucun CV actif -> Bloc d'avertissement clignotant invitant au chargement -->
+      <div class="d-flex align-items-center justify-content-between p-3 rounded bg-white shadow-sm animate-blink">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle" style="width: 40px; height: 40px; min-width: 40px;">
+            <i class="ti ti-alert-triangle" style="font-size: 1.3rem;"></i>
+          </div>
+          <div>
+            <h6 class="mb-0 text-danger font-weight-bold" style="font-size: 0.9rem;">Action requise : Aucun CV chargé</h6>
+          </div>
+        </div>
+        <a href="{{ url_for('cv.chargement_cv') }}" class="btn btn-sm btn-danger px-3 rounded-pill font-weight-bold" style="white-space: nowrap;">
+          <i class="ti ti-upload"></i> Charger un CV
+        </a>
+      </div>
+
+    {% endif %}
   </div>
 
-  <!-- Grille des Offres (Style Catalogue E-commerce) -->
+
+  <!-- Grille des Offres (Style Catalogue) -->
   <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
     {% if offres %}
       {% for offre in offres %}
@@ -56,7 +91,6 @@
                   </div>
                   <div>
                     <h5 class="font-weight-bold text-dark mb-0 text-truncate" style="max-width: 150px;">{{ offre.titre }}</h5>
-                    <!-- Changement structurel : Lien dynamique vers le nom de l'entreprise associée -->
                     <span class="text-muted small">
                       <i class="ti ti-building"></i> {{ offre.departement.entreprise.nom if offre.departement else "Entreprise Anonyme" }}
                     </span>
@@ -64,32 +98,12 @@
                 </div>
 
                 <!-- Bouton "Voir l'offre" (Pop-up PDF) placé en haut à droite -->
-                <button
-                    type="button"
-                    class="btn btn-icon btn-light rounded-circle btn-voir-pdf"
-
-                    data-pdf-url="{{ url_for('offre.voir_pdf', offre_id=offre.id) }}"
-
-                    data-offre-titre="{{ offre.titre }}">
-
+                <button type="button" class="btn btn-icon btn-light rounded-circle btn-voir-pdf"
+                        data-pdf-url="{{ url_for('offre.voir_pdf', offre_id=offre.id) }}"
+                        data-offre-titre="{{ offre.titre }}">
                     <i class="ti ti-eye"></i>
-
                 </button>
-
               </div>
-
-                <!-- Indicateur de Score Dynamique si déjà testé -->
-                {% if offre.id in scores_deja_calcules %}
-                  {% set score = scores_deja_calcules[offre.id] %}
-                  <span class="badge position-absolute top-0 end-0 mt-3 me-3 px-2 py-1 rounded" 
-                        style="font-size: 0.8rem; font-weight: bold; 
-                               {% if score >= 75 %}background-color: #e6fffa; color: #0d9488; border: 1px solid #b2f5ea;
-                               {% elif score >= 50 %}background-color: #fefcbf; color: #b7791f; border: 1px solid #fef3c7;
-                               {% else %}background-color: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7;{% endif %}">
-                    <i class="ti ti-percentage"></i> Match : {{ score | int }}%
-                  </span>
-                {% endif %}
-
 
               <!-- Description courte tronquée -->
               <p class="text-secondary small mb-4" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; min-height: 4.5em;">
@@ -97,28 +111,47 @@
               </p>
             </div>
 
-            <!-- Pied de page de la carte : Métadonnées et Actions Alternatives -->
-            <div class="border-top pt-3 d-flex align-items-center justify-content-between mt-auto">
-              <span class="text-muted" style="font-size: 0.75rem;">
+            <!-- Pied de page de la carte : Métadonnées, Score au milieu et Actions Alternatives -->
+            <div class="border-top pt-3 d-flex align-items-center justify-content-between mt-auto gap-2">
+              
+              <!-- ÉLÉMENT GAUGHE : La date de l'offre -->
+              <span class="text-muted" style="font-size: 0.75rem; white-space: nowrap;">
                 <i class="ti ti-calendar"></i> {{ offre.date_creation.strftime('%d/%m/%Y') }}
               </span>
               
-              <!-- AFFICHAGE CONDITIONNEL DES ACTIONS -->
+              <!-- 🎯 ÉLÉMENT CENTRAL : Indicateur de Score Dynamique (S'affiche ici maintenant) -->
+              {% if offre.id in scores_deja_calcules %}
+                {% set score = scores_deja_calcules[offre.id] %}
+                <span class="badge px-2 py-1 rounded small" 
+                      style="font-size: 0.75rem; font-weight: bold; white-space: nowrap;
+                             {% if score >= 75 %}background-color: #e6fffa; color: #0d9488; border: 1px solid #b2f5ea;
+                             {% elif score >= 50 %}background-color: #fefcbf; color: #b7791f; border: 1px solid #fef3c7;
+                             {% else %}background-color: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7;{% endif %}">
+                  <i class="ti ti-percentage"></i> {{ score | int }}% match
+                </span>
+              {% else %}
+                <!-- Espace vide ou séparateur discret si aucun score calculé pour garder l'alignement flex -->
+                <span></span>
+              {% endif %}
+
+              <!-- ÉLÉMENT DROIT : AFFICHAGE CONDITIONNEL DES ACTIONS -->
               {% if offre.id in scores_deja_calcules %}
                 <!-- Cas 1 : L'offre est DÉJÀ comparée -> Bouton Voir les détails de l'analyse -->
-                <button type="button" class="btn btn-sm btn-outline-secondary px-3 rounded-pill btn-details-analyse" 
+                <button type="button" class="btn btn-sm btn-outline-secondary px-2 rounded-pill btn-details-analyse" 
                         data-offre-id="{{ offre.id }}"
-                        style="font-weight: 500;">
-                  <i class="ti ti-report-analytics"></i> Détails de l'analyse
+                        style="font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
+                  <i class="ti ti-report-analytics"></i> Détails
                 </button>
               {% else %}
                 <!-- Cas 2 : L'offre n'a PAS ENCORE été testée -> Bouton standard Comparer à mon CV -->
-                <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-pill btn-analyser-offre" 
+                <button type="button" class="btn btn-sm btn-outline-primary px-2 rounded-pill btn-analyser-offre" 
                         data-offre-id="{{ offre.id }}"
-                        style="color: #0d9488; border-color: #0d9488; font-weight: 500;">
-                  <i class="ti ti-arrows-diff"></i> Comparer à mon CV
+                        data-matching-url="{{ url_for('global.matching') }}"
+                        style="color: #0d9488; border-color: #0d9488; font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
+                  <i class="ti ti-arrows-diff"></i> Comparer
                 </button>
               {% endif %}
+              
             </div>
 
           </div>
@@ -138,6 +171,7 @@
     {% endif %}
   </div>
 </div>
+
 
 
 

@@ -25,6 +25,8 @@ matching_bp = Blueprint(
     url_prefix="/matching"
 )
 
+# faire une comparaison d'un offre avec mon cv
+
 
 @matching_bp.route("/start_match", methods=["GET"])
 @login_required

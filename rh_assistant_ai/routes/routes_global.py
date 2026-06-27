@@ -18,6 +18,11 @@ from config.decorateurs import role_required
 from models.cv import CV
 
 from services.cv_service import save_cv
+from flask import request, render_template, redirect, url_for, session, flash, jsonify
+from flask_login import login_required, current_user
+from config.database import db
+from models.cv import CV
+from models.offre import Offre
 
 
 global_bp = Blueprint(
@@ -26,16 +31,10 @@ global_bp = Blueprint(
     url_prefix="/global"
 )
 
-from flask import request, render_template, redirect, url_for, session, flash, jsonify
-from flask_login import login_required, current_user
-from config.database import db
-from models.cv import CV
-from models.offre import Offre
-
-
 @global_bp.route("/matching", methods=["GET", "POST"])
 @login_required
 def matching():
+    print(" Call matching route")
     # ============================================================
     # COMPORTEMENT SÉCURISÉ — MÉTHODE POST (Lancement du Matching)
     # ============================================================
@@ -110,10 +109,12 @@ def matching():
             session['current_offre_id'] = existing_offre.id
 
     # Rendu final du formulaire de comparaison
+    offres_publiees = Offre.query.all()
     return render_template(
-        "upload.html",  # Remplacez par le nom exact de votre template global de matching
+        "upload.html",  
         existing_cv=existing_cv, 
-        existing_offre=existing_offre
+        existing_offre=existing_offre,
+        offres_publiees= offres_publiees
     )
 
 

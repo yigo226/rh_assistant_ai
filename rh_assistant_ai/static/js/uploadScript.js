@@ -152,12 +152,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     const boutons = document.querySelectorAll(".btn-voir-pdf");
-    console.log(boutons.length);
-
     const modalElement = document.getElementById("modalApercuOffre");
 
-    const modal = new bootstrap.Modal(modalElement);
+    let modalApercu = null;
+    let modalAnalyse = null;
 
+    try {
+        // Initialisation standard Bootstrap 5
+        if (htmlApercu && typeof bootstrap !== 'undefined') modalApercu = new bootstrap.Modal(htmlApercu);
+        if (htmlAnalyse && typeof bootstrap !== 'undefined') modalAnalyse = new bootstrap.Modal(htmlAnalyse);
+    } catch (e) {
+        console.warn("Rétrocompatibilité : Passage en mode d'ouverture natif HTML.");
+        // Mode secours si Bootstrap crash : on utilise les API natives
+        modalApercu = { show: () => htmlApercu.style.display = 'block', hide: () => htmlApercu.style.display = 'none' };
+        modalAnalyse = { show: () => htmlAnalyse.style.display = 'block', hide: () => htmlAnalyse.style.display = 'none' };
+    }
     const iframe = document.getElementById("iframePdfViewer");
 
     const titre = document.getElementById("modalOffreTitre");
@@ -182,13 +191,20 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     
     document.querySelectorAll(".btn-voir-pdf").forEach(btn => {
-
-
+        // Votre code de clic existant reste ici
     });
-    modalElement.addEventListener("hidden.bs.modal", function () {
 
-        iframe.src = "";
+    /* CORRECTION DE LA LIGNE 197 : */
+    // On récupère la modale par son vrai ID HTML avant d'écouter sa fermeture
+    const maModaleOffre = document.getElementById('modalApercuOffre');
+    
+    if (maModaleOffre && iframe) {
+        maModaleOffre.addEventListener("hidden.bs.modal", function () {
+            iframe.src = "";
+        });
+    }
 
-    });
+    
 
 });
+

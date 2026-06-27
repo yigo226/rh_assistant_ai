@@ -9,7 +9,8 @@ import os
 
 def save_cv(file, user): 
     filename = secure_filename(file.filename)
-    upload_folder = "uploads"
+
+    upload_folder = "static/uploads/cvs"
     os.makedirs(upload_folder, exist_ok=True)
     file_path = os.path.join(upload_folder, filename)
     # sauvegarder le fichier original

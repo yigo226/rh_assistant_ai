@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // ============================================================
-    // INITIALISATION DES STATUTS INITIALS (Badges Jinja)
+    // INITIALISATION DES STATUTS INITIALS (Basé sur vos badges Jinja)
     // ============================================================
     ['cv', 'offre'].forEach(type => {
         const badge = document.getElementById(`${type}StatusBadge`);
@@ -143,18 +143,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ============================================================
-    // 5. GESTION DES FENÊTRES POP-UPS & APERÇU PDF
+    // 5. GESTION DES FENÊTRES POP-UPS (Nouveau Bloc Intégré et Sécurisé)
     // ============================================================
     const htmlApercu = document.getElementById("modalApercuOffre");
     const htmlAnalyse = document.getElementById("modalDetailsAnalyse");
     const iframeViewer = document.getElementById("iframePdfViewer");
     const modalTitre = document.getElementById("modalOffreTitre");
-    const modalAnalyseContenu = document.getElementById("modalAnalyseContenu");
 
     let modalApercu = null;
     let modalAnalyse = null;
     let isNativeMode = false;
 
+    // Initialisation sécurisée
     try {
         if (htmlApercu && typeof bootstrap !== 'undefined') modalApercu = new bootstrap.Modal(htmlApercu);
         if (htmlAnalyse && typeof bootstrap !== 'undefined') modalAnalyse = new bootstrap.Modal(htmlAnalyse);
@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 modalTitre.textContent = offreTitre || "Fiche de poste";
                 iframeViewer.src = pdfUrl;
 
+                // FIX LIGNE 187 : Ouverture selon le mode détecté (Natif ou Bootstrap)
                 if (isNativeMode && htmlApercu) {
                     htmlApercu.style.display = 'block';
                     htmlApercu.classList.add('show');
@@ -183,105 +184,20 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
-    // ============================================================
-    // 🟢 AJOUTÉ : LOGIQUE POUR LE BOUTON DÉTAILS (RAPPORT IA 🤖)
-    // ============================================================
-    document.querySelectorAll('.btn-details-analyse').forEach(button => {
-        button.addEventListener('click', async function() {
-            const offreId = this.getAttribute('data-offre-id');
-            
-            if (!modalAnalyseContenu) return;
 
-            // 1. Affichage du loader d'attente animé natif Bootstrap
-            modalAnalyseContenu.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner-border text-success" role="status"></div>
-                    <p class="text-muted mt-2">Récupération des métriques auprès de l'assistant IA...</p>
-                </div>`;
-            
-            // 2. Ouverture de la modale d'analyse (S'adapte au mode Bootstrap ou Natif)
-            if (isNativeMode && htmlAnalyse) {
-                htmlAnalyse.style.display = 'block';
-                htmlAnalyse.classList.add('show');
-                htmlAnalyse.style.background = 'rgba(0,0,0,0.5)';
-            } else if (modalAnalyse) {
-                modalAnalyse.show();
-            }
-
-            try {
-                // 3. Appel AJAX vers votre route backend Flask
-                const response = await fetch(`/matching/recuperer-details-json/${offreId}`);
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    // 4. Construction et injection dynamique du rapport au format HTML
-                    modalAnalyseContenu.innerHTML = `
-                        <div class="row align-items-center mb-4">
-                            <div class="col-sm-4 text-center">
-                                <div class="d-inline-flex align-items-center justify-content-center rounded-circle border border-4 border-success" style="width: 100px; height: 100px;">
-                                    <span class="h2 font-weight-bold mb-0 text-dark">${Math.floor(data.score)}%</span>
-                                </div>
-                                <span class="d-block text-muted small mt-2">Score d'adéquation</span>
-                            </div>
-                            <div class="col-sm-8 border-start">
-                                <h6 class="font-weight-bold text-uppercase small text-secondary"><i class="ti ti-message-chatbot"></i> Synthèse de l'assistant</h6>
-                                <p class="text-dark small mb-0" style="line-height: 1.5;">${data.recommendation}</p>
-                            </div>
-                        </div>
-
-                        <div class="d-flex flex-column gap-3">
-                            <div>
-                                <h6 class="text-success font-weight-bold small text-uppercase mb-2"><i class="ti ti-circle-check"></i> Compétences Validées (${data.matching_skills.length})</h6>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${data.matching_skills.map(s => `<span class="badge px-2 py-1 small rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucune correspondance.</span>'}
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="text-danger font-weight-bold small text-uppercase mb-2"><i class="ti ti-circle-x"></i> Compétences Manquantes (${data.missing_skills.length})</h6>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${data.missing_skills.map(s => `<span class="badge px-2 py-1 small rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca;">${s}</span>`).join('') || '<span class="text-success small fw-bold">Parfait ! Rien ne manque.</span>'}
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="text-primary font-weight-bold small text-uppercase mb-2"><i class="ti ti-plus"></i> Compétences Extra (${data.extra_skills.length})</h6>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${data.extra_skills.map(s => `<span class="badge px-2 py-1 small rounded text-primary" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucun bonus.</span>'}
-                                </div>
-                            </div>
-                        </div>`;
-                } else {
-                    modalAnalyseContenu.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
-                }
-            } catch (error) {
-                console.error(error);
-                modalAnalyseContenu.innerHTML = `<div class="alert alert-danger">Erreur réseau lors de la récupération des données.</div>`;
-            }
-        });
-    });
-
-    // ============================================================
-    // 6. GESTION UNIFIÉE DE LA FERMETURE (Croix et Boutons fermer)
-    // ============================================================
-    const fermerToutesLesModales = () => {
-        if (htmlApercu) htmlApercu.style.display = 'none';
-        if (htmlAnalyse) htmlAnalyse.style.display = 'none';
-        if (iframeViewer) iframeViewer.src = ""; // Coupe instantanément le PDF
-        
-        if (!isNativeMode) {
-            if (modalApercu) modalApercu.hide();
-            if (modalAnalyse) modalAnalyse.hide();
-        }
-    };
-
-    // Écoute le clic sur toutes les croix "X" ou boutons fermer du projet
-    document.querySelectorAll('[data-bs-dismiss="modal"], .btn-close').forEach(btn => {
-        btn.addEventListener('click', fermerToutesLesModales);
-    });
-
-    // Nettoyage classique si Bootstrap standard s'active un jour pour l'iframe
+    // Nettoyage de l'iframe à la fermeture
     if (htmlApercu && iframeViewer) {
-        htmlApercu.addEventListener('hidden.bs.modal', () => {
+        htmlApercu.addEventListener("hidden.bs.modal", function () {
             iframeViewer.src = "";
         });
     }
+
+    // Gestion manuelle de la fermeture si le mode natif s'active
+    document.querySelectorAll('[data-bs-dismiss="modal"], .btn-close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', () => {
+            if (htmlApercu) htmlApercu.style.display = 'none';
+            if (htmlAnalyse) htmlAnalyse.style.display = 'none';
+            if (iframeViewer) iframeViewer.src = "";
+        });
+    });
 });

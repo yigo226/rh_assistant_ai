@@ -79,82 +79,104 @@
     {% if offres %}
       {% for offre in offres %}
         <div class="col">
+        
           <!-- Carte Offre Individuelle -->
-          <div class="card h-100 border-0 shadow-sm p-3 position-relative d-flex flex-column justify-content-between" style="border-radius: 12px; transition: transform 0.2s; background: #ffffff;">
-            
-            <div>
-              <!-- En-tête de la carte -->
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <div class="d-flex align-items-center gap-3">
-                  <div class="d-flex align-items-center justify-content-center bg-light text-purple font-weight-bold rounded-circle" style="width: 45px; height: 45px; font-size: 1.2rem;">
-                    <i class="ti ti-briefcase"></i>
-                  </div>
-                  <div>
-                    <h5 class="font-weight-bold text-dark mb-0 text-truncate" style="max-width: 150px;">{{ offre.titre }}</h5>
-                    <span class="text-muted small">
-                      <i class="ti ti-building"></i> {{ offre.departement.entreprise.nom if offre.departement else "Entreprise Anonyme" }}
-                    </span>
-                  </div>
+        <div class="card h-100 border-0 shadow-sm p-3 position-relative d-flex flex-column justify-content-between" style="border-radius: 12px; transition: transform 0.2s; background: #ffffff;">
+          
+          <div>
+            <!-- En-tête de la carte -->
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center justify-content-center bg-light text-purple font-weight-bold rounded-circle" style="width: 45px; height: 45px; font-size: 1.2rem;">
+                  <i class="ti ti-briefcase"></i>
                 </div>
-
-                <!-- Bouton "Voir l'offre" (Pop-up PDF) placé en haut à droite -->
-                <button type="button" class="btn btn-icon btn-light rounded-circle btn-voir-pdf"
-                        data-pdf-url="{{ url_for('offre.voir_pdf', offre_id=offre.id) }}"
-                        data-offre-titre="{{ offre.titre }}">
-                    <i class="ti ti-eye"></i>
-                </button>
+                <div>
+                  <h5 class="font-weight-bold text-dark mb-0 text-truncate" style="max-width: 150px;">{{ offre.titre }}</h5>
+                  
+                  <!-- En-tête modifié : Entreprise et Date limite (en rouge) sur le même bloc span -->
+                  <span class="text-muted small d-block">
+                    <i class="ti ti-building"></i> {{ offre.entreprise or (offre.departement.entreprise.nom if offre.departement else "Entreprise Anonyme") }} 
+                    <span style="color: #ef4444; font-weight: 600; margin-left: 6px;">
+                      <i class="ti ti-calendar-time"></i> Limite : {{ offre.date_limite.strftime('%d/%m/%Y') if offre.date_limite else "Non spécifiée" }}
+                    </span>
+                  </span>
+                </div>
               </div>
 
-              <!-- Description courte tronquée -->
-              <p class="text-secondary small mb-4" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; min-height: 4.5em;">
-                {{ offre.description or "Aucune description fournie pour cette offre d'emploi." }}
-              </p>
+              <!-- Bouton "Voir l'offre" (Pop-up PDF) placé en haut à droite -->
+              <button type="button" class="btn btn-icon btn-light rounded-circle btn-voir-pdf"
+                      data-pdf-url="{{ url_for('offre.voir_pdf', offre_id=offre.id) }}"
+                      data-offre-titre="{{ offre.titre }}">
+                  <i class="ti ti-eye"></i>
+              </button>
             </div>
 
-            <!-- Pied de page de la carte : Métadonnées, Score au milieu et Actions Alternatives -->
-            <div class="border-top pt-3 d-flex align-items-center justify-content-between mt-auto gap-2">
-              
-              <!-- ÉLÉMENT GAUGHE : La date de l'offre -->
-              <span class="text-muted" style="font-size: 0.75rem; white-space: nowrap;">
-                <i class="ti ti-calendar"></i> {{ offre.date_creation.strftime('%d/%m/%Y') }}
+            <!-- Description courte tronquée -->
+            <p class="text-secondary small mb-4" style="display: -webkit-box;  -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; min-height: 4.5em;">
+              {{ offre.description or "Aucune description fournie pour cette offre d'emploi." }}
+            </p>
+          </div>
+
+          <!-- Pied de page de la carte réorganisé : [Bouton Action] → [Score] → [Bouton Postuler] -->
+          <div class="border-top pt-3 d-flex align-items-center justify-content-between mt-auto gap-2">
+            
+            <!-- ÉLÉMENT GAUCHE : Action de comparaison (Affichage conditionnel) -->
+            {% if offre.id in scores_deja_calcules %}
+              <!-- Cas 1 : Déjà comparé -> Bouton Détails -->
+              <button type="button" class="btn btn-sm btn-outline-secondary px-2 rounded-pill btn-details-analyse" 
+                      data-offre-id="{{ offre.id }}"
+                      style="font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
+                <i class="ti ti-report-analytics"></i> Détails
+              </button>
+            {% else %}
+              <!-- Cas 2 : Non testé -> Bouton Comparer -->
+              <button type="button" class="btn btn-sm btn-outline-primary px-2 rounded-pill btn-analyser-offre" 
+                      data-offre-id="{{ offre.id }}"
+                      data-matching-url="{{ url_for('global.matching') }}"
+                      style="color: #0d9488; border-color: #0d9488; font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
+                <i class="ti ti-arrows-diff"></i> Comparer
+              </button>
+            {% endif %}
+            
+            <!-- 🎯 ÉLÉMENT CENTRAL : Indicateur de Score Dynamique au milieu -->
+            {% if offre.id in scores_deja_calcules %}
+              {% set score = scores_deja_calcules[offre.id] %}
+              <span class="badge px-2 py-1 rounded small" 
+                    style="font-size: 0.75rem; font-weight: bold; white-space: nowrap;
+                          {% if score >= 75 %}background-color: #e6fffa; color: #0d9488; border: 1px solid #b2f5ea;
+                          {% elif score >= 50 %}background-color: #fefcbf; color: #b7791f; border: 1px solid #fef3c7;
+                          {% else %}background-color: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7;{% endif %}">
+                <i class="ti ti-percentage"></i> {{ score | int }}% match
               </span>
-              
-              <!-- 🎯 ÉLÉMENT CENTRAL : Indicateur de Score Dynamique (S'affiche ici maintenant) -->
-              {% if offre.id in scores_deja_calcules %}
-                {% set score = scores_deja_calcules[offre.id] %}
-                <span class="badge px-2 py-1 rounded small" 
-                      style="font-size: 0.75rem; font-weight: bold; white-space: nowrap;
-                             {% if score >= 75 %}background-color: #e6fffa; color: #0d9488; border: 1px solid #b2f5ea;
-                             {% elif score >= 50 %}background-color: #fefcbf; color: #b7791f; border: 1px solid #fef3c7;
-                             {% else %}background-color: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7;{% endif %}">
-                  <i class="ti ti-percentage"></i> {{ score | int }}% match
-                </span>
-              {% else %}
-                <!-- Espace vide ou séparateur discret si aucun score calculé pour garder l'alignement flex -->
-                <span></span>
-              {% endif %}
+            {% else %}
+              <!-- Séparateur invisible pour conserver l'alignement central parfait de Flexbox -->
+              <span></span>
+            {% endif %}
 
-              <!-- ÉLÉMENT DROIT : AFFICHAGE CONDITIONNEL DES ACTIONS -->
-              {% if offre.id in scores_deja_calcules %}
-                <!-- Cas 1 : L'offre est DÉJÀ comparée -> Bouton Voir les détails de l'analyse -->
-                <button type="button" class="btn btn-sm btn-outline-secondary px-2 rounded-pill btn-details-analyse" 
-                        data-offre-id="{{ offre.id }}"
-                        style="font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
-                  <i class="ti ti-report-analytics"></i> Détails
-                </button>
-              {% else %}
-                <!-- Cas 2 : L'offre n'a PAS ENCORE été testée -> Bouton standard Comparer à mon CV -->
-                <button type="button" class="btn btn-sm btn-outline-primary px-2 rounded-pill btn-analyser-offre" 
-                        data-offre-id="{{ offre.id }}"
-                        data-matching-url="{{ url_for('global.matching') }}"
-                        style="color: #0d9488; border-color: #0d9488; font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
-                  <i class="ti ti-arrows-diff"></i> Comparer
-                </button>
-              {% endif %}
-              
-            </div>
+            <!-- ÉLÉMENT DROIT : Le nouveau bouton Postuler (Candidature) -->
+            <!-- ÉLÉMENT DROIT : Le bouton Postuler dynamique -->
+            {% if offre.id in scores_deja_calcules %}
+              <!-- Cas A : Déjà testé -> Postulation directe classique -->
+              <a href="{{ url_for('candidat.postuler_offre', offre_id=offre.id) }}" 
+                class="btn btn-sm btn-primary px-2 rounded-pill" 
+                style="background-color: #0d9488; border-color: #0d9488; font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
+                <i class="ti ti-send"></i> Postuler
+              </a>
+            {% else %}
+              <!-- Cas B : Non testé -> Postulation avec déclencheur de matching IA transparent -->
+              <a href="{{ url_for('candidat.postuler_offre', offre_id=offre.id) }}" 
+                class="btn btn-sm btn-outline-secondary px-2 rounded-pill" 
+                style="color: #64748b; border-color: #cbd5e1; font-weight: 500; font-size: 0.75rem; white-space: nowrap;"
+                title="L'IA analysera votre profil automatiquement lors de la validation">
+                <i class="ti ti-bolt"></i> Postuler (Match IA)
+              </a>
+            {% endif %}
 
           </div>
+
+        </div>
+
+
         </div>
       {% endfor %}
 

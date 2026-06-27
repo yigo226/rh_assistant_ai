@@ -31,10 +31,27 @@
 
     <!-- Header -->
     <header class="app-header">
-      <div class="header-inner">
+    <div class="header-inner" style="display: flex; align-items: center; justify-content: space-between; width: 100%; width: 100%; padding: 0 1rem; height: 60px;">
+      
+      <!-- 1. BLOC GAUCHE : Bouton Retour dynamique -->
+      <div class="header-left">
+        <button type="button" class="btn-retour-propre" onclick="window.history.back();" style="margin: 0;">
+          <i class="ti ti-arrow-left"></i>
+          <span>Retour</span>
+        </button>
+      </div>
+
+      <!-- 2. BLOC CENTRAL : Titre de l'application et statut IA -->
+      <div class="header-center" style="display: flex; align-items: center; gap: 8px;">
         <span class="header-dot"></span>
-        <span class="header-title">rh_assistant</span>
-        <span class="header-badge">IA active</span>
+        <span class="header-title" style="font-weight: 700; font-size: 1.2rem; tracking-tight: -0.02em;">rh_assistant</span>
+        <span class="header-badge header-badge--ia">IA active</span>
+      </div>
+
+      <!-- 3. BLOC DROIT : Rôle de l'utilisateur et Menu Profil -->
+      <div class="header-right" style="display: flex; align-items: center; gap: 12px;">
+        
+        <!-- Badge de rôle dynamique -->
         <span class="header-badge">
           {% if current_user.is_authenticated %}
               {% if current_user.est_recruteur() %}
@@ -44,12 +61,28 @@
               {% endif %}
           {% else %}
               Invité
-          {% endif %}
+              {% endif %}
         </span>
 
+        <!-- Bouton Profil pour lier votre gestion de compte -->
+        <!-- Bouton Profil pour lier votre gestion de compte -->
+        {% if current_user.is_authenticated %}
+          <!-- Remplacement de la ligne 69 problématique : -->
+          <a href="/auth/profil" class="header-profile-avatar" title="Mon Profil" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 50%; color: #475569; text-decoration: none; transition: all 0.2s;">
+            <i class="ti ti-user" style="font-size: 1.25rem;"></i>
+          </a>
+        {% else %}
+          <!-- Remplacement de la ligne de connexion : -->
+          <a href="/auth/login" class="header-profile-avatar" title="Se connecter" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background-color: #e0f2fe; border: 1px solid #bae6fd; border-radius: 50%; color: #0369a1; text-decoration: none;">
+            <i class="ti ti-login" style="font-size: 1.25rem;"></i>
+          </a>
+        {% endif %}
+
       </div>
-      <button class="sidebar-toggle d-md-none" id="sidebarToggle" aria-label="Ouvrir le menu">
-        <i class="ti ti-menu-2"></i>
+    </div>
+
+    <button class="sidebar-toggle d-md-none" id="sidebarToggle" aria-label="Ouvrir le menu">
+        <i class="ti ti-menu-2"></i> 
       </button>
     </header>
 

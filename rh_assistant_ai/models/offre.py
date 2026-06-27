@@ -54,5 +54,11 @@ class Offre(db.Model):
     cascade="all, delete-orphan"
     )
 
+    @property
+    def total_postulants(self):
+        if self.analyse and self.analyse.match_results:
+            return len(self.analyse.match_results)
+        return 0
+
     def __repr__(self):
         return f"<Offre {self.titre}>"

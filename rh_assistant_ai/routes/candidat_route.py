@@ -53,63 +53,6 @@ def espace_candidat():
         cv_existant=cv_existant
     )
 
-# @candidat_bp.route("/postuler/<int:offre_id>", methods=["GET", "POST"])
-# @login_required
-# def postuler_offre(offre_id):
-#     # 1. Vérifications de base (Offre et CV Actif)
-#     offre = Offre.query.get_or_404(offre_id)
-#     cv_actif = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
-    
-#     if not cv_actif:
-#         flash("Vous devez charger un CV actif dans votre espace avant de postuler.", "danger")
-#         return redirect(url_for("candidat.espace_candidat"))
-
-#     # 2. 🧠 INTEGRATION DU MATCHING AUTOMATIQUE TRANSPARENT
-#     # On cherche si un résultat de match existe déjà entre ce CV et cette offre
-#     match_existant = MatchResult.query.filter_by(cv_id=cv_actif.id, offre_id=offre.id).first()
-    
-#     if not match_existant:
-#         try:
-#             # Récupération des analyses structurales (skills, diplomas, etc.)
-#             analyse_cv = cv_actif.analyse
-#             analyse_offre = offre.analyse
-            
-#             # Appel direct de vos deux fonctions de calcul mathématique et d'écriture en BDD
-#             metriques = calculer_matching(analyse_cv, analyse_offre)
-#             match_existant = enregistrer_match_result(
-#                 analyse_cv=analyse_cv, 
-#                 analyse_offre=analyse_offre, 
-#                 metriques=metriques, 
-#                 user=current_user
-#             )
-#         except Exception as e:
-#             flash(f"L'assistant IA n'a pas pu évaluer votre profil pour ce poste : {str(e)}", "danger")
-#             return redirect(url_for("candidat.espace_candidat"))
-
-#     # 3. TRAITEMENT DE LA CANDIDATURE
-#     # Maintenant que 'match_existant' est garanti d'exister et possède un ID stable :
-    
-#     # Vérification si le candidat n'a pas déjà postulé à cette offre
-#     deja_postule = Candidature.query.filter_by(user_id=current_user.id, offre_id=offre.id).first()
-#     if deja_postule:
-#         flash("Vous avez déjà déposé votre candidature pour ce poste.", "warning")
-#         return redirect(url_for("candidat.espace_candidat"))
-
-#     # Enregistrement final de la candidature liée au MatchResult ID
-#     nouvelle_candidature = Candidature(
-#         user_id=current_user.id,
-#         offre_id=offre.id,
-#         match_result_id=match_existant.id, # 👈 Injecté de manière transparente !
-#         date_postulation=datetime.now(timezone.utc)
-#     )
-    
-#     db.session.add(nouvelle_candidature)
-#     db.session.commit()
-
-#     flash(f"Votre candidature pour « {offre.titre} » a été transmise avec succès après analyse de conformité !", "success")
-#     return redirect(url_for("candidat.espace_candidat"))
-from datetime import datetime, timezone
-
 @candidat_bp.route("/postuler/<int:offre_id>", methods=["GET", "POST"])
 @login_required
 def postuler_offre(offre_id):

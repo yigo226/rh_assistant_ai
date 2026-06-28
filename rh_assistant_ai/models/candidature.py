@@ -41,3 +41,26 @@ class Candidature(db.Model):
 
     def __repr__(self):
         return f"<Candidature ID={self.id} User={self.user_id} Offre={self.offre_id} Statut={self.statut}>"
+
+
+class LesRecrutEntreprise(db.Model):
+    __tablename__ = "les_recrut_entreprise"
+
+    id = db.Column(db.Integer, primary_key=True)
+    date_recrutement = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    #  NOUVEAUX CHAMPS COMPREHENSIFS
+    type_contrat = db.Column(db.String(50), nullable=False)       # CDI, CDD, Stage, Alternance
+    salaire_propose = db.Column(db.Float, nullable=True)          # Salaire brut annuel ou mensuel
+    date_debut = db.Column(db.Date, nullable=False)               # Date de début de contrat
+    
+    # Liaisons contextuelles existantes
+    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False)
+    offre_id = db.Column(db.Integer, db.ForeignKey("offres.id", ondelete="CASCADE"), nullable=False)
+    candidat_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    match_result_id = db.Column(db.Integer, db.ForeignKey("match_results.id", ondelete="SET NULL"), nullable=True)
+
+    # Relations de confort
+    entreprise = db.relationship("Entreprise")
+    offre = db.relationship("Offre")
+    candidat = db.relationship("User")

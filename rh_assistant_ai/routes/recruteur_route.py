@@ -71,14 +71,10 @@ def dashboard():
     #     )
     #     .count()
     # )
-
     return render_template(
         "dashboardRecruteur.html",
-
         offres=offres,
-
         departements=departements,
-
         equipe=equipe,
     )
 

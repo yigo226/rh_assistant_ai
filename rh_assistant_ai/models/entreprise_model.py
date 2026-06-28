@@ -14,7 +14,8 @@ class Entreprise(db.Model):
 
     # Relations réciproques
     departements = db.relationship("Departement", backref="entreprise", cascade="all, delete-orphan")
-    employes = db.relationship("User", foreign_keys="[User.entreprise_id]")
+    employes = db.relationship("User", 
+                               back_populates="entreprise")
 
 class Departement(db.Model):
     __tablename__ = "departements"

@@ -1,0 +1,143 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container mb-4 mb-"></div>
+
+    <!-- Bouton Retour supérieur -->
+    <div class="mb-3">
+      <button type="button" class="btn-retour-propre" onclick="window.history.back();">
+        <i class="ti ti-arrow-left"></i> <span>Retour au tableau de bord</span>
+      </button>
+    </div>
+
+    <!-- En-tête du Pilotage -->
+    <div class="matching-header  mb-4">
+      <h2>Suivi des Candidatures — {{ offre.titre }}</h2>
+      <p class="matching-subtitle">
+        <i class="ti ti-building"></i> {{ offre.entreprise }} &bull; 
+        <i class="ti ti-users"></i> {{ candidatures | length }} profil(s) enregistré(s)
+      </p>
+    </div>
+
+    <!-- Tableau de gestion des candidats -->
+    <div class="match-card p-0" style="width: 100%; max-width: 100%; overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
+      <table class="table align-middle mb-0" style="width: 100%; min-width: 800px; border-collapse: collapse;">
+        <thead class="bg-light" style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+          <tr>
+            <th class="p-3 text-secondary small text-uppercase" style="font-weight: 700;">Candidat</th>
+            <th class="p-3 text-secondary small text-uppercase text-center" style="font-weight: 700; width: 110px;">Score Match</th>
+            <th class="p-3 text-secondary small text-uppercase" style="font-weight: 700; max-width: 300px;">Recommandation IA</th>
+            <th class="p-3 text-secondary small text-uppercase text-center" style="font-weight: 700; width: 140px;">Statut Actuel</th>
+            <th class="p-3 text-secondary small text-uppercase text-end" style="font-weight: 700; width: 200px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if candidatures %}
+            {% for c in candidatures %}
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                
+                <!-- 1. Identité du Candidat -->
+                <td class="p-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center bg-light text-secondary rounded-circle font-weight-bold" style="width: 40px; height: 40px;">
+                      <i class="ti ti-user" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-0 font-weight-bold text-dark">{{ c.candidat.nom }} {{ c.candidat.prenom }}</h6>
+                      <span class="text-muted small">{{ c.candidat.email }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- 2. Badge de Score Dynamique -->
+                <td class="p-3 text-center">
+                  {% set score = c.details_matching.score %}
+                  <span class="badge px-2 py-1 rounded font-weight-bold" 
+                        style="font-size: 0.8rem;
+                               {% if score >= 75 %}background-color: #e6fffa; color: #0d9488; border: 1px solid #b2f5ea;
+                               {% elif score >= 50 %}background-color: #fefcbf; color: #b7791f; border: 1px solid #fef3c7;
+                               {% else %}background-color: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7;{% endif %}">
+                    {{ score | int }}%
+                  </span>
+                </td>
+
+                <!-- 3. Recommandation Textuelle IA -->
+                <td class="p-3">
+                  <p class="mb-0 text-secondary small text-truncate" style="max-width: 320px;" title="{{ c.details_matching.recommendation }}">
+                    {{ c.details_matching.recommendation or "Aucune recommandation générée." }}
+                  </p>
+                </td>
+
+                <!-- 4. Statut RH avec badges Bootstrap colorés -->
+                <td class="p-3 text-center">
+                  {% if c.statut == 'a_letude' %}
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 rounded small">À l'étude</span>
+                  {% elif c.statut == 'entretien' %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded small">Entretien</span>
+                  {% elif c.statut == 'retenu' %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded small">Retenu</span>
+                  {% elif c.statut == 'refuse' %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded small">Refusé</span>
+                  {% endif %}
+                </td>
+
+                <!-- 5. Sélecteur d'action rapide pour update le statut -->
+
+                <td class="p-3 text-end">
+                    <div class="d-inline-flex gap-2 justify-content-end align-items-center w-100">
+                        
+                        {% if c.statut == 'a_letude' %}
+                        <form method="POST" action="{{ url_for('candidat.avancer_statut', candidature_id=c.id) }}">
+                            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" style="background-color: #2563eb; border-color: #2563eb; font-size: 0.75rem; font-weight: 600;">
+                            <i class="ti ti-calendar-event"></i> Planifier l'entretien
+                            </button>
+                        </form>
+
+                        {% elif c.statut == 'entretien' %}
+                        <!--  MODIFIÉ : Ce bouton ouvre le formulaire pop-up de contrat au lieu de soumettre à l'aveugle -->
+                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3 btn-ouvrir-recrut" 
+                                data-candidature-id="{{ c.id }}"
+                                data-candidat-nom="{{ c.candidat.nom }} {{ c.candidat.prenom }}"
+                                style="background-color: #16a34a; border-color: #16a34a; font-size: 0.75rem; font-weight: 600;">
+                            <i class="ti ti-circle-check"></i> Valider l'embauche
+                        </button>
+
+                        {% elif c.statut == 'retenu' %}
+                        <span class="text-success small font-weight-bold" style="font-size: 0.75rem;">
+                            <i class="ti ti-circle-check-filled"></i> Recrutement finalisé
+                        </span>
+                        {% elif c.statut == 'refuse' %}
+                        <span class="text-muted small italic" style="font-size: 0.75rem;">Dossier classé</span>
+                        {% endif %}
+
+                        {% if c.statut in ['a_letude', 'entretien'] %}
+                        <form method="POST" action="{{ url_for('candidat.refuser_candidature', candidature_id=c.id) }}" onsubmit="return confirm('Écarter définitivement ce candidat ?');">
+                            <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;" title="Refuser le candidat">
+                            <i class="ti ti-x" style="font-size: 1rem;"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+
+                    </div>
+                </td>
+
+
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-5 text-muted">
+                <i class="ti ti-users-minus d-block display-6 mb-2 text-slate-300"></i>
+                <p class="mb-0">Aucun candidat n'a postulé à cette offre pour le moment.</p>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+
+    
+ 
+</div>
+{% endblock %}

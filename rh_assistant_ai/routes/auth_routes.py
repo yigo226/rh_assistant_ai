@@ -13,7 +13,7 @@ from flask import (
 from flask_login import login_required
 from werkzeug.security import (generate_password_hash)
 from config.database import db
-from models.user import User
+from models.user import User, Recruteur
 from werkzeug.security import (check_password_hash)
 from flask_login import ( login_user )
 from flask_login import logout_user
@@ -123,7 +123,8 @@ def login_post():
     email = request.form.get("email")
     password = request.form.get("password")
 
-    # Recherche de l'utilisateur
+    # Recherche globale sur la table parente.
+    # Grâce au polymorphisme, 'user' sera une instance directe de la classe Recruteur ou Candidat.
     user = User.query.filter_by(email=email).first()
 
     # Vérification du mot de passe
@@ -131,17 +132,17 @@ def login_post():
         login_user(user)
         flash("Connexion réussie", "success")
 
-        # --- Redirection intelligente selon le profil ---
-        if user.est_recruteur():
-            #return redirect(url_for('recruteur_bp.liste_offres'))
-            return redirect(url_for('recruteur.dashboard'))  # Redirection vers la page d'accueil pour les recruteurs
+        # --- Redirection intelligente selon la nature de l'objet ---
+        if isinstance(user, Recruteur) or user.est_recruteur():
+            return redirect(url_for('recruteur.dashboard'))
         else:
             return redirect(url_for('home'))
-        # ------------------------------------------------
 
-    # Si les identifiants sont incorrects
+    # ⚠️ RECTIFICATION SÉCURITÉ : Si les identifiants sont faux ou inexistants, 
+    # on doit obligatoirement réafficher la page de connexion (GET /login) 
+    # et non tenter de rediriger vers l'espace candidat qui requiert d'être connecté.
     flash("Identifiants incorrects", "danger")
-    return redirect(url_for("candidat.espace_candidat")) 
+    return redirect(url_for("auth_bp.login")) 
 
 # Déconnexion
 @auth_bp.route("/logout")

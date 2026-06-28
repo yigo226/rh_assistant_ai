@@ -8,7 +8,7 @@ from flask_login import current_user, login_required
 from config.decorateurs import role_required
 from models.offre import Offre
 from models.cv import CV
-from models.candidature import Candidature
+from models.candidature import Candidature, LesRecrutEntreprise
 from models.offre_analyser import OffreAnalyser
 from services.cv_service import save_cv
 from models.match_result import MatchResult
@@ -114,6 +114,112 @@ def postuler_offre(offre_id):
     flash(f"Votre candidature pour « {offre.titre} » a été transmise avec succès après analyse de conformité !", "success")
     return redirect(url_for("candidat.espace_candidat"))
 
+@candidat_bp.route("/candidatListe/<int:offre_id>", methods=["GET"])
+@login_required
+@role_required("recruteur")
+def candidat_liste(offre_id):
+    # 1. Récupération de l'offre en s'assurant qu'elle appartient à la même entreprise
+    offre = Offre.query.get_or_404(offre_id)
+    if offre.user.entreprise_id != current_user.entreprise_id:
+        flash("Accès refusé : Cette offre ne dépend pas de votre établissement.", "danger")
+        return redirect(url_for("recruteur.dashboard"))
+
+    # 2. Récupération des candidatures triées par score de matching décroissant (le meilleur en premier)
+    # On fait une jointure avec MatchResult pour obtenir le score et trier directement [3]
+    candidatures = Candidature.query.filter_by(offre_id=offre.id)\
+        .join(MatchResult, Candidature.match_result_id == MatchResult.id)\
+        .order_by(MatchResult.score.desc()).all()
+
+    return render_template(
+        "candidat_liste.html", 
+        offre=offre, 
+        candidatures=candidatures
+    )
+
+@candidat_bp.route("/update-statut/<int:candidature_id>", methods=["POST"])
+@login_required
+@role_required("recruteur")
+def update_statut(candidature_id):
+    candidature = Candidature.query.get_or_404(candidature_id)
+    
+    # Sécurité d'accès
+    if candidature.offre.user.entreprise_id != current_user.entreprise_id:
+        flash("Action non autorisée.", "danger")
+        return redirect(url_for("recruteur.dashboard"))
+
+    # Récupération de la nouvelle valeur soumise par le select HTML
+    nouveau_statut = request.form.get("nouveau_statut")
+    valeurs_autorisees = ['a_letude', 'entretien', 'retenu', 'refuse']
+    
+    if nouveau_statut in valeurs_autorisees:
+        candidature.statut = nouveau_statut
+        db.session.commit()
+        flash(f"Le statut de {candidature.candidat.nom} a été mis à jour !", "success")
+    else:
+        flash("Statut soumis invalide.", "danger")
+
+    return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
+
+
+@candidat_bp.route("/avancer-statut/<int:candidature_id>", methods=["POST"])
+@login_required
+@role_required("recruteur")
+def avancer_statut(candidature_id):
+    candidature = Candidature.query.get_or_404(candidature_id)
+    
+    # Sécurité d'accès entreprise
+    if candidature.offre.user.entreprise_id != current_user.entreprise_id:
+        flash("Action non autorisée.", "danger")
+        return redirect(url_for("recruteur.dashboard"))
+
+    # CAS 1 : Passage du dossier en Entretien
+    if candidature.statut == "a_letude":
+        candidature.statut = "entretien"
+        db.session.commit()
+        flash(f"Un entretien a été planifié avec {candidature.candidat.nom}.", "success")
+        
+    # CAS 2 : Validation Finale avec collecte des détails du contrat
+    elif candidature.statut == "entretien":
+        candidature.statut = "retenu"
+        
+        # Récupération des données du formulaire de la modale
+        type_contrat = request.form.get("type_contrat")
+        salaire_raw = request.form.get("salaire_propose")
+        date_debut_raw = request.form.get("date_debut")
+        
+        # Conversions sécurisées
+        salaire = float(salaire_raw) if salaire_raw else None
+        date_debut = datetime.strptime(date_debut_raw, "%Y-%m-%d").date() if date_debut_raw else datetime.now(timezone.utc).date()
+
+        # Insertion complète dans le registre
+        nouveau_recrutement = LesRecrutEntreprise(
+            entreprise_id=current_user.entreprise_id,
+            offre_id=candidature.offre_id,
+            candidat_id=candidature.user_id,
+            match_result_id=candidature.match_result_id,
+            type_contrat=type_contrat,
+            salaire_propose=salaire,
+            date_debut=date_debut
+        )
+        db.session.add(nouveau_recrutement)
+        db.session.commit()
+        
+        flash(f"Félicitations ! {candidature.candidat.nom} a été recruté(e) sous contrat {type_contrat}.", "success")
+
+    return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
+
+@candidat_bp.route("/refuser-candidature/<int:candidature_id>", methods=["POST"])
+@login_required
+@role_required("recruteur")
+def refuser_candidature(candidature_id):
+    candidature = Candidature.query.get_or_404(candidature_id)
+    if candidature.offre.user.entreprise_id != current_user.entreprise_id:
+        return redirect(url_for("recruteur.dashboard"))
+        
+    candidature.statut = "refuse"
+    db.session.commit()
+    flash(f"La candidature de {candidature.candidat.nom} a été écartée.", "info")
+    return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
 
 def obtenir_classement_recrutement(id_de_loffre):
     """

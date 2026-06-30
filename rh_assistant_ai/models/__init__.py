@@ -1,4 +1,4 @@
-from .user import User
+from .utilisateur import Utilisateur
 from .cv import CV
 from .cv_analyser import CVAnalyser
 from .offre import Offre

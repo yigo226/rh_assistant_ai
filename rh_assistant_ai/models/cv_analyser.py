@@ -35,5 +35,11 @@ class CVAnalyser(db.Model):
     # Relation bidirectionnelle avec le modèle CV
     cv = db.relationship("CV", back_populates="analyse")
 
+    match_results = db.relationship(
+        "MatchResult", 
+        back_populates="cv_analyser", 
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<CVAnalyser id={self.id} cv_id={self.cv_id}>"

@@ -33,5 +33,12 @@ class OffreAnalyser(db.Model):
     # Ajout de la relation réciproque vers le modèle Offre 
     offre = db.relationship("Offre", back_populates="analyse")
 
+
+    match_results = db.relationship(
+        "MatchResult", 
+        back_populates="offre_analyser", 
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<OffreAnalyser id={self.id} offre_id={self.offre_id}>"

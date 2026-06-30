@@ -1,85 +1,188 @@
-
 import os
+from datetime import datetime, timezone
 from config.database import db
 
-# Blueprint pour les routes liées aux CV
-from flask import Blueprint, render_template
-from flask_login import current_user, login_required
-from config.decorateurs import role_required
-from flask import request, render_template, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_login import login_required, current_user
-from models.offre import Offre
-from models.entreprise_model import Departement
-from models.user import User
-from models.match_result import MatchResult
-from services.cv_service import save_cv
+from config.decorateurs import role_required
 
+# Modèles typés et révisés
+from models import Offre, Departement,  Candidature, LesRecrutEntreprise, MatchResult, CV, CVAnalyser
+from models.entreprise_model  import Entreprise
+from models.utilisateur import Recruteur,Candidat
 
 recruteur_bp = Blueprint(
     "recruteur",
     __name__,
-    url_prefix="/recruteur"
-)
+    url_prefix="/recruteur")
 
-# poster un offre d'emploi
-# charger les offres lier à son entreprise
-# Validation des candidats pour qu'il deviennent des employes
-
+# ============================================================
+# TABLEAU DE BORD (Vue Collaborative de l'Entreprise)
+# ============================================================
 @recruteur_bp.route("/dashboard")
 @login_required
 @role_required("recruteur")
 def dashboard():
-
+    # 🟢 SYNC : Charge TOUTES les offres de l'entreprise (visibles par tous les collègues RH)
     offres = (
         Offre.query
-        .filter_by(user_id=current_user.id)
+        .join(Recruteur)
+        .filter(Recruteur.entreprise_id == current_user.entreprise_id)
         .order_by(Offre.date_creation.desc())
         .all()
     )
 
     departements = (
         Departement.query
-        .filter_by(
-            entreprise_id=current_user.entreprise_id
-        )
+        .filter_by(entreprise_id=current_user.entreprise_id)
         .all()
     )
 
     equipe = (
-        User.query
-        .filter_by(
-            entreprise_id=current_user.entreprise_id
-        )
+        Recruteur.query
+        .filter_by(entreprise_id=current_user.entreprise_id)
         .all()
     )
 
-    # total_matchings = (
-    #     MatchResult.query
-    #     .join(Offre)
-    #     .filter(
-    #         Offre.user_id == current_user.id
-    #     )
-    #     .count()
-    # )
+    total_matchings = (
+        Candidature.query
+        .join(Offre)
+        .join(Recruteur)
+        .filter(Recruteur.entreprise_id == current_user.entreprise_id)
+        .count()
+    )
 
-    # total_employes = (
-    #     MatchResult.query
-    #     .join(Offre)
-    #     .filter(
-    #         Offre.user_id == current_user.id,
-    #         MatchResult.score >= 70
-    #     )
-    #     .count()
-    # )
+    total_employes = (
+        LesRecrutEntreprise.query
+        .filter_by(entreprise_id=current_user.entreprise_id)
+        .count()
+    )
+
     return render_template(
         "dashboardRecruteur.html",
         offres=offres,
         departements=departements,
         equipe=equipe,
+        total_matchings=total_matchings,
+        total_employes=total_employes
     )
 
+# ============================================================
+# SUIVI DES CANDIDATS (Trié par Score d'Adéquation)
+# ============================================================
+@recruteur_bp.route("/candidatListe/<int:offre_id>", methods=["GET"])
+@login_required
+@role_required("recruteur")
+def candidat_liste(offre_id):
+    offre = Offre.query.get_or_404(offre_id)
+    
+    # Sécurité collaborative : n'importe quel recruteur de la même boîte peut y accéder
+    if offre.recruteur.entreprise_id != current_user.entreprise_id:
+        flash("Accès refusé : Cette offre ne dépend pas de votre établissement.", "danger")
+        return redirect(url_for("recruteur.dashboard"))
+
+    # Récupération des candidatures liées à cette offre précise
+    candidatures = Candidature.query.filter_by(offre_id=offre.id).all()
+
+    # Tri manuel côté Python si votre propriété dynamique details_matching est appelée
+    # (Ou via une jointure si vous préférez le SQL brut)
+    try:
+        candidatures.sort(key=lambda c: c.details_matching.score if c.details_matching else 0, reverse=True)
+    except Exception:
+        pass
+
+    return render_template(
+        "recruteur/candidat_liste.html", 
+        offre=offre, 
+        candidatures=candidatures
+    )
+
+# ============================================================
+# TRAITEMENT DES STATUTS ET ARCHIVAGE SIRH (CDI/CDD/SALAIRE)
+# ============================================================
+@recruteur_bp.route("/update-statut/<int:candidature_id>", methods=["POST"])
+@login_required
+@role_required("recruteur")
+def update_statut(candidature_id):
+    candidature = Candidature.query.get_or_404(candidature_id)
+    
+    # Sécurité d'accès collaborative
+    if candidature.offre.recruteur.entreprise_id != current_user.entreprise_id:
+        flash("Action non autorisée.", "danger")
+        return redirect(url_for("recruteur.dashboard"))
+
+    nouveau_statut = request.form.get("nouveau_statut")
+    valeurs_autorisees = ['a_letude', 'entretien', 'retenu', 'refuse']
+    
+    if nouveau_statut in valeurs_autorisees:
+        candidature.statut = nouveau_statut
+        
+        # Si validation finale d'embauche, insertion dans le registre LesRecrutEntreprise
+        if nouveau_statut == 'retenu':
+            type_contrat = request.form.get("type_contrat", "CDI")
+            salaire_raw = request.form.get("salaire_propose")
+            date_debut_raw = request.form.get("date_debut")
+            
+            salaire = float(salaire_raw) if salaire_raw else None
+            date_debut = datetime.strptime(date_debut_raw, "%Y-%m-%d").date() if date_debut_raw else datetime.now(timezone.utc).date()
+
+            # Enregistrement sans redondance basé sur la Candidature unique !
+            nouveau_recrutement = LesRecrutEntreprise(
+                entreprise_id=current_user.entreprise_id,
+                candidature_id=candidature.id,
+                type_contrat=type_contrat,
+                salaire_propose=salaire,
+                date_debut=date_debut
+            )
+            db.session.add(nouveau_recrutement)
+
+        db.session.commit()
+        flash("Le suivi de la candidature a été mis à jour avec succès !", "success")
+    else:
+        flash("Statut soumis invalide.", "danger")
+
+    return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
+
+# ============================================================
+# DÉTAILS INDIVIDUELS DE L'OFFRE
+# ============================================================
 @recruteur_bp.route("/offre/<int:offre_id>")
 @login_required
 @role_required("recruteur")
 def detail_offre(offre_id):
-    return render_template("detailOffre.html", offre_id=offre_id)
+    offre = Offre.query.get_or_404(offre_id)
+    if offre.recruteur.entreprise_id != current_user.entreprise_id:
+        flash("Accès refusé.", "danger")
+        return redirect(url_for("recruteur.dashboard"))
+        
+    return render_template("detailOffre.html", offre=offre)
+
+@recruteur_bp.route("/refuser-candidature/<int:candidature_id>", methods=["POST"])
+@login_required
+@role_required("recruteur")
+def refuser_candidature(candidature_id):
+    candidature = Candidature.query.get_or_404(candidature_id)
+    
+    # CORRECTION : On passe par offre.recruteur.entreprise_id
+    if candidature.offre.recruteur.entreprise_id != current_user.entreprise_id:
+        flash("Action non autorisée.", "danger")
+        return redirect(url_for("recruteur.dashboard")) 
+        
+    candidature.statut = "refuse"
+    db.session.commit()
+    
+    flash(f"La candidature de {candidature.candidat.nom} a été écartée.", "info")
+    return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
+
+def obtenir_classement_recrutement(id_de_loffre):
+    """
+    Retourne la liste de tous les candidats ayant postulé à une offre,
+    classés par ordre décroissant de score de matching (IA).
+    """
+    # CORRECTION : Jointure correcte étape par étape à travers l'analyse du CV et de l'offre
+    return Candidature.query.filter_by(offre_id=id_de_loffre)\
+                            .join(CV)\
+                            .join(CVAnalyser)\
+                            .join(MatchResult, CVAnalyser.id == MatchResult.cv_analyser_id)\
+                            .order_by(MatchResult.score.desc())\
+                            .all()

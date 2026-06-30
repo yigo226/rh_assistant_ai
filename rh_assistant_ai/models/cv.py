@@ -1,3 +1,4 @@
+
 from datetime import datetime, timezone
 from config.database import db
 
@@ -10,42 +11,39 @@ class CV(db.Model):
     contenu_texte = db.Column(db.Text, nullable=True)
     
     date_upload = db.Column(
-        db.DateTime, 
+        db.DateTime(timezone=True), 
         default=lambda: datetime.now(timezone.utc), 
         nullable=False
     )
 
-    # 1. UNIQUE=TRUE empêche la base de données d'accepter deux fois le même user_id
-    user_id = db.Column(
+    est_actif = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False
+    )
+
+    # 🟢 CORRECTION 1 : La clé étrangère pointe strictement sur la table candidats
+    candidat_id = db.Column(
         db.Integer,
-        db.ForeignKey("users.id", ondelete="CASCADE"),
+        db.ForeignKey("candidats.id", ondelete="CASCADE"),
         nullable=False,
-        unique=False  
+        unique=False  # Permet de conserver l'historique de plusieurs fichiers par candidat
     )
 
-    # 2. USELIST=FALSE transforme la liste d'objets en un objet unique côté Python
-    user = db.relationship(
-        "User",
-        backref=db.backref(
-            "cv", # Renommé en "cv" (au singulier) pour correspondre à la logique
-            lazy=True,
-            uselist=False, 
-            cascade="all, delete-orphan"
-        )
+    # 🟢 CORRECTION 2 : Remplacement de la relation User par la relation enfant Candidat (back_populates)
+    candidat = db.relationship(
+        "Candidat",
+        back_populates="cvs"
     )
 
-    # relation bidirectionnel avec CVAnalyser
+    candidatures = db.relationship("Candidature", back_populates="cv", cascade="all, delete-orphan")
+
+    # Relation bidirectionnelle avec CVAnalyser
     analyse = db.relationship(
         "CVAnalyser",
         back_populates="cv",
         uselist=False,
         cascade="all, delete-orphan"
-    )
-
-    est_actif = db.Column(
-        db.Boolean,
-        default= True,
-        nullable= False
     )
 
     def __repr__(self):

@@ -18,6 +18,22 @@
       <!-- 🟢 SOLUTIONS AUX BUGS : Injection des IDs masqués nécessaires pour matching.js -->
       <input type="hidden" name="cv_id" id="hiddenCvId" value="{{ existing_cv.id if existing_cv else '' }}">
       <input type="hidden" name="offre_id" id="hiddenOffreId" value="{{ existing_offre.id if existing_offre else '' }}">
+<div class="container mt-4">
+  <div class="matching-page">
+
+    <div class="matching-header">
+      <h2>Comparer mon CV à une offre</h2>
+      <p class="matching-subtitle">
+        Sélectionnez une offre d'emploi officielle pour évaluer sa compatibilité avec votre profil candidat grâce à l'assistant IA.
+      </p>
+    </div>
+
+    <!-- 🟢 RECTIFICATION : Ouverture propre du conteneur de formulaire sans action brute perturbatrice -->
+    <form id="matchingForm" onsubmit="return false;">
+      
+      <!-- 🟢 DEUX CHAMPS REQUIS : Permettent à matching.js de lire instantanément les IDs d'analyses -->
+      <input type="hidden" id="hiddenCvId" value="{{ existing_cv.analyse.id if (existing_cv and existing_cv.analyse) else '' }}">
+      <input type="hidden" id="hiddenOffreId" value="{{ existing_offre.analyse.id if (existing_offre and existing_offre.analyse) else '' }}">
 
       <!-- ============================================================
            BLOC 1 — CV
@@ -49,16 +65,15 @@
                 <i class="ti ti-file-text match-file-icon"></i>
                 <div class="match-file-info">
                   <span class="match-file-name" id="cvCurrentName">{{ existing_cv.nom_fichier }}</span>
-                  <span class="match-file-meta">PDF</span>
+                  <span class="match-file-meta">PDF Actif</span>
                 </div>
               </div>
               <button type="button" class="match-edit-btn" id="cvEditBtn">
-                <i class="ti ti-edit"></i> Modifier
+                <i class="ti ti-edit"></i> Remplacer
               </button>
-              <!-- Bouton pour voir les résultats de l'analyse -->
               <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" 
                       data-type="cv"
-                      data-analysis-id="{{ existing_cv.analyse.id if existing_cv.analyse else '' }}">
+                      data-analysis-id="{{ existing_cv.analyse.id if (existing_cv and existing_cv.analyse) else '' }}">
                 <i class="ti ti-eye"></i> Voir
               </button>
             </div>
@@ -70,9 +85,6 @@
                 <input type="file" id="cvFileInput" class="form-control" accept=".pdf">
                 <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="cv">
                   <i class="ti ti-upload"></i> Uploader
-                </button>
-                <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" data-type="cv">
-                  <i class="ti ti-eye"></i> Voir
                 </button>
               </div>
               <p class="match-help-text" id="cvFileLabel">Aucun nouveau fichier sélectionné</p>
@@ -107,7 +119,6 @@
             <p class="match-card-sub">Sélectionnez une offre publiée pour lancer la comparaison</p>
           </div>
 
-          <!-- Badge d'état dynamique -->
           <span class="match-status-badge {% if existing_offre %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="offreStatusBadge">
             {% if existing_offre %}
               <i class="ti ti-circle-check"></i> Sélectionnée
@@ -128,6 +139,7 @@
                 <option value="" disabled {% if not existing_offre %}selected{% endif %}>-- Sélectionnez une offre d'emploi --</option>
                 {% for o in offres_publiees %}
                   <option value="{{ o.id }}" 
+                          data-analysis-id="{{ o.analyse.id if o.analyse else '' }}"
                           data-titre="{{ o.titre }}" 
                           data-entreprise="{{ o.entreprise or (o.departement.entreprise.nom if o.departement else 'Entreprise') }}"
                           {% if existing_offre and existing_offre.id == o.id %}selected{% endif %}>
@@ -148,27 +160,20 @@
         </div>
       </div>
 
-
       <!-- ============================================================
           ACTIONS GLOBALES
       ============================================================ -->
       <div class="d-flex flex-wrap gap-3 mt-4">
-        
-        <!-- Bouton pour lancer le calcul (ID harmonisé pour correspondre au script d'autorun) -->
         <button type="button" class="match-submit-btn flex-grow-1" id="btnLaunchMatch" {% if not existing_cv or not existing_offre %}disabled{% endif %}>
-          <i class="ti ti-arrows-diff"></i>
-          Comparer cette offre à mon CV
+          <i class="ti ti-arrows-diff"></i> Comparer cette offre à mon CV
         </button>
 
-        <!-- Bouton de résultat (Initialement discret et inactif) -->
         <button type="button" class="btn btn-outline-secondary flex-grow-1 align-items-center justify-content-center gap-2" 
                 id="btnVoirResultatGlobal" 
                 style="display: none;" 
                 data-match-url="">
-          <i class="ti ti-eye"></i> 
-          Voir le résultat
+          <i class="ti ti-eye"></i> Voir le résultat
         </button>
-
       </div>
 
       <p class="match-help-text text-center mt-2" id="formValidationMessage">
@@ -183,196 +188,6 @@
   </div>
 </div>
 
-
-<script>
-  
-document.addEventListener("DOMContentLoaded", () => {
-
-    // ============================================================
-    // 1. INITIALISATION SYNCHRONE DU STATUT (Jinja -> JavaScript)
-    // ============================================================
-    ['cv', 'offre'].forEach(type => {
-        const badge = document.getElementById(`${type}StatusBadge`);
-        if (badge) {
-            // Si le badge contient la classe de succès (--ok), le système sait que c'est chargé
-            const isLoaded = badge.classList.contains('match-status-badge--ok');
-            badge.setAttribute('data-status', isLoaded ? 'loaded' : 'empty');
-        }
-    });
-
-    // ============================================================
-    // 2. GESTION DU NOM DES FICHIERS ET BASCULEMENT DE VUE
-    // ============================================================
-    ['cv', 'offre'].forEach(type => {
-        const fileInput = document.getElementById(`${type}FileInput`);
-        const fileLabel = document.getElementById(`${type}FileLabel`);
-        const badge = document.getElementById(`${type}StatusBadge`);
-
-        if (fileInput) {
-            fileInput.addEventListener("change", () => {
-                if (fileInput.files.length > 0) {
-                    fileLabel.textContent = fileInput.files[0].name;
-                    // L'utilisateur change le fichier localement -> non synchronisé
-                    badge.setAttribute('data-status', 'dirty');
-                }
-            });
-        }
-
-        // Boutons "Modifier / Charger un autre"
-        const editBtn = document.getElementById(`${type}EditBtn`);
-        if (editBtn) {
-            editBtn.addEventListener('click', () => {
-                document.getElementById(`${type}LoadedView`).style.display = 'none';
-                document.getElementById(`${type}InputWrap`).style.display = 'block';
-                badge.setAttribute('data-status', 'dirty');
-            });
-        }
-    });
-
-    // ============================================================
-    // 3. LOGIQUE D'UPLOAD AJAX FACTORISÉE
-    // ============================================================
-    document.querySelectorAll('.btn-upload-ajax').forEach(button => {
-        button.addEventListener("click", async function() {
-            const targetType = this.getAttribute('data-target'); // 'cv' ou 'offre'
-            const fileInput = document.getElementById(`${targetType}FileInput`);
-            const badge = document.getElementById(`${targetType}StatusBadge`);
-
-            if (!fileInput || !fileInput.files.length) {
-                alert(`Veuillez sélectionner un fichier PDF pour le bloc ${targetType.toUpperCase()}.`);
-                return;
-            }
-
-            const file = fileInput.files[0];
-            const formData = new FormData();
-            
-            // Respect strict des clés attendues par vos services Flask respectifs
-            const formKey = (targetType === 'cv') ? 'cv' : 'file';
-            formData.append(formKey, file);
-
-            try {
-                this.disabled = true;
-                this.innerHTML = '<i class="ti ti-loader text-spin"></i> Analyse...';
-
-                const response = await fetch(`/${targetType}/upload`, {
-                    method: "POST",
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (!data.success) {
-                    alert(data.message);
-                    return;
-                }
-
-                // Passage du badge au Vert (Succès)
-                badge.className = 'match-status-badge match-status-badge--ok';
-                badge.innerHTML = '<i class="ti ti-circle-check"></i> Chargé';
-                badge.setAttribute('data-status', 'loaded'); // Validation pour le bouton final
-
-                // Sauvegarde immédiate de l'ID d'analyse renvoyé par la route d'upload
-                document.querySelectorAll(`.btnVoirAnalyse[data-type="${targetType}"]`)
-                    .forEach(btn => {
-                        btn.dataset.analysisId = data.analysis_id;
-                    });
-
-                alert(`${targetType === 'cv' ? 'Votre CV' : "L'offre d'emploi"} a été traité(e) avec succès.`);
-
-            } catch (error) {
-                console.error(error);
-                alert("Une erreur est survenue lors de la communication avec le serveur.");
-            } finally {
-                this.disabled = false;
-                this.innerHTML = '<i class="ti ti-upload"></i> Uploader';
-            }
-        });
-    });
-
-    // ============================================================
-    // 4. LOGIQUE UNIQUE POUR LES BOUTONS "VOIR" INDIVIDUELS
-    // ============================================================
-    document.querySelectorAll(".btnVoirAnalyse").forEach(btn => {
-        btn.addEventListener("click", function() {
-            const analysisId = this.dataset.analysisId;
-            const targetType = this.getAttribute('data-type');
-
-            if (!analysisId) {
-                alert("Aucune analyse n'est disponible pour ce document pour le moment.");
-                return;
-            }
-
-            window.location.href = `/${targetType}/result/${analysisId}`;
-        });
-    });
-
-    // ============================================================
-    // 5. BOUTON GLOBAL AJAX — APPEL DE LA ROUTE `/run`
-    // ============================================================
-    const matchSubmitBtn = document.getElementById('matchSubmitBtn');
-
-    if (matchSubmitBtn) {
-        matchSubmitBtn.addEventListener('click', async function () {
-            
-            const cvBtn = document.querySelector('.btnVoirAnalyse[data-type="cv"]');
-            const offreBtn = document.querySelector('.btnVoirAnalyse[data-type="offre"]');
-            
-            const cvId = cvBtn ? cvBtn.dataset.analysisId : null;
-            const offreId = offreBtn ? offreBtn.dataset.analysisId : null;
-
-            const cvStatus = document.getElementById('cvStatusBadge').getAttribute('data-status');
-            const offreStatus = document.getElementById('offreStatusBadge').getAttribute('data-status');
-
-            // Vérifications de sécurité basées sur le statut réel
-            if (cvStatus !== 'loaded' || !cvId || cvId === "") {
-                alert("Action impossible : Votre CV doit être chargé et analysé.");
-                return;
-            }
-            if (offreStatus !== 'loaded' || !offreId || offreId === "") {
-                alert("Action impossible : L'offre d'emploi doit être chargée et analysée.");
-                return;
-            }
-
-            // Animation du bouton de chargement
-            this.disabled = true;
-            const originalContent = this.innerHTML;
-            this.innerHTML = '<i class="ti ti-loader text-spin"></i> Calcul de compatibilité...';
-
-            try {
-                const response = await fetch('/matching/run', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        cv_id: parseInt(cvId),
-                        offre_id: parseInt(offreId)
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    // Redirection directe vers la page du rapport global généré
-                    window.location.href = `/matching/rapport/${result.data.id}`;
-                } else {
-                    alert("Erreur de calcul : " + (result.message || "Impossible de matcher les profils."));
-                    this.disabled = false;
-                    this.innerHTML = originalContent;
-                }
-
-            } catch (error) {
-                console.error("Erreur Matching Global:", error);
-                alert("Erreur réseau ou serveur lors de la confrontation des profils.");
-                this.disabled = false;
-                this.innerHTML = originalContent;
-            }
-        });
-    }
-});
-
-
-</script> 
 
 
 {% endblock %}

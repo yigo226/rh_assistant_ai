@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ['cv', 'offre'].forEach(type => {
         const badge = document.getElementById(`${type}StatusBadge`);
         if (badge) {
+            // vue du badge ( succès)
+
+            //const isLoaded = badge.classList.contains('match-status-badge--ok');
+            //badge.setAttribute('data-status', isLoaded ? 'loaded' : 'empty');
             const hasFile = badge.classList.contains('match-status-badge--ok');
             badge.setAttribute('data-status', hasFile ? 'loaded' : 'empty');
         }
@@ -27,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         }
-
+        // Boutons "Modifier / Charger un autre"
         const editBtn = document.getElementById(`${type}EditBtn`);
         if (editBtn) {
             editBtn.addEventListener('click', () => {
@@ -56,6 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const file = fileInput.files[0];
             const formData = new FormData();
+
+            // Respect strict des clés attendues par vos services Flask respectifs
             const formKey = (targetType === 'cv') ? 'cv' : 'file';
             formData.append(formKey, file);
 
@@ -284,4 +290,70 @@ document.addEventListener("DOMContentLoaded", () => {
             iframeViewer.src = "";
         });
     }
+
+
+   // ============================================================
+    // 5. G BOUTON GLOBAL AJAX — APPEL DE LA ROUTE `/run`
+    // ============================================================
+    const matchSubmitBtn = document.getElementById('matchSubmitBtn');
+
+    if (matchSubmitBtn) {
+        matchSubmitBtn.addEventListener('click', async function () {
+            
+            const cvBtn = document.querySelector('.btnVoirAnalyse[data-type="cv"]');
+            const offreBtn = document.querySelector('.btnVoirAnalyse[data-type="offre"]');
+            
+            const cvId = cvBtn ? cvBtn.dataset.analysisId : null;
+            const offreId = offreBtn ? offreBtn.dataset.analysisId : null;
+
+            const cvStatus = document.getElementById('cvStatusBadge').getAttribute('data-status');
+            const offreStatus = document.getElementById('offreStatusBadge').getAttribute('data-status');
+
+            // Vérifications de sécurité basées sur le statut réel
+            if (cvStatus !== 'loaded' || !cvId || cvId === "") {
+                alert("Action impossible : Votre CV doit être chargé et analysé.");
+                return;
+            }
+            if (offreStatus !== 'loaded' || !offreId || offreId === "") {
+                alert("Action impossible : L'offre d'emploi doit être chargée et analysée.");
+                return;
+            }
+
+            // Animation du bouton de chargement
+            this.disabled = true;
+            const originalContent = this.innerHTML;
+            this.innerHTML = '<i class="ti ti-loader text-spin"></i> Calcul de compatibilité...';
+
+            try {
+                const response = await fetch('/matching/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cv_id: parseInt(cvId),
+                        offre_id: parseInt(offreId)
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Redirection directe vers la page du rapport global généré
+                    window.location.href = `/matching/rapport/${result.data.id}`;
+                } else {
+                    alert("Erreur de calcul : " + (result.message || "Impossible de matcher les profils."));
+                    this.disabled = false;
+                    this.innerHTML = originalContent;
+                }
+
+            } catch (error) {
+                console.error("Erreur Matching Global:", error);
+                alert("Erreur réseau ou serveur lors de la confrontation des profils.");
+                this.disabled = false;
+                this.innerHTML = originalContent;
+            }
+        });
+    }
 });
+

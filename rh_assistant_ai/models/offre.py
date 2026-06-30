@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from config.database import db
 
+
 class Offre(db.Model):
     __tablename__ = "offres"
 
@@ -9,59 +10,63 @@ class Offre(db.Model):
     entreprise = db.Column(db.String(255), nullable=True)
     description = db.Column(db.Text, nullable=False)
     
-    # Ajouts indispensables pour l'upload du fichier PDF de l'offre (comme pour le CV)
+    # Éléments indispensables pour l'upload du fichier PDF de l'offre
     nom_fichier = db.Column(db.String(255), nullable=False)
     chemin_fichier = db.Column(db.String(500), nullable=False)
     contenu_texte = db.Column(db.Text, nullable=True)
 
-    # Correction de la date avec fuseau horaire UTC moderne
+    # Suivi temporel moderne en UTC
     date_creation = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
-
     date_limite = db.Column(db.DateTime(timezone=True), nullable=False)
 
-    # Clé étrangère sécurisée avec suppression en cascade
-    user_id = db.Column(
+    #  clé étrangère pointe sur la table recruteurs
+    recruteur_id = db.Column(
         db.Integer,
-        db.ForeignKey("users.id", ondelete="CASCADE"),
+        db.ForeignKey("recruteurs.id", ondelete="CASCADE"),
         nullable=False
     )
-    #  Ajout de la clé  vers la table 'departements'
+    
+    # Clé vers la table 'departements'
     departement_id = db.Column(
         db.Integer, 
         db.ForeignKey("departements.id", ondelete="CASCADE"), 
         nullable=False 
     )
-    # Un utilisateur peut avoir PLUSIEURS offres (contrairement au CV qui est unique)
-    # On garde uselist=True implicite (pas besoin de le spécifier), mais on gère les orphelins.
-    user = db.relationship(
-        "User",
-        backref=db.backref(
-            "offres",
-            lazy=True,
-            cascade="all, delete-orphan"
-        )
+
+    #  pointer  sur 'offres_publiees'
+    recruteur = db.relationship(
+        "Recruteur",
+        back_populates="offres_publiees"
     )
 
-    # relation bidirectionnel avec OffreAnalyser
+    # Relation vers le Département
+    departement = db.relationship(
+        "Departement",
+        back_populates="offres"
+    )
+
+    # Relation bidirectionnelle avec OffreAnalyser
     analyse = db.relationship(
-    "OffreAnalyser",
-    back_populates="offre",
-    uselist=False,
-    cascade="all, delete-orphan"
+        "OffreAnalyser",
+        back_populates="offre",
+        uselist=False,
+        cascade="all, delete-orphan"
     )
 
-    # @property
-    # def total_postulants(self):
-    #     if self.analyse and self.analyse.match_results:
-    #         return len(self.analyse.match_results)
-    #     return 0
+    # Relation bidirectionnelle avec Candidature
+    candidatures = db.relationship(
+        "Candidature",
+        back_populates="offre",
+        cascade="all, delete-orphan"
+    )
+
     @property
     def total_postulants(self):
-        # Utilise le backref 'candidatures' pour compter les lignes liées
+        # 🟢 SUGGESTION SÉCURITÉ : Protection si la relation candidatures n'est pas encore initialisée
         return len(self.candidatures) if self.candidatures else 0
     
     def __repr__(self):

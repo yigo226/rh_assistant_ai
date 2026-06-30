@@ -162,15 +162,16 @@ def calculer_matching(analyse_cv, analyse_offre):
 
 # Enregistrement du résultat du matching en base de données
 # Cette fonction prend en charge la création d'une nouvelle entrée MatchResult
-def enregistrer_match_result(analyse_cv, analyse_offre, metriques, user):
+
+# Cette fonction prend en charge la création d'une nouvelle entrée MatchResult (Épurée)
+def enregistrer_match_result(analyse_cv, analyse_offre, metriques):
     """
     Prend en charge l'instanciation et la sauvegarde du résultat du matching
-    en incluant l'utilisateur et toutes les métriques de compétences JSON.
+    en reliant uniquement les deux analyses et toutes les métriques de compétences JSON.
     """
     try:
-        # Création de l'entité avec TOUTES les données requises par votre table SQL
+        # 🟢 CORRECTION : Instanciation propre sans user_id ni paramètre user
         nouveau_match = MatchResult(
-            user_id=int(user.id),
             cv_analyser_id=int(analyse_cv.id),       
             offre_analyser_id=int(analyse_offre.id),
 
@@ -179,7 +180,7 @@ def enregistrer_match_result(analyse_cv, analyse_offre, metriques, user):
             # Toutes les listes de compétences JSON calculées par le service
             matching_skills=metriques["matching_skills"],
             missing_skills=metriques["missing_skills"],
-            extra_skills=metriques["extra_skills"], # ✅ Ajouté (Manquait)
+            extra_skills=metriques["extra_skills"], 
             
             recommendation=metriques["recommendation"]
         )

@@ -1,8 +1,8 @@
-"""Initiation
+"""Premier migration pour adapter Utilisateur avec les polymorphisme
 
-Revision ID: 60976e266b49
+Revision ID: bd2863264c01
 Revises: 
-Create Date: 2026-06-25 18:24:02.639802
+Create Date: 2026-06-30 06:56:47.333884
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '60976e266b49'
+revision = 'bd2863264c01'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,14 +26,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('nom')
     )
-    op.create_table('departements',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('nom', sa.String(length=100), nullable=False),
-    sa.Column('entreprise_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['entreprise_id'], ['entreprises.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('users',
+    op.create_table('utilisateurs',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nom', sa.String(length=100), nullable=False),
     sa.Column('prenom', sa.String(length=100), nullable=False),
@@ -41,28 +34,43 @@ def upgrade():
     sa.Column('mot_de_passe', sa.String(length=255), nullable=False),
     sa.Column('telephone', sa.String(length=20), nullable=True),
     sa.Column('actif', sa.Boolean(), nullable=True),
-    sa.Column('date_creation', sa.DateTime(), nullable=False),
-    sa.Column('derniere_connexion', sa.DateTime(), nullable=True),
+    sa.Column('date_creation', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('derniere_connexion', sa.DateTime(timezone=True), nullable=True),
     sa.Column('photo', sa.String(length=255), nullable=True),
     sa.Column('bio', sa.Text(), nullable=True),
     sa.Column('role', sa.String(length=20), nullable=False),
-    sa.Column('entreprise_id', sa.Integer(), nullable=True),
-    sa.Column('departement_id', sa.Integer(), nullable=True),
-    sa.CheckConstraint("(role = 'recruteur' AND entreprise_id IS NOT NULL) OR (role != 'recruteur')", name='check_recruteur_has_entreprise'),
-    sa.ForeignKeyConstraint(['departement_id'], ['departements.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['entreprise_id'], ['entreprises.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
+    )
+    op.create_table('candidats',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['id'], ['utilisateurs.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('departements',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('nom', sa.String(length=100), nullable=False),
+    sa.Column('entreprise_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['entreprise_id'], ['entreprises.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('recruteurs',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('entreprise_id', sa.Integer(), nullable=True),
+    sa.CheckConstraint('entreprise_id IS NOT NULL', name='check_recruteur_has_entreprise_strict'),
+    sa.ForeignKeyConstraint(['entreprise_id'], ['entreprises.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['id'], ['utilisateurs.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('cvs',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nom_fichier', sa.String(length=255), nullable=False),
     sa.Column('chemin_fichier', sa.String(length=500), nullable=False),
     sa.Column('contenu_texte', sa.Text(), nullable=True),
-    sa.Column('date_upload', sa.DateTime(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('date_upload', sa.DateTime(timezone=True), nullable=False),
     sa.Column('est_actif', sa.Boolean(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.Column('candidat_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['candidat_id'], ['candidats.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('offres',
@@ -73,11 +81,24 @@ def upgrade():
     sa.Column('nom_fichier', sa.String(length=255), nullable=False),
     sa.Column('chemin_fichier', sa.String(length=500), nullable=False),
     sa.Column('contenu_texte', sa.Text(), nullable=True),
-    sa.Column('date_creation', sa.DateTime(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('date_creation', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('date_limite', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('recruteur_id', sa.Integer(), nullable=False),
     sa.Column('departement_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['departement_id'], ['departements.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['recruteur_id'], ['recruteurs.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('candidatures',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('statut', sa.String(length=30), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('candidat_id', sa.Integer(), nullable=False),
+    sa.Column('offre_id', sa.Integer(), nullable=False),
+    sa.Column('cv_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['candidat_id'], ['candidats.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['cv_id'], ['cvs.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['offre_id'], ['offres.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('cv_analyses',
@@ -103,9 +124,20 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('offre_id')
     )
+    op.create_table('les_recrut_entreprise',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('date_recrutement', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('type_contrat', sa.String(length=50), nullable=False),
+    sa.Column('salaire_propose', sa.Float(), nullable=True),
+    sa.Column('date_debut', sa.Date(), nullable=False),
+    sa.Column('entreprise_id', sa.Integer(), nullable=False),
+    sa.Column('candidature_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['candidature_id'], ['candidatures.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['entreprise_id'], ['entreprises.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('match_results',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('cv_analyser_id', sa.Integer(), nullable=False),
     sa.Column('offre_analyser_id', sa.Integer(), nullable=False),
     sa.Column('score', sa.Float(), nullable=False),
@@ -114,9 +146,8 @@ def upgrade():
     sa.Column('extra_skills', sa.JSON(), nullable=True),
     sa.Column('recommendation', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['cv_analyser_id'], ['cv_analyses.id'], ),
-    sa.ForeignKeyConstraint(['offre_analyser_id'], ['offre_analyses.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['cv_analyser_id'], ['cv_analyses.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['offre_analyser_id'], ['offre_analyses.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
@@ -125,11 +156,15 @@ def upgrade():
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('match_results')
+    op.drop_table('les_recrut_entreprise')
     op.drop_table('offre_analyses')
     op.drop_table('cv_analyses')
+    op.drop_table('candidatures')
     op.drop_table('offres')
     op.drop_table('cvs')
-    op.drop_table('users')
+    op.drop_table('recruteurs')
     op.drop_table('departements')
+    op.drop_table('candidats')
+    op.drop_table('utilisateurs')
     op.drop_table('entreprises')
     # ### end Alembic commands ###

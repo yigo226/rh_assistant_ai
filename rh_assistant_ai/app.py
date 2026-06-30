@@ -2,7 +2,7 @@ from flask import Flask, render_template
 from config.login_manager import login_manager
 from config.settings import Config
 from config.database import db, migrate
-from models.user import User
+from models.utilisateur import Utilisateur
 
 from routes.auth_routes import auth_bp
 from routes.cv_routes import cv_bp

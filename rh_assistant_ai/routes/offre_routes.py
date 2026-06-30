@@ -1,54 +1,29 @@
 import os
-from flask import send_file, abort
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    session,
-    jsonify,
-)
-
-from flask_login import (
-    login_required,
-    current_user
-)
-
+from datetime import datetime, timezone
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, send_file, abort
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 from config.database import db
 from config.decorateurs import role_required
-from models.offre import Offre
-
-from werkzeug.utils import secure_filename
-from models.offre_analyser import OffreAnalyser
-from services.offre_service import analyseur_texte_extrait, save_offre
-from models.entreprise_model import Departement
-from services.file_service import extract_text 
-
-import os
-from datetime import datetime
-from flask import render_template, request, redirect, url_for, flash
-from flask_login import current_user, login_required
-
-
+from models import Offre, OffreAnalyser, Departement
+from models.utilisateur import Recruteur
+from services.offre_service import save_offre
 
 offre_bp = Blueprint(
     "offre",
     __name__,
     url_prefix="/offre"
 )
-import os
-from datetime import datetime, timezone
-from flask import render_template, request, flash, redirect, url_for
-from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
 
-
+# ============================================================
+# 1. CRÉATION MANUELLE D'OFFRE (Via Formulaire Recruteur)
+# ============================================================
 @offre_bp.route("/creer", methods=["GET", "POST"])
 @login_required
 @role_required("recruteur")
 def creer_offre():
-    # Sécurité Entreprise
+    # Sécurité Établissement
     if not current_user.entreprise_id:
         flash("Vous devez être rattaché à une entreprise pour poster une offre.", "danger")
         return redirect(url_for("recruteur.dashboard"))
@@ -58,7 +33,7 @@ def creer_offre():
         description = request.form.get("description")
         departement_id = request.form.get("departement_id")
         
-        # 1. Traitement de la date limite en UTC
+        # Traitement de la date limite en UTC moderne avec fuseau horaire
         date_limite_raw = request.form.get("date_limite")
         if date_limite_raw:
             date_limite = datetime.fromisoformat(date_limite_raw).replace(tzinfo=timezone.utc)
@@ -66,26 +41,25 @@ def creer_offre():
             flash("La date limite est obligatoire", "danger")
             return redirect(request.url)
         
-        # 2. Récupération du fichier PDF
+        # Récupération du fichier PDF
         file = request.files.get("fichier_pdf")
         if not file or file.filename == '':
             flash("Le fichier PDF officiel de l'offre est obligatoire", "danger")
             return redirect(request.url)
 
-        # 3. Sécurité Département
+        # Validation de sécurité pour le département
         id_dep_selectionne = int(departement_id)
         dep_valide = Departement.query.filter_by(id=id_dep_selectionne, entreprise_id=current_user.entreprise_id).first()
         if not dep_valide:
             flash("Département sélectionné invalide.", "danger")
             return redirect(request.url)
 
-        # 4. Identification de l'entreprise
         nom_entreprise = current_user.entreprise.nom
 
-        # 5. Appel de la logique unifiée (Sauvegarde + Extraction + Analyse IA)
+        # 🟢 CORRECTION : Passage de recruteur=current_user (conforme au nouveau service)
         offre, synthese, infos = save_offre(
             file=file,
-            user=current_user,
+            recruteur=current_user,
             titre=titre,
             description=description,
             date_limite=date_limite,
@@ -93,91 +67,20 @@ def creer_offre():
             nom_entreprise=nom_entreprise
         )
 
-        # Enregistrement optionnel dans la session de l'offre courante (comme votre ancienne route)
+        # Archivage de l'ID en session pour les processus de matching automatiques
         session['current_offre_id'] = offre.id
         
         flash("L'offre a été créée, enregistrée et analysée par l'IA avec succès !", "success")
         return redirect(url_for("recruteur.dashboard"))
 
-    # En méthode GET
+    # En méthode GET : Récupération des services de l'entreprise pour alimenter le select
     departements = Departement.query.filter_by(entreprise_id=current_user.entreprise_id).all()
     return render_template("offre/create.html", departements=departements)
 
 
-# @offre_bp.route("/creer", methods=["GET", "POST"])
-# @login_required
-# @role_required("recruteur")
-# def creer_offre():
-#     # Sécurité : On vérifie immédiatement que le recruteur a bien une entreprise associée
-#     if not current_user.entreprise_id:
-#         flash("Vous devez être rattaché à une entreprise pour poster une offre.", "danger")
-#         return redirect(url_for("recruteur.dashboard"))
-
-#     if request.method == "POST":
-#         titre = request.form.get("titre")
-#         description = request.form.get("description")
-#         departement_id = request.form.get("departement_id")
-        
-#         # 1. Conversion de la date limite reçue du HTML (input type="datetime-local" ou "date")
-#         # On ajoute impérativement l'information du fuseau horaire UTC pour éviter le conflit
-#         date_limite_raw = request.form.get("date_limite")
-#         if date_limite_raw:
-#             # datetime.fromisoformat convertit la chaîne, puis .replace(tzinfo=timezone.utc) la rend "Aware"
-#             date_limite = datetime.fromisoformat(date_limite_raw).replace(tzinfo=timezone.utc)
-#         else:
-#             flash("La date limite est obligatoire", "danger")
-#             return redirect(request.url)
-        
-#         # Gestion du fichier PDF
-#         file = request.files.get("fichier_pdf")
-#         if file and file.filename != '':
-#             nom_fichier = secure_filename(file.filename)
-#             # Bonne pratique : s'assurer que le dossier existe sur le serveur
-#             os.makedirs("static/uploads/offres", exist_ok=True)
-#             chemin_fichier = os.path.join("static/uploads/offres", nom_fichier)
-#             file.save(chemin_fichier)
-#             contenu_texte = "Texte extrait du PDF..." # Votre logique d'extraction
-#         else:
-#             flash("Le fichier PDF est obligatoire", "danger")
-#             return redirect(request.url)
-
-#         # 2. Récupération automatique du nom de l'entreprise via la relation de l'utilisateur connecté
-#         nom_entreprise = current_user.entreprise.nom
-
-#         # 3. Validation de sécurité pour le département
-#         # On s'assure que le département choisi appartient bien à l'entreprise du recruteur connecté
-#         id_dep_selectionne = int(departement_id)
-#         dep_valide = Departement.query.filter_by(id=id_dep_selectionne, entreprise_id=current_user.entreprise_id).first()
-        
-#         if not dep_valide:
-#             flash("Département sélectionné invalide.", "danger")
-#             return redirect(request.url)
-
-#         # Création de l'offre
-#         nouvelle_offre = Offre(
-#             titre=titre,
-#             entreprise=nom_entreprise,
-#             description=description,
-#             nom_fichier=nom_fichier,
-#             chemin_fichier=chemin_fichier,
-#             contenu_texte=contenu_texte,
-#             date_limite=date_limite,       # Désormais synchronisé en UTC !
-#             user_id=current_user.id,
-#             departement_id=id_dep_selectionne
-#         )
-        
-#         db.session.add(nouvelle_offre)
-#         db.session.commit()
-        
-#         flash("L'offre a été créée avec succès !", "success")
-#         return redirect(url_for("recruteur.dashboard"))
-
-#     # En méthode GET : Récupération des départements liés uniquement à l'entreprise du recruteur
-#     departements = Departement.query.filter_by(entreprise_id=current_user.entreprise_id).all()
-    
-#     return render_template("offre/create.html", departements=departements)
-
-
+# ============================================================
+# 2. UPLOAD RAPIDE D'OFFRE (Via Requête AJAX du Matching)
+# ============================================================
 @offre_bp.route("/upload", methods=["POST"])
 @login_required
 def upload_offre():
@@ -186,13 +89,30 @@ def upload_offre():
     if not file:
         return jsonify({"success": False, "message": "Aucun fichier sélectionné"}), 400
 
-    # Chaque upload crée une nouvelle entrée indépendante dans l'historique de l'utilisateur
+    # 🟢 CORRECTION ALIGNEMENT ARGUMENTS : Extraction de valeurs de secours pour éviter le crash à 7 paramètres
+    # On utilise le nom du fichier nettoyé comme titre par défaut
+    titre_secours = secure_filename(file.filename).rsplit('.', 1)[0]
     
-    # Traiter et sauvegarder la nouvelle offre
-    offre, synthese_criteres_offre, informations_extraites = save_offre(file, current_user)
+    # On affecte arbitrairement le premier département de l'entreprise ou une date limite à J+30
+    from datetime import timedelta
+    date_limite_secours = datetime.now(timezone.utc) + timedelta(days=30)
+    
+    # Récupération sécurisée du département de l'entreprise
+    premier_dep = Departement.query.filter_by(entreprise_id=current_user.entreprise_id).first()
+    id_dep = premier_dep.id if premier_dep else 1
+    nom_ent = current_user.entreprise.nom if current_user.entreprise else "Entreprise Externe"
 
-    # On stocke l'ID de cette offre précise en session pour savoir sur laquelle 
-    # l'utilisateur travaille actuellement
+    # Traiter et sauvegarder la nouvelle offre en lui injectant les 7 paramètres requis
+    offre, synthese_criteres_offre, informations_extraites = save_offre(
+        file=file,
+        recruteur=current_user,
+        titre=titre_secours,
+        description="Fiche de poste importée via l'interface d'analyse rapide.",
+        date_limite=date_limite_secours,
+        departement_id=id_dep,
+        nom_entreprise=nom_ent
+    )
+
     session['current_offre_id'] = offre.id
 
     return jsonify({
@@ -204,20 +124,16 @@ def upload_offre():
     })
 
 
-
+# ============================================================
+# 3. VISUALISATION DES COMPÉTENCES EXTRAITES PAR L'IA
+# ============================================================
 @offre_bp.route("/result/<int:analysis_id>")
 @login_required
 def view_result(analysis_id):
-    # Récupérer les critères extraits de l'offre ou renvoyer une erreur 404
+    # Récupérer les critères extraits ou renvoyer une erreur 404
     informations_extraites = OffreAnalyser.query.get_or_404(analysis_id)
-    print("Le contenu de informations_extraites dans offre_route : ", informations_extraites)
-
-    # Accès à l'offre parente via la relation back_populates du modèle
     offre_utilisateur = informations_extraites.offre
-    print("Le contenu de offre_utilisateur dans offre_route : ", offre_utilisateur)
     
-    print(type(informations_extraites.skills))
-    print(informations_extraites.skills)
     return render_template(
         "offre/result.html",
         offre_utilisateur=offre_utilisateur,
@@ -225,21 +141,24 @@ def view_result(analysis_id):
     )
 
 
-
-
-# afficher un offre
+# ============================================================
+# 4. ENVOI FLUIDE DU PDF (Pour la Modale Intégrée de l'Œil 👁️)
+# ============================================================
 @offre_bp.route("/pdf/<int:offre_id>")
 @login_required
 def voir_pdf(offre_id):
-
     offre = Offre.query.get_or_404(offre_id)
 
-    # Vérification de sécurité
-    # (à adapter selon tes règles métier)
-
-    if not offre.chemin_fichier:
+    # 🟢 SÉCURITÉ COLLABORATIVE : Un recruteur ne peut voir que les PDF de sa propre boîte
+    if current_user.est_recruteur():
+        if offre.recruteur.entreprise_id != current_user.entreprise_id:
+            abort(403) # Interdit si l'offre appartient à une entreprise concurrente
+            
+    # Si le chemin du fichier n'existe pas physiquement sur le disque
+    if not offre.chemin_fichier or not os.path.exists(offre.chemin_fichier):
         abort(404)
 
+    # Envoi sécurisé du flux binaire interprétable directement par l'iframe HTML
     return send_file(
         offre.chemin_fichier,
         mimetype="application/pdf",

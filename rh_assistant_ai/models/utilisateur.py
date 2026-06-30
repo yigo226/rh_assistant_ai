@@ -3,10 +3,16 @@ from datetime import datetime, timezone
 from config.database import db
 
 # ============================================================
-# 1. CLASSE PARENTE GLOBAL : USER
+from flask_login import UserMixin
+from datetime import datetime, timezone
+from config.database import db
+
 # ============================================================
-class User(UserMixin, db.Model):
-    __tablename__ = "users"
+# 1. CLASSE PARENTE : UTILISATEUR
+# ============================================================
+class Utilisateur(UserMixin, db.Model):
+    # Changement du nom de la table en français
+    __tablename__ = "utilisateurs"
 
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(100), nullable=False)
@@ -16,18 +22,18 @@ class User(UserMixin, db.Model):
     telephone = db.Column(db.String(20), nullable=True)
     actif = db.Column(db.Boolean, default=True)
     
-    # Remplacement moderne recommandé de utcnow (obsolète en Python 3.12+)
+    # Gestion du temps UTC moderne
     date_creation = db.Column(
-        db.DateTime, 
+        db.DateTime(timezone=True), 
         default=lambda: datetime.now(timezone.utc), 
         nullable=False
     )
 
-    derniere_connexion = db.Column(db.DateTime, nullable=True)
+    derniere_connexion = db.Column(db.DateTime(timezone=True), nullable=True)
     photo = db.Column(db.String(255), nullable=True)
     bio = db.Column(db.Text, nullable=True)
     
-    # Champ discriminateur pour indiquer à SQLAlchemy la classe enfant associée
+    # Champ discriminateur pour l'héritage
     role = db.Column(db.String(20), default="candidat", nullable=False) 
 
     # Configuration du mappage polymorphique parent
@@ -45,38 +51,53 @@ class User(UserMixin, db.Model):
         return self.role == "employe"
 
     def __repr__(self):
-        return f"<User {self.email} - Rôle: {self.role}>"
+        return f"<Utilisateur {self.email} - Rôle: {self.role}>"
 
 
 # ============================================================
 # 2. CLASSE ENFANT EXCLUSIVE : CANDIDAT
 # ============================================================
-class Candidat(User):
+class Candidat(Utilisateur):
     __tablename__ = "candidats"
 
     # Clé primaire liée à la table parente via une contrainte de cascade
-    id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    id = db.Column(db.Integer, db.ForeignKey("utilisateurs.id", ondelete="CASCADE"), primary_key=True)
     
-    # Champ spécifique d'affectation si le candidat est plus tard embauché / retenu
-    departement_id = db.Column(
-        db.Integer, 
-        db.ForeignKey("departements.id", ondelete="SET NULL"), 
-        nullable=True
+    cvs = db.relationship(
+        "CV", 
+        back_populates="candidat", 
+        cascade="all, delete-orphan"
     )
+    
+    # candidatures = db.relationship(
+    #     "Candidature", 
+    #     back_populates="candidat", 
+    #     cascade="all, delete-orphan"
+    # )
+
+    @property
+    def candidatures(self):
+        liste = []
+        for mon_cv in self.cvs:
+            liste.extend(mon_cv.candidatures)
+        return liste
 
     # Identité polymorphique associée
     __mapper_args__ = {
         "polymorphic_identity": "candidat",
     }
 
+    def __repr__(self):
+        return f"<Candidat ID={self.id} Email={self.email}>"
+
 
 # ============================================================
 # 3. CLASSE ENFANT EXCLUSIVE : RECRUTEUR
 # ============================================================
-class Recruteur(User):
+class Recruteur(Utilisateur):
     __tablename__ = "recruteurs"
 
-    id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    id = db.Column(db.Integer, db.ForeignKey("utilisateurs.id", ondelete="CASCADE"), primary_key=True)
 
     # Déplacement de la clé étrangère d'entreprise : Uniquement pour les recruteurs
     entreprise_id = db.Column(
@@ -84,6 +105,15 @@ class Recruteur(User):
         db.ForeignKey("entreprises.id", ondelete="SET NULL"), 
         nullable=True # Mis à True temporairement pour l'étape d'inscription initiale, vérifié par la contrainte ci-dessous
     )
+    offres_publiees = db.relationship(
+        "Offre", 
+        back_populates="recruteur", 
+        cascade="all, delete-orphan"
+    )
+
+
+    # Relation ORM propre transférée à l'enfant
+    entreprise = db.relationship("Entreprise", back_populates="employes")
 
     # Sécurisation : Déplacement logique de la contrainte métier au niveau de la table enfant
     __table_args__ = (
@@ -93,8 +123,6 @@ class Recruteur(User):
         ),
     )
 
-    # Relation ORM propre transférée à l'enfant
-    entreprise = db.relationship("Entreprise", back_populates="employes")
 
     # Identité polymorphique associée
     __mapper_args__ = {

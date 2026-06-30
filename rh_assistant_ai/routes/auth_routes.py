@@ -1,163 +1,92 @@
-from flask import Blueprint
-auth_bp = Blueprint( 
-    "auth", 
-    __name__, 
-    url_prefix="/auth" )
-from flask import (
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash
-)
-from flask_login import login_required
-from werkzeug.security import (generate_password_hash)
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required, login_user, logout_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from config.database import db
-from models.user import User, Recruteur
-from werkzeug.security import (check_password_hash)
-from flask_login import ( login_user )
-from flask_login import logout_user
 
+# Importation de la classe mère et des deux classes enfants exclusivités
+from models.utilisateur import Utilisateur, Recruteur, Candidat
 
-# inscription
+auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+# ============================================================
+# INSCRIPTION (Gère dynamiquement les Candidats et Recruteurs)
+# ============================================================
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
-
         nom = request.form.get("nom")
         prenom = request.form.get("prenom")
         email = request.form.get("email")
         password = request.form.get("password")
 
-        # Vérifier si email existe
-        user = User.query.filter_by(
-            email=email
-        ).first()
+        # Vérifier si l'email existe déjà
+        utilisateur_existant = Utilisateur.query.filter_by(email=email).first()
+        if utilisateur_existant:
+            flash("Email déjà utilisé", "danger")
+            return redirect(url_for("auth.register"))
 
-        if user:
-            flash(
-                "Email déjà utilisé",
-                "danger"
-            )
-            return redirect(
-                url_for("auth.register")
-            )
+        # Hachage du mot de passe
+        hashed_password = generate_password_hash(password)
 
-        # Hash du mot de passe
-        hashed_password = generate_password_hash(
-            password
-        )
-
-        new_user = User(
+        # 🟢 SÉCURITÉ : Tout le monde s'inscrit en tant que "Candidat"
+        nouveau_candidat = Candidat(
             nom=nom,
             prenom=prenom,
             email=email,
             mot_de_passe=hashed_password
         )
 
-        db.session.add(new_user)
+        db.session.add(nouveau_candidat)
         db.session.commit()
 
-        flash(
-            "Compte créé avec succès",
-            "success"
-        )
+        flash("Votre compte candidat a été créé avec succès !", "success")
+        return redirect(url_for("auth.login"))
 
-        return redirect(
-            url_for("auth.login")
-        )
-
-    return render_template(
-        "auth/register.html"
-    )
+    return render_template("auth/register.html")
 
 
-# Connexion
-# @auth_bp.route("/login", methods=["GET", "POST"])
-# def login():
-
-#     if request.method == "POST":
-
-#         email = request.form.get("email")
-#         password = request.form.get("password")
-
-#         user = User.query.filter_by(
-#             email=email
-#         ).first()
-
-#         if user and check_password_hash(
-#             user.mot_de_passe,
-#             password
-#         ):
-        
-#             login_user(user)
-
-#             flash(
-#                 "Connexion réussie",
-#                 "success"
-#             )
-
-#             return redirect(
-#                 url_for("home")
-#             )
-
-#         flash(
-#             "Identifiants incorrects",
-#             "danger"
-#         )
-
-#     return render_template(
-#         "auth/login.html"
-#     )
-
-# 1. Affichage du formulaire de connexion (Méthode GET)
+# ============================================================
+# CONNEXION (Méthode GET — Affichage)
+# ============================================================
 @auth_bp.route("/login", methods=["GET"])
 def login():
     return render_template("auth/login.html")
 
 
-# 2. Traitement des données du formulaire (Méthode POST)
+# ============================================================
+# CONNEXION (Méthode POST — Traitement)
+# ============================================================
 @auth_bp.route("/login", methods=["POST"])
 def login_post():
     email = request.form.get("email")
     password = request.form.get("password")
 
-    # Recherche globale sur la table parente.
-    # Grâce au polymorphisme, 'user' sera une instance directe de la classe Recruteur ou Candidat.
-    user = User.query.filter_by(email=email).first()
+    # Recherche globale sur la table parente 'utilisateurs'.
+    # Grâce au polymorphisme, 'utilisateur' sera un objet Recruteur ou Candidat complet.
+    utilisateur = Utilisateur.query.filter_by(email=email).first()
 
     # Vérification du mot de passe
-    if user and check_password_hash(user.mot_de_passe, password):
-        login_user(user)
+    if utilisateur and check_password_hash(utilisateur.mot_de_passe, password):
+        login_user(utilisateur)
         flash("Connexion réussie", "success")
 
-        # --- Redirection intelligente selon la nature de l'objet ---
-        if isinstance(user, Recruteur) or user.est_recruteur():
+        # Redirection intelligente selon la nature de l'objet (ou le rôle)
+        if isinstance(utilisateur, Recruteur) or utilisateur.est_recruteur():
             return redirect(url_for('recruteur.dashboard'))
         else:
             return redirect(url_for('home'))
 
-    # ⚠️ RECTIFICATION SÉCURITÉ : Si les identifiants sont faux ou inexistants, 
-    # on doit obligatoirement réafficher la page de connexion (GET /login) 
-    # et non tenter de rediriger vers l'espace candidat qui requiert d'être connecté.
+    # 🟢 FIX SÉCURITÉ : La route de redirection exacte est auth.login (et non auth_bp.login)
     flash("Identifiants incorrects", "danger")
-    return redirect(url_for("auth_bp.login")) 
+    return redirect(url_for("auth.login")) 
 
-# Déconnexion
+
+# ============================================================
+# DÉCONNEXION
+# ============================================================
 @auth_bp.route("/logout")
 @login_required
 def logout():
-
     logout_user()
-
-    flash(
-        "Déconnexion réussie",
-        "success"
-    )
- 
- 
-    return redirect(
-        url_for("auth.login")
-    )
-
+    flash("Déconnexion réussie", "success")
+    return redirect(url_for("auth.login"))

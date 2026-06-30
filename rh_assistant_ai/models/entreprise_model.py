@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 
-from models.user import User
+from models.utilisateur import Utilisateur
 from config.database import db
-
 
 class Entreprise(db.Model):
     __tablename__ = "entreprises"
@@ -12,10 +11,17 @@ class Entreprise(db.Model):
     site_web = db.Column(db.String(255), nullable=True)
     description = db.Column(db.Text, nullable=True)
 
-    # Relations réciproques
+    # 1. Vos départements/services
     departements = db.relationship("Departement", backref="entreprise", cascade="all, delete-orphan")
-    employes = db.relationship("User", 
-                               back_populates="entreprise")
+    
+    # 2. Vos collaborateurs RH existants (Vos recruteurs connectés)
+    # ⚠️ Gardez "employes" intact comme dans votre code d'origine !
+    employes = db.relationship("Recruteur", back_populates="entreprise")
+
+    # 3. 🟢 NOUVELLE RELATION DISTINCTE : Le registre des recrutements IA validés
+    # On la nomme "recrutements" pour qu'elle ne vienne pas écraser vos recruteurs
+    recrutements = db.relationship("LesRecrutEntreprise", back_populates="entreprise", cascade="all, delete-orphan")
+
 
 class Departement(db.Model):
     __tablename__ = "departements"
@@ -30,12 +36,11 @@ class Departement(db.Model):
                                 nullable=False)
 
     # Relation vers les offres
-    offres = db.relationship("Offre", backref="departement")
-
+    offres = db.relationship("Offre", back_populates="departement")
 
 
 def embaucher_candidat(id_candidat, id_departement, id_entreprise):
-    candidat = User.query.get(id_candidat)
+    candidat = Utilisateur.query.get(id_candidat)
     
     if candidat:
         # Le candidat est rattaché à l'entreprise et au département cible

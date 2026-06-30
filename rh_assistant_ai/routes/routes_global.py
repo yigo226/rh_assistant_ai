@@ -1,29 +1,10 @@
-from flask import (
-    Blueprint,
-    jsonify,
-    render_template,
-    request,
-    flash,
-    redirect,
-    url_for
-)
-
 import os
-from config.database import db
-
-# Blueprint pour les routes liées aux CV
-from flask import Blueprint
-from flask_login import current_user, login_required
-from config.decorateurs import role_required
-from models.cv import CV
-
-from services.cv_service import save_cv
-from flask import request, render_template, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_login import login_required, current_user
 from config.database import db
-from models.cv import CV
-from models.offre import Offre
 
+# Importations des modèles mis à jour
+from models import CV, Offre
 
 global_bp = Blueprint(
     "global",
@@ -34,16 +15,18 @@ global_bp = Blueprint(
 @global_bp.route("/matching", methods=["GET", "POST"])
 @login_required
 def matching():
-    print(" Call matching route")
+    print("Call matching route")
+    
     # ============================================================
     # COMPORTEMENT SÉCURISÉ — MÉTHODE POST (Lancement du Matching)
     # ============================================================
     if request.method == "POST":
-        # 1. Récupérer le CV unique de l'utilisateur
-        existing_cv = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
+        # 1. Récupérer le CV unique de l'utilisateur connecté
+        # 🟢 CORRECTION : Utilisation de la colonne candidat_id
+        existing_cv = CV.query.filter_by(candidat_id=current_user.id, est_actif=True).first()
         if not existing_cv or not existing_cv.analyse:
             flash("Action impossible : Votre CV n'est pas chargé ou analysé dans le système.", "danger")
-            return redirect(url_for('global_bp.matching'))
+            return redirect(url_for('global.matching'))
 
         # 2. Récupérer l'offre active sélectionnée dans la session de l'utilisateur
         current_offre_id = session.get('current_offre_id')
@@ -55,7 +38,7 @@ def matching():
         # Sécurité : Si aucune offre en session ou pas d'analyse rattachée
         if not existing_offre or not existing_offre.analyse:
             flash("Action impossible : Aucune offre d'emploi n'est sélectionnée ou analysée.", "danger")
-            return redirect(url_for('global_bp.matching'))
+            return redirect(url_for('global.matching'))
 
         # 3. Récupération des données extraites (JSON) pour l'algorithme de comparaison
         donnees_cv = existing_cv.analyse       # Contient skills, diplomas, experiences du CV
@@ -63,9 +46,6 @@ def matching():
 
         # ------------------------------------------------------------
         # Simulation de score (votre logique d'algorithme / IA prend le relais ici)
-        # ICI : Insérez l'appel à votre algorithme ou IA de Matching
-        # Exemple basique pour le rendu final :
-        # score_matching = votre_fonction_matching(donnees_cv, donnees_offre)
         # ------------------------------------------------------------
         score_matching = 85 # Score de simulation pour l'exemple
 
@@ -91,32 +71,29 @@ def matching():
             session['current_offre_id'] = offre_selectionnee.id
             flash(f"Offre « {offre_selectionnee.titre} » chargée avec succès pour la comparaison.", "success")
 
-    # 1. Récupérer le CV de référence unique de l'utilisateur
-    existing_cv = CV.query.filter_by(user_id=current_user.id, est_actif=True).first()
+    # 2. Récupérer le CV de référence unique de l'utilisateur
+    # 🟢 CORRECTION : Utilisation de la colonne candidat_id
+    existing_cv = CV.query.filter_by(candidat_id=current_user.id, est_actif=True).first()
 
-    # 2. Récupérer l'offre active via la session (Plan A - Historique)
+    # 3. Récupérer l'offre active via la session (Plan A - Historique)
     existing_offre = None
     current_offre_id = session.get('current_offre_id')
     
     if current_offre_id:
         existing_offre = Offre.query.get(current_offre_id)
     
-    # Sécurité Plan A : Si la session s'est vidée mais que l'utilisateur a un historique, 
-    # on sélectionne automatiquement la toute dernière offre qu'il a analysée.
+    # 🟢 SÉCURITÉ PLAN A CORRIGÉE : Si la session est vide, 
+    # on charge simplement la toute dernière offre générale du catalogue public
     if not existing_offre:
-        existing_offre = Offre.query.filter_by(user_id=current_user.id).order_by(Offre.id.desc()).first()
+        existing_offre = Offre.query.order_by(Offre.date_creation.desc()).first()
         if existing_offre:
             session['current_offre_id'] = existing_offre.id
 
-    # Rendu final du formulaire de comparaison
+    # 4. Rendu final du formulaire de comparaison avec le catalogue complet des offres publiées
     offres_publiees = Offre.query.all()
     return render_template(
         "upload.html",  
         existing_cv=existing_cv, 
         existing_offre=existing_offre,
-        offres_publiees= offres_publiees
+        offres_publiees=offres_publiees
     )
-
-
-
-

@@ -15,12 +15,27 @@ class Entreprise(db.Model):
     departements = db.relationship("Departement", backref="entreprise", cascade="all, delete-orphan")
     
     # 2. Vos collaborateurs RH existants (Vos recruteurs connectés)
-    # ⚠️ Gardez "employes" intact comme dans votre code d'origine !
     employes = db.relationship("Recruteur", back_populates="entreprise")
 
-    # 3. 🟢 NOUVELLE RELATION DISTINCTE : Le registre des recrutements IA validés
+    # 3.  RELATION DISTINCTE : Le registre des recrutements IA validés
     # On la nomme "recrutements" pour qu'elle ne vienne pas écraser vos recruteurs
     recrutements = db.relationship("LesRecrutEntreprise", back_populates="entreprise", cascade="all, delete-orphan")
+   
+    # Dans la classe Entreprise
+    @property
+    def recrutements(self):
+        """
+        Va chercher dynamiquement tous les recrutements conclus pour cette entreprise 
+        en passant par les départements et les offres.
+        """
+        from models import LesRecrutEntreprise, Candidature, Offre, Departement # À adapter selon vos imports
+        
+        return LesRecrutEntreprise.query\
+            .join(Candidature)\
+            .join(Offre)\
+            .join(Departement)\
+            .filter(Departement.entreprise_id == self.id)\
+            .all()
 
 
 class Departement(db.Model):

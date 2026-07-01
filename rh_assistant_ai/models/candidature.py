@@ -75,42 +75,88 @@ class LesRecrutEntreprise(db.Model):
         nullable=False
     )
     
-    # Informations de finalisation du contrat
-    type_contrat = db.Column(db.String(50), nullable=False)       # CDI, CDD, Stage, Alternance
+    # Détails du contrat conclu
+    type_contrat = db.Column(db.String(50), nullable=False) # CDI, CDD, etc.
     salaire_propose = db.Column(db.Float, nullable=True)          
     date_debut = db.Column(db.Date, nullable=False)               
 
-    # 🟢 LES DEUX SEULES CLÉS PHYSIQUES NÉCESSAIRES :
-    # 1. On garde l'entreprise intacte pour filtrer le registre RH en un éclair
-    entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False)
-    
-    # 2. Le nouveau lien direct vers la candidature officielle validée
-    candidature_id = db.Column(db.Integer, db.ForeignKey("candidatures.id", ondelete="CASCADE"), nullable=False)
+    candidature_id = db.Column(
+        db.Integer, 
+        db.ForeignKey("candidatures.id", ondelete="CASCADE"), 
+        unique=True, 
+        nullable=False
+    )
 
-    # 🟢 Relations SQLAlchemy bidirectionnelles
-    entreprise = db.relationship("Entreprise", back_populates="recrutements")
-    candidature = db.relationship("Candidature")
-
-    # 🟢 PROPRIÉTÉS VIRTUELLES (Pour naviguer facilement sans colonnes doublons)
-    @property
-    def candidat(self):
-        """Remonte directement au candidat à travers la candidature"""
-        return self.candidature.candidat if self.candidature else None
+    # Relation SQLAlchemy vers la candidature
+    candidature = db.relationship("Candidature", backref=db.backref("recrutement", uselist=False))
 
     @property
     def offre(self):
-        """Remonte directement à l'offre à travers la candidature"""
         return self.candidature.offre if self.candidature else None
 
     @property
     def departement(self):
-        """Remonte directement au département/service à travers l'offre de la candidature"""
         return self.candidature.offre.departement if (self.candidature and self.candidature.offre) else None
 
     @property
+    def entreprise(self):
+        return self.candidature.offre.departement.entreprise if (self.candidature and self.candidature.offre and self.candidature.offre.departement) else None
+
+    @property
+    def candidat(self):
+        return self.candidature.cv.candidat if (self.candidature and self.candidature.cv) else None
+
+    @property
     def match_result(self):
-        """Remonte directement aux scores de l'IA à travers la candidature"""
         return self.candidature.details_matching if self.candidature else None
 
-    def __repr__(self):
-        return f"<Recrutement ID={self.id} Entreprise={self.entreprise_id} Candidature={self.candidature_id}>"
+# class LesRecrutEntreprise(db.Model):
+#     __tablename__ = "les_recrut_entreprise"
+
+#     id = db.Column(db.Integer, primary_key=True)
+#     date_recrutement = db.Column(
+#         db.DateTime(timezone=True), 
+#         default=lambda: datetime.now(timezone.utc), 
+#         nullable=False
+#     )
+    
+#     # Informations de finalisation du contrat
+#     type_contrat = db.Column(db.String(50), nullable=False)       # CDI, CDD, Stage, Alternance
+#     salaire_propose = db.Column(db.Float, nullable=True)          
+#     date_debut = db.Column(db.Date, nullable=False)               
+
+#     # 🟢 LES DEUX SEULES CLÉS PHYSIQUES NÉCESSAIRES :
+#     # 1. On garde l'entreprise intacte pour filtrer le registre RH en un éclair
+#     entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False)
+    
+#     # 2. Le nouveau lien direct vers la candidature officielle validée
+#     candidature_id = db.Column(db.Integer, db.ForeignKey("candidatures.id", ondelete="CASCADE"), nullable=False)
+
+#     # 🟢 Relations SQLAlchemy bidirectionnelles
+#     entreprise = db.relationship("Entreprise", back_populates="recrutements")
+#     #candidature = db.relationship("Candidature")
+#     candidature = db.relationship("Candidature", backref=db.backref("recrutement", uselist=False))
+
+#     # 🟢 PROPRIÉTÉS VIRTUELLES (Pour naviguer facilement sans colonnes doublons)
+#     @property
+#     def candidat(self):
+#         """Remonte directement au candidat à travers la candidature"""
+#         return self.candidature.cv.candidat if self.candidature.cv else None
+
+#     @property
+#     def offre(self):
+#         """Remonte directement à l'offre à travers la candidature"""
+#         return self.candidature.offre if self.candidature else None
+
+#     @property
+#     def departement(self):
+#         """Remonte directement au département/service à travers l'offre de la candidature"""
+#         return self.candidature.offre.departement if (self.candidature and self.candidature.offre) else None
+
+#     @property
+#     def match_result(self):
+#         """Remonte directement aux scores de l'IA à travers la candidature"""
+#         return self.candidature.details_matching if self.candidature else None
+
+#     def __repr__(self):
+#         return f"<Recrutement ID={self.id} Entreprise={self.entreprise_id} Candidature={self.candidature_id}>"

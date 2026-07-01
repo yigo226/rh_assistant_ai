@@ -6,54 +6,6 @@ from config.database import db
 from datetime import datetime, timezone
 from config.database import db
 
-# class Candidature(db.Model):
-#     """
-#     Représente l'action officielle du candidat qui valide son matching 
-#     et postule auprès du recruteur pour une offre.
-#     """
-#     __tablename__ = "candidatures"
-
-#     id = db.Column(db.Integer, primary_key=True)
-    
-#     # Valeurs de suivi RH : 'a_letude', 'entretien', 'retenu', 'refuse'
-#     statut = db.Column(db.String(30), default="a_letude", nullable=False)
-    
-#     created_at = db.Column(
-#         db.DateTime(timezone=True), 
-#         default=lambda: datetime.now(timezone.utc), 
-#         nullable=False
-#     )
-
-#     # 🟢 CORRECTION 1 : Remplacement de utilisateurs.id par candidats.id (liaison enfant stricte)
-#     candidat_id = db.Column(
-#         db.Integer, 
-#         db.ForeignKey("candidats.id", ondelete="CASCADE"), 
-#         nullable=False
-#     )
-    
-#     # Identifiant de l'offre conservé pour indexation ultra-rapide des requêtes
-#     offre_id = db.Column(
-#         db.Integer, 
-#         db.ForeignKey("offres.id", ondelete="CASCADE"), 
-#         nullable=False
-#     )
-    
-#     # Le pont vers les métriques privées de l'IA
-#     match_result_id = db.Column(
-#         db.Integer, 
-#         db.ForeignKey("match_results.id", ondelete="CASCADE"), 
-#         nullable=False
-#     )
-
-#     # 🟢 CORRECTION 2 : Transition complète des anciens backref vers des back_populates propres
-#     candidat = db.relationship("Candidat", back_populates="candidatures", foreign_keys=[candidat_id])
-#     offre = db.relationship("Offre", back_populates="candidatures", foreign_keys=[offre_id])
-    
-#     # Liaison bidirectionnelle avec le MatchResult
-#     details_matching = db.relationship("MatchResult", back_populates="candidatures", foreign_keys=[match_result_id])
-
-#     def __repr__(self):
-#         return f"<Candidature ID={self.id} Candidat={self.candidat_id} Offre={self.offre_id} Statut={self.statut}>"
 
 class Candidature(db.Model):
     """

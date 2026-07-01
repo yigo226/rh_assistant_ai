@@ -88,7 +88,7 @@ def postuler_offre(offre_id):
         offre_analyser_id=analyse_offre.id
     ).first()
     
-    # 🧠 INTÉGRATION IA : Si non testé, exécution transparente du matching à la volée avant envoi
+    # 🧠 INTÉGRATION IA (Cas B) : Si non testé, exécution transparente du matching à la volée avant envoi
     if not match_existant:
         try:
             metriques = calculer_matching(analyse_cv, analyse_offre)
@@ -102,19 +102,18 @@ def postuler_offre(offre_id):
             return redirect(url_for("candidat.espace_candidat"))
 
     # 3. ENREGISTREMENT SÉCURISÉ DE LA CANDIDATURE CONFORME À LA RÉALITÉ MÉTIER
-    # On utilise la liaison directe (candidat_id + offre_id + cv_id) que nous avons programmée
+    # 🟢 CORRECTION : On vérifie si le candidat a déjà postulé en filtrant par cv_id et offre_id
     deja_postule = Candidature.query.filter_by(
-        candidat_id=current_user.id, 
+        cv_id=cv_actif.id, 
         offre_id=offre.id
     ).first()
     
     if deja_postule:
-        flash("Vous avez déjà déposé votre candidature pour ce poste.", "warning")
+        flash("Vous avez déjà déposé votre candidature pour ce poste avec ce CV.", "warning")
         return redirect(url_for("candidat.espace_candidat"))
 
-    # Écriture définitive de la postulation en base de données
+    # 🟢 CORRECTION : Écriture définitive sans le champ "candidat_id" qui n'existe plus en BDD
     nouvelle_candidature = Candidature(
-        candidat_id=current_user.id, 
         offre_id=offre.id, 
         cv_id=cv_actif.id, 
         statut="a_letude"

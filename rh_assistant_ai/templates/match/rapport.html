@@ -8,7 +8,7 @@
     <div>
       <h2 class="font-weight-bold">Rapport d'adéquation Profil / Offre</h2>
       <p class="text-muted small mb-0">
-        Généré le {{ resultat.created_at.strftime('%d/%m/%Y à %H:%M') }}
+        Généré le {{ resultat.date_creation.strftime('%d/%m/%Y à %H:%M') if resultat.date_creation else 'Récemment' }}
       </p>
     </div>
     <a href="/global/matching" class="btn btn-outline-secondary">
@@ -22,8 +22,8 @@
     <div class="col-lg-4 mb-4">
       
       <!-- Carte Score -->
-      <div class="match-card text-center p-4 mb-4">
-        <h4 class="text-secondary small font-weight-bold text-uppercase tracking-wider mb-3">Score de Matching</h4>
+      <div class="match-card text-center p-4 mb-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <h4 class="text-secondary small font-weight-bold text-uppercase tracking-wider mb-3">Score Global</h4>
         
         <!-- Jauge Visuelle Circulaire Simplifiée -->
         <div class="position-relative d-inline-flex align-items-center justify-content-center mb-3" style="width: 140px; height: 140px;">
@@ -34,31 +34,31 @@
         </div>
 
         <p class="small text-muted mt-2">
-          Basé sur les critères obligatoires de l'offre
+          Analyse pondérée (Compétences, Diplômes & Expériences)
         </p>
       </div>
 
       <!-- Carte Recommandation de l'IA -->
-      <div class="match-card p-4">
+      <div class="match-card p-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div class="d-flex align-items-center gap-2 mb-3 text-secondary">
-          <i class="ti ti-message-chatbot h4 mb-0 text-teal"></i>
+          <i class="ti ti-message-chatbot h4 mb-0" style="color: #0d9488;"></i>
           <h4 class="h5 mb-0 font-weight-bold">Synthèse de l'assistant</h4>
         </div>
-        <p class="card-text text-dark" style="line-height: 1.6;">
-          {{ resultat.recommendation }}
+        <p class="card-text text-dark" style="line-height: 1.6; font-size: 0.9rem;">
+          {{ resultat.recommandation }}
         </p>
       </div>
 
     </div>
 
-    <!-- PANNEAU DROIT : Détail des Documents et Compétences -->
+    <!-- PANNEAU DROIT : Détail des Documents et Critères Multi-dimensions -->
     <div class="col-lg-8">
       
       <!-- Rappel des fichiers comparés -->
       <div class="row mb-4">
         <div class="col-sm-6 mb-3 mb-sm-0">
           <div class="p-3 bg-light rounded d-flex align-items-center gap-3">
-            <i class="ti ti-file-text text-teal h3 mb-0"></i>
+            <i class="ti ti-file-text h3 mb-0" style="color: #0d9488;"></i>
             <div>
               <span class="small text-muted d-block">Source Profil</span>
               <strong class="text-truncate d-inline-block" style="max-width: 200px;">
@@ -80,67 +80,149 @@
         </div>
       </div>
 
-      <!-- ANALYSE DES COMPÉTENCES -->
-      <div class="match-card p-4">
-        <h3 class="h4 font-weight-bold border-bottom pb-2 mb-4">Cartographie des compétences</h3>
+      <!-- ACCORDION OU SECTIONS POUR CHAQUE DIMENSION -->
+      <div class="d-flex flex-column gap-4">
+        
+        <!-- SECTION 1 : CARTOGRAPHIE DES COMPÉTENCES -->
+        <div class="match-card p-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <h3 class="h4 font-weight-bold border-bottom pb-2 mb-3"><i class="ti ti-settings"></i> Analyse des compétences</h3>
 
-        <!-- 1. Compétences en commun -->
+          <!-- Compétences en commun -->
+          <div class="mb-3">
+            <h5 class="text-success font-weight-bold small text-uppercase mb-2">
+              <i class="ti ti-circle-check"></i> Validées ({{ resultat.competences_validees | length if resultat.competences_validees else 0 }})
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+              {% if resultat.competences_validees %}
+                {% for item in resultat.competences_validees %}
+                  <span class="badge px-3 py-2 rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.8rem;">
+                    {{ item }}
+                  </span>
+                {% endfor %}
+              {% else %}
+                <span class="text-muted small italic">Aucune correspondance détectée.</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Compétences manquantes -->
+          <div class="mb-3">
+            <h5 class="text-danger font-weight-bold small text-uppercase mb-2">
+              <i class="ti ti-circle-x"></i> Manquantes ({{ resultat.competences_manquantes | length if resultat.competences_manquantes else 0 }})
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+              {% if resultat.competences_manquantes %}
+                {% for item in resultat.competences_manquantes %}
+                  <span class="badge px-3 py-2 rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca; font-size: 0.8rem;">
+                    {{ item }}
+                  </span>
+                {% endfor %}
+              {% else %}
+                <span class="text-success small fw-bold"><i class="ti ti-check"></i> Parfait ! Aucune compétence requise ne manque.</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Compétences bonus -->
+          <div>
+            <h5 class="text-primary font-weight-bold small text-uppercase mb-2">
+              <i class="ti ti-plus"></i> Bonus / Extra ({{ resultat.competences_bonus | length if resultat.competences_bonus else 0 }})
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+              {% if resultat.competences_bonus %}
+                {% for item in resultat.competences_bonus %}
+                  <span class="badge px-3 py-2 rounded text-primary" style="background-color: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.8rem;">
+                    {{ item }}
+                  </span>
+                {% endfor %}
+              {% else %}
+                <span class="text-muted small italic">Aucune compétence bonus détectée.</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2 : MATCHING DES DIPLÔMES -->
+        <div class="match-card p-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <h3 class="h4 font-weight-bold border-bottom pb-2 mb-3"><i class="ti ti-school"></i> Niveau d'études & Diplômes</h3>
+
+          <!-- Diplômes validés -->
+          <div class="mb-3">
+            <h5 class="text-success font-weight-bold small text-uppercase mb-2">
+              <i class="ti ti-circle-check"></i> Validés ({{ resultat.diplomes_valides | length if resultat.diplomes_valides else 0 }})
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+              {% if resultat.diplomes_valides %}
+                {% for item in resultat.diplomes_valides %}
+                  <span class="badge px-3 py-2 rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.8rem;">
+                    {{ item }}
+                  </span>
+                {% endfor %}
+              {% else %}
+                <span class="text-muted small italic">Aucun diplôme correspondant direct détecté.</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Diplômes manquants -->
+          <div>
+            <h5 class="text-danger font-weight-bold small text-uppercase mb-2">
+              <i class="ti ti-circle-x"></i> Requis mais manquants ({{ resultat.diplomes_manquants | length if resultat.diplomes_manquants else 0 }})
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+              {% if resultat.diplomes_manquants %}
+                {% for item in resultat.diplomes_manquants %}
+                  <span class="badge px-3 py-2 rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca; font-size: 0.8rem;">
+                    {{ item }}
+                  </span>
+                {% endfor %}
+              {% else %}
+                <span class="text-success small fw-bold"><i class="ti ti-check"></i> Votre cursus d'études répond parfaitement aux critères.</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Expériences professionnelles -->
         <div class="mb-4">
-          <h5 class="text-success font-weight-bold small text-uppercase mb-2">
-            <i class="ti ti-circle-check"></i> Compétences Validées ({{ resultat.matching_skills | length }})
+          <h5 class="text-warning font-weight-bold small text-uppercase mb-2">
+            <i class="ti ti-history"></i> Expériences Validées ({{ resultat.experiences_validees | length if resultat.experiences_validees else 0 }})
           </h5>
-          <div class="d-flex flex-wrap gap-2">
-            {% if resultat.matching_skills %}
-              {% for skill in resultat.matching_skills %}
-                <span class="badge bg-success-lt px-3 py-2 rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
-                  {{ skill }}
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            {% if resultat.experiences_validees %}
+              {% for exp in resultat.experiences_validees %}
+                <span class="badge px-3 py-2 rounded text-warning" style="background-color: #fefce8; border: 1px solid #fef08a; color: #a16207 !important;">
+                  {{ exp }}
                 </span>
               {% endfor %}
             {% else %}
-              <span class="text-muted small italic">Aucune correspondance détectée.</span>
+              <span class="text-muted small italic">Aucune correspondance d'expérience détectée.</span>
             {% endif %}
           </div>
         </div>
 
-        <!-- 2. Compétences manquantes -->
-        <div class="mb-4">
-          <h5 class="text-danger font-weight-bold small text-uppercase mb-2">
-            <i class="ti ti-circle-x"></i> Compétences Manquantes ({{ resultat.missing_skills | length }})
-          </h5>
-          <div class="d-flex flex-wrap gap-2">
-            {% if resultat.missing_skills %}
-              {% for skill in resultat.missing_skills %}
-                <span class="badge bg-danger-lt px-3 py-2 rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca;">
-                  {{ skill }}
-                </span>
-              {% endfor %}
-            {% else %}
-              <span class="text-success small fw-bold">Parfait ! Aucune compétence requise ne manque.</span>
-            {% endif %}
-          </div>
-        </div>
-
-        <!-- 3. Compétences bonus -->
+        <!-- 4. Expériences manquantes ou à renforcer -->
         <div class="mb-2">
-          <h5 class="text-primary font-weight-bold small text-uppercase mb-2">
-            <i class="ti ti-plus"></i> Compétences Bonus / Extra ({{ resultat.extra_skills | length }})
+          <h5 class="text-secondary font-weight-bold small text-uppercase mb-2">
+            <i class="ti ti-alert-circle"></i> Expériences à Renforcer ({{ resultat.experiences_manquantes | length if resultat.experiences_manquantes else 0 }})
           </h5>
           <div class="d-flex flex-wrap gap-2">
-            {% if resultat.extra_skills %}
-              {% for skill in resultat.extra_skills %}
-                <span class="badge bg-primary-lt px-3 py-2 rounded text-primary" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
-                  {{ skill }}
+            {% if resultat.experiences_manquantes %}
+              {% for exp in resultat.experiences_manquantes %}
+                <span class="badge px-3 py-2 rounded text-secondary" style="background-color: #f8fafc; border: 1px solid #e2e8f0; color: #475569 !important;">
+                  {{ exp }}
                 </span>
               {% endfor %}
             {% else %}
-              <span class="text-muted small italic">Aucune compétence bonus détectée.</span>
+              <span class="text-success small fw-bold">Parfait ! Le parcours professionnel répond entièrement aux exigences.</span>
             {% endif %}
           </div>
         </div>
 
-      </div>
+      </div> <!-- Fin de la carte de cartographie des compétences -->
 
-    </div>
-  </div>
-</div>
+    </div> <!-- Fin du PANNEAU DROIT -->
+  </div> <!-- Fin de la row principale -->
+</div> <!-- Fin du container global -->
+
 {% endblock %}

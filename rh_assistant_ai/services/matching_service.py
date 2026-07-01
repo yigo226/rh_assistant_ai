@@ -1,9 +1,6 @@
 from models import MatchResult
 from config.database import db
-
-
-
-
+from datetime import datetime, timezone
 
 """
 matching_service.py
@@ -22,167 +19,118 @@ Le matching repose actuellement uniquement sur les compétences
 - un score pondéré
 """
 
-
 def calculer_matching(analyse_cv, analyse_offre):
     """
-    Compare les compétences d'un CV avec celles d'une offre.
-
-    Paramètres
-    ----------
-    analyse_cv : CVAnalyser
-        Résultat de l'analyse du CV.
-
-    analyse_offre : OffreAnalyser
-        Résultat de l'analyse de l'offre.
-
-    Retour
-    ------
-    dict contenant :
-
-        score
-        matching_skills
-        missing_skills
-        extra_skills
-        recommendation
+    Compare de manière exhaustive les compétences, diplômes et expériences
+    d'un CV avec ceux d'une offre d'emploi.
     """
+    # ============================================================
+    # 1. PRÉPARATION ET EXTRACTION DES DONNÉES EN FRANÇAIS
+    # ============================================================
+    competences_cv = {c.lower().strip() for c in (analyse_cv.competences or [])}
+    competences_offre = {c.lower().strip() for c in (analyse_offre.competences or [])}
 
-    competences_cv = {
-        skill.lower().strip()
-        for skill in (analyse_cv.skills or [])
-    }
+    diplomes_cv = {d.lower().strip() for d in (analyse_cv.diplomes or [])}
+    diplomes_offre = {d.lower().strip() for d in (analyse_offre.diplomes or [])}
 
-    competences_offre = {
-        skill.lower().strip()
-        for skill in (analyse_offre.skills or [])
-    }
+    experiences_cv = {e.lower().strip() for e in (analyse_cv.experiences or [])}
+    experiences_offre = {e.lower().strip() for e in (analyse_offre.experiences or [])}
 
-    if not competences_offre:
-
+    # Sécurité : Si l'offre ne contient aucun critère
+    if not competences_offre and not diplomes_offre:
         return {
-
-            "score": 0,
-
-            "matching_skills": [],
-
-            "missing_skills": [],
-
-            "extra_skills": [],
-
-            "recommendation":
-                "Impossible de calculer un matching : "
-                "aucune compétence n'a été détectée dans l'offre."
+            "score": 0.0,
+            "competences_validees": [], "competences_manquantes": [], "competences_bonus": [],
+            "diplomes_valides": [], "diplomes_manquants": [],
+            "experiences_validees": [], "experiences_manquantes": [],
+            "recommandation": "Impossible d'analyser : aucun critère détecté dans l'offre."
         }
-    # Calcul des compétences communes
-    matching_skills = sorted(
-        competences_cv.intersection(
-            competences_offre
-        )
-    )
-    # Compétences manquantes
-    missing_skills = sorted(
-        competences_offre.difference(
-            competences_cv
-        )
-    )
-    # Compétences supplémentaires du candidat
-    extra_skills = sorted(
-        competences_cv.difference(
-            competences_offre
-        )
-    )
-    # Calcul du score
-    score = round(
-        (
-            len(matching_skills)
-            /
-            len(competences_offre)
-        ) * 100,
 
-        2
-    )
-    # Génération de la recommandation
-    if score >= 80:
+    # ============================================================
+    # 2. CALCULS ALGORITHMIQUES (INTERSECTIONS & DIFFÉRENCES)
+    # ============================================================
+    # Bloc Compétences
+    competences_validees = sorted(competences_cv.intersection(competences_offre))
+    competences_manquantes = sorted(competences_offre.difference(competences_cv))
+    competences_bonus = sorted(competences_cv.difference(competences_offre))
 
-        recommendation = (
-            "Excellent profil. "
-            "Le candidat possède la majorité "
-            "des compétences recherchées."
-        )
+    # Bloc Diplômes
+    diplomes_valides = sorted(diplomes_cv.intersection(diplomes_offre))
+    diplomes_manquants = sorted(diplomes_offre.difference(diplomes_cv))
 
-    elif score >= 60:
+    # Bloc Expériences
+    experiences_validees = sorted(experiences_cv.intersection(experiences_offre))
+    experiences_manquantes = sorted(experiences_offre.difference(experiences_cv))
 
-        recommendation = (
-            "Bon profil. "
-            "Quelques compétences restent "
-            "à renforcer mais le candidat "
-            "mérite un entretien."
-        )
+    # ============================================================
+    # 3. CALCUL DU SCORE COMPOSITE ET PONDÉRÉ
+    # ============================================================
+    # On donne un poids de 60% aux compétences, 30% aux diplômes, 10% aux expériences
+    score_comp = 0.0
+    poids_total = 0.0
 
-    elif score >= 40:
+    if competences_offre:
+        score_comp += (len(competences_validees) / len(competences_offre)) * 60.0
+        poids_total += 60.0
+    if diplomes_offre:
+        score_comp += (len(diplomes_valides) / len(diplomes_offre)) * 30.0
+        poids_total += 30.0
+    if experiences_offre:
+        score_comp += (len(experiences_validees) / len(experiences_offre)) * 100.0 * 0.10 # 10%
+        poids_total += 10.0
 
-        recommendation = (
-            "Profil intermédiaire. "
-            "Des écarts importants existent "
-            "sur certaines compétences."
-        )
+    score_final = round((score_comp / poids_total) * 100, 2) if poids_total > 0 else 0.0
 
+    # ============================================================
+    # 4. GÉNÉRATION DE LA RECOMMANDATION SÉMANTIQUE
+    # ============================================================
+    if score_final >= 80:
+        recommandation = "Excellent profil. Le candidat possède la grande majorité des critères recherchés."
+    elif score_final >= 60:
+        recommandation = "Bon profil. Quelques critères restent à renforcer mais le candidat mérite un entretien."
+    elif score_final >= 40:
+        recommandation = "Profil intermédiaire. Des écarts notables existent sur des compétences ou diplômes clés."
     else:
-
-        recommendation = (
-            "Compatibilité faible. "
-            "Le profil ne correspond pas "
-            "aux exigences principales du poste."
-        )
-
-    # ---------------------------------------
-    # Résultat du matching
-    # ---------------------------------------
+        recommandation = "Compatibilité faible. Le profil ne correspond pas aux exigences principales du poste."
 
     return {
-
-        "score": score,
-
-        "matching_skills": matching_skills,
-
-        "missing_skills": missing_skills,
-
-        "extra_skills": extra_skills,
-
-        "recommendation": recommendation,
-
-        "matching_count": len(matching_skills),
-
-        "missing_count": len(missing_skills),
-
-        "required_count": len(competences_offre),
-
-        "candidate_count": len(competences_cv)
+        "score": score_final,
+        "competences_validees": competences_validees,
+        "competences_manquantes": competences_manquantes,
+        "competences_bonus": competences_bonus,
+        "diplomes_valides": diplomes_valides,
+        "diplomes_manquants": diplomes_manquants,
+        "experiences_validees": experiences_validees,
+        "experiences_manquantes": experiences_manquantes,
+        "recommandation": recommandation
     }
 
 
-# Enregistrement du résultat du matching en base de données
-# Cette fonction prend en charge la création d'une nouvelle entrée MatchResult
-
-# Cette fonction prend en charge la création d'une nouvelle entrée MatchResult (Épurée)
+# ============================================================
+# 5. ENREGISTREMENT ET MASTAGE EN BDD (NOMS DE CHAMPS EN FR)
+# ============================================================
 def enregistrer_match_result(analyse_cv, analyse_offre, metriques):
     """
     Prend en charge l'instanciation et la sauvegarde du résultat du matching
-    en reliant uniquement les deux analyses et toutes les métriques de compétences JSON.
+    en insérant l'intégralité des nouveaux champs français en BDD.
     """
     try:
-        # 🟢 CORRECTION : Instanciation propre sans user_id ni paramètre user
         nouveau_match = MatchResult(
             cv_analyser_id=int(analyse_cv.id),       
             offre_analyser_id=int(analyse_offre.id),
-
             score=metriques["score"],
+            recommandation=metriques["recommandation"],
             
-            # Toutes les listes de compétences JSON calculées par le service
-            matching_skills=metriques["matching_skills"],
-            missing_skills=metriques["missing_skills"],
-            extra_skills=metriques["extra_skills"], 
+            # Injection des clés françaises dans votre table match_results
+            competences_validees=metriques["competences_validees"],
+            competences_manquantes=metriques["competences_manquantes"],
+            competences_bonus=metriques["competences_bonus"],
             
-            recommendation=metriques["recommendation"]
+            diplomes_valides=metriques["diplomes_valides"],
+            diplomes_manquants=metriques["diplomes_manquants"],
+            
+            experiences_validees=metriques["experiences_validees"],
+            experiences_manquantes=metriques["experiences_manquantes"]
         )
         
         db.session.add(nouveau_match)

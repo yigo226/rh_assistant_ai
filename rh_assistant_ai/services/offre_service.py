@@ -5,48 +5,40 @@ from models.offre import Offre
 from models.offre_analyser import OffreAnalyser
 from services.file_service import extract_text, analyseur_texte_extrait
 
-# Importations optionnelles si utilisées par ailleurs
-from services.nlp.preprocessing import clean_text
-from services.nlp.skill_extractor import extract_skills
-from services.nlp.diploma_extractor import extract_diplomas
-from services.nlp.experience_extractor import extract_experience
-
-def save_offre(file, recruteur, titre, description, date_limite, departement_id, nom_entreprise):
-    filename = secure_filename(file.filename)
+def save_offre(fichier, recruteur, titre, description, date_limite, departement_id, nom_entreprise):
+    nom_fichier = secure_filename(fichier.filename)
     
     # Harmonisation du dossier d'upload vers static pour VS Code / Flask
-    upload_folder = "static/uploads/offres"
-    os.makedirs(upload_folder, exist_ok=True)
-    file_path = os.path.join(upload_folder, filename)
-    file.save(file_path)
+    dossier_upload = "static/uploads/offres"
+    os.makedirs(dossier_upload, exist_ok=True)
+    chemin_fichier = os.path.join(dossier_upload, nom_fichier)
+    fichier.save(chemin_fichier)
 
     # Extraction réelle du texte du PDF
-    extracted_text = extract_text(file_path)
+    texte_extrait = extract_text(chemin_fichier)
 
-    # 🟢 CORRECTION : Remplacement de user_id par recruteur_id 
-    # pour s'aligner sur l'héritage polymorphique de votre BDD
+    # Création complète de l'Offre liée au Recruteur
     offre = Offre(
         titre=titre,
         entreprise=nom_entreprise,
-        description=description if description else extracted_text[:500],
-        nom_fichier=filename,          
-        chemin_fichier=file_path,      
-        contenu_texte=extracted_text,
+        description=description if description else texte_extrait[:500],
+        nom_fichier=nom_fichier,          
+        chemin_fichier=chemin_fichier,      
+        contenu_texte=texte_extrait,
         date_limite=date_limite,
-        recruteur_id=recruteur.id, # 👈 Modifié ici
+        recruteur_id=recruteur.id,
         departement_id=departement_id
     )
     db.session.add(offre)
     db.session.commit()
 
-    # Analyse IA automatique du texte extrait du PDF
-    informations_extraites = analyseur_texte_extrait(extracted_text)
+    # Analyse IA automatique du texte extrait du PDF (Retourne les clés en français)
+    informations_extraites = analyseur_texte_extrait(texte_extrait)
 
-    # Sauvegarde de la synthèse IA dans la table OffreAnalyser
-    # (Utilise la liaison propre gérée en cascade)
+    # 🟢 CORRECTION : Utilisation des nouveaux champs et clés en français
     synthese_competences_offre = OffreAnalyser(
-        diplomas=informations_extraites["diplomas"],    
-        skills=informations_extraites["skills"],        
+        competences=informations_extraites["competences"],        
+        diplomes=informations_extraites["diplomes"],    
         experiences=informations_extraites["experiences"], 
         offre_id=offre.id
     )

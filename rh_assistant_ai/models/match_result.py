@@ -7,9 +7,7 @@ class MatchResult(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # 🟢 CORRECTION 1 : Suppression physique de user_id pour éviter la redondance
-    # L'ID du candidat est retrouvé proprement à travers la chaîne : MatchResult -> CVAnalyser -> CV -> Candidat
-
+    # Liaisons physiques existantes
     cv_analyser_id = db.Column(
         db.Integer,
         db.ForeignKey("cv_analyses.id", ondelete="CASCADE"),
@@ -22,24 +20,36 @@ class MatchResult(db.Model):
         nullable=False
     )
 
-    score = db.Column(db.Float, nullable=False)
-    matching_skills = db.Column(db.JSON, nullable=True)
-    missing_skills = db.Column(db.JSON, nullable=True)
-    extra_skills = db.Column(db.JSON, nullable=True)
-    recommendation = db.Column(db.Text, nullable=True)
+    # 🟢 COMPLETION & TRADUCTION : Les 3 dimensions du matching (Compétences, Diplômes, Expériences)
     
-    created_at = db.Column(
-        db.DateTime,
-        default=lambda: datetime.now(timezone.utc)
+    # 1. Le bloc Compétences
+    competences_validees = db.Column(db.JSON, nullable=True) # matching_skills
+    competences_manquantes = db.Column(db.JSON, nullable=True) # missing_skills
+    competences_bonus = db.Column(db.JSON, nullable=True) # extra_skills
+
+    # 2. Le bloc Diplômes (🟢 Ajouté)
+    diplomes_valides = db.Column(db.JSON, nullable=True)
+    diplomes_manquants = db.Column(db.JSON, nullable=True)
+
+    # 3. Le bloc Expériences (🟢 Ajouté)
+    experiences_validees = db.Column(db.JSON, nullable=True)
+    experiences_manquantes = db.Column(db.JSON, nullable=True)
+    
+    # Métriques globales
+    score = db.Column(db.Float, nullable=False)
+    recommandation = db.Column(db.Text, nullable=True) # recommendation
+    
+    date_creation = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
     )
 
-    # 🟢 CORRECTION 2 : Harmonisation des relations en mode bidirectionnel (back_populates)
+    # Relations de lecture bidirectionnelles (Mises à jour avec le nouveau nom de classe back_populates)
     cv_analyser = db.relationship("CVAnalyser", back_populates="match_results", foreign_keys=[cv_analyser_id])
     offre_analyser = db.relationship("OffreAnalyser", back_populates="match_results", foreign_keys=[offre_analyser_id])
-    
-    #candidatures = db.relationship("Candidature", back_populates="details_matching", cascade="all, delete-orphan")
 
-    # 🟢 AJOUT : Propriété magique pour remonter au candidat sans complexité
+    # Propriété virtuelle pour remonter au candidat sans redondance
     @property
     def candidat(self):
         """Remonte automatiquement jusqu'à l'objet Candidat à travers l'analyse du CV"""
@@ -48,6 +58,4 @@ class MatchResult(db.Model):
         return None
 
     def __repr__(self):
-        return f"<MatchResult ID={self.id} Score={self.score}%>"
-
-
+        return f"<ResultatMatch ID={self.id} Score={self.score}%>"

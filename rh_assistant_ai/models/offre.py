@@ -7,7 +7,7 @@ class Offre(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     titre = db.Column(db.String(255), nullable=False)
-    entreprise = db.Column(db.String(255), nullable=True)
+    #entreprise = db.Column(db.String(255), nullable=True)
     description = db.Column(db.Text, nullable=False)
     
     # Éléments indispensables pour l'upload du fichier PDF de l'offre

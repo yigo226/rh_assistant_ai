@@ -5,38 +5,38 @@ from models.cv import CV
 from models.cv_analyser import CVAnalyser
 from services.file_service import analyseur_texte_extrait, extract_text
 
-def save_cv(file, candidat): 
-    filename = secure_filename(file.filename)
+def save_cv(fichier, candidat): 
+    nom_fichier = secure_filename(fichier.filename)
 
-    upload_folder = "static/uploads/cvs"
-    os.makedirs(upload_folder, exist_ok=True)
-    file_path = os.path.join(upload_folder, filename)
+    dossier_upload = "static/uploads/cvs"
+    os.makedirs(dossier_upload, exist_ok=True)
+    chemin_fichier = os.path.join(dossier_upload, nom_fichier)
     
     # Sauvegarder le fichier original
-    file.save(file_path)
+    fichier.save(chemin_fichier)
     
     # Extraire le texte du PDF
-    extracted_text = extract_text(file_path)
+    texte_extrait = extract_text(chemin_fichier)
 
-    # 🟢 CORRECTION : Liaison stricte vers la table enfant candidats via candidat_id
+    # Création du CV lié à la table enfant candidats
     cv = CV(
-        nom_fichier=filename,
-        chemin_fichier=file_path,
-        contenu_texte=extracted_text,
-        candidat_id=candidat.id # 👈 Modifié ici pour s'aligner sur votre modèle CV
+        nom_fichier=nom_fichier,
+        chemin_fichier=chemin_fichier,
+        contenu_texte=texte_extrait,
+        candidat_id=candidat.id
     )
 
     # Ajouter le cv en base de données
     db.session.add(cv)
     db.session.commit()
 
-    # Analyser le texte du CV avec votre assistant IA
-    informations_extraites = analyseur_texte_extrait(extracted_text)
+    # Analyser le texte du CV avec l'assistant IA (Retourne les clés en français)
+    informations_extraites = analyseur_texte_extrait(texte_extrait)
 
-    # Sauvegarder la synthèse IA dans la table CVAnalyser
+    # 🟢 CORRECTION : Utilisation des nouveaux champs et clés en français
     synthese_competences_cv = CVAnalyser(
-        skills=informations_extraites["skills"],
-        diplomas=informations_extraites["diplomas"],
+        competences=informations_extraites["competences"],
+        diplomes=informations_extraites["diplomes"],
         experiences=informations_extraites["experiences"],
         cv_id=cv.id
     )
@@ -45,5 +45,5 @@ def save_cv(file, candidat):
     db.session.add(synthese_competences_cv)
     db.session.commit()
 
-    # Retourner le triplet (Objet, Analyse, Dictionnaire brut) exploité par vos routes
+    # Retourner le triplet exploité par vos routes
     return cv, synthese_competences_cv, informations_extraites

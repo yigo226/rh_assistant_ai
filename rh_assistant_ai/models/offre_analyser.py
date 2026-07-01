@@ -10,14 +10,13 @@ class OffreAnalyser(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Harmonisation au format JSON pour stocker les listes de critères de l'offre
-    skills = db.Column(db.JSON, nullable=True)
-    diplomas = db.Column(db.JSON, nullable=True)
+    competences = db.Column(db.JSON, nullable=True)
+    diplomes = db.Column(db.JSON, nullable=True)
     experiences = db.Column(db.JSON, nullable=True)
 
-    # Correction de la date
-    created_at = db.Column(
-        db.DateTime,
+    # Suivi temporel moderne en UTC
+    date_creation = db.Column(
+        db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
@@ -30,9 +29,7 @@ class OffreAnalyser(db.Model):
         unique=True # Une offre d'emploi n'a qu'une seule analyse de texte associée
     )
 
-    # Ajout de la relation réciproque vers le modèle Offre 
     offre = db.relationship("Offre", back_populates="analyse")
-
 
     match_results = db.relationship(
         "MatchResult", 
@@ -41,4 +38,4 @@ class OffreAnalyser(db.Model):
     )
 
     def __repr__(self):
-        return f"<OffreAnalyser id={self.id} offre_id={self.offre_id}>"
+        return f"<AnalyseOffre id={self.id} offre_id={self.offre_id}>"

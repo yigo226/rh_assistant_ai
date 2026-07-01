@@ -10,16 +10,15 @@ class CVAnalyser(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Utilisation de JSON pour stocker de vraies listes Python proprement
-    skills = db.Column(db.JSON, nullable=True)
-    diplomas = db.Column(db.JSON, nullable=True)
+    competences = db.Column(db.JSON, nullable=True)
+    diplomes = db.Column(db.JSON, nullable=True)
     experiences = db.Column(db.JSON, nullable=True)
     
     score = db.Column(db.Float, nullable=True)
 
-    # Correction de la date avec le fuseau horaire UTC moderne
+    # Suivi temporel moderne en UTC
     created_at = db.Column(
-        db.DateTime,
+        db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )

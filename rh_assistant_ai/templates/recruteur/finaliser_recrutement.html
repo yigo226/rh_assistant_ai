@@ -1,0 +1,83 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container mt-4 mb-5" style="max-width: 800px;">
+  
+  <!-- Bouton Retour -->
+  <div class="mb-3">
+    <a href="{{ url_for('recruteur.candidat_liste', offre_id=candidature.offre_id) }}" class="btn btn-sm btn-light border rounded-pill">
+      <i class="ti ti-arrow-left"></i> Retour à la liste des candidats
+    </a>
+  </div>
+
+  <!-- En-tête administratif -->
+  <div class="matching-header mb-4">
+    <h2><i class="ti ti-file-certificate text-success"></i> Établissement du Contrat d'Embauche</h2>
+    <p class="matching-subtitle text-muted">
+      Vous vous apprêtez à recruter <strong>{{ candidat.nom }} {{ candidat.prenom }}</strong> pour le poste de <strong>{{ offre.titre }}</strong>.
+    </p>
+  </div>
+
+  <!-- Fiche récapitulative du profil -->
+  <div class="card p-3 mb-4 border-0 shadow-sm bg-light" style="border-radius: 12px;">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h6 class="font-weight-bold mb-1 text-dark">Résumé de la candidature :</h6>
+        <p class="small text-secondary mb-0">
+          <i class="ti ti-mail"></i> {{ candidat.email }} &bull; 
+          <i class="ti ti-chart-bar"></i> Score de matching IA : <strong>{{ candidature.details_matching.score | int if candidature.details_matching else 'N/A' }}%</strong>
+        </p>
+      </div>
+      <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        <span class="badge bg-success-lt px-3 py-2 rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-weight: 700;">
+          PROFIL RETENU
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de Saisie traditionnel (Synchrone) -->
+  <div class="match-card p-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <form method="POST" action="{{ url_for('recruteur.finaliser_recrutement', candidature_id=candidature.id) }}" style="display: flex; flex-direction: column; gap: 1.25rem;">
+      
+      <div class="row">
+        <div class="col-md-6 mb-3 mb-md-0">
+          <label class="form-label small font-weight-bold d-block mb-1 text-secondary">Type de contrat de travail *</label>
+          <select name="type_contrat" required class="form-control" style="height: 42px; background: white; border-radius: 6px;">
+            <option value="CDI" selected>CDI (Contrat à durée indéterminée)</option>
+            <option value="CDD">CDD (Contrat à durée déterminée)</option>
+            <option value="Alternance">Alternance / Apprentissage</option>
+            <option value="Stage">Stage conventionné</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label small font-weight-bold d-block mb-1 text-secondary">Date de prise de poste officielle *</label>
+          <input type="date" name="date_debut" required class="form-control" style="height: 42px; border-radius: 6px;">
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label small font-weight-bold d-block mb-1 text-secondary">Rémunération proposée (Salaire brut annuel en €)</label>
+        <div class="input-group">
+          <input type="number" name="salaire_propose" placeholder="Ex: 45000" min="0" class="form-control" style="height: 42px; border-radius: 6px 0 0 6px;">
+          <span class="input-group-text bg-light text-secondary small" style="font-weight: 600;">€ / an</span>
+        </div>
+        <p class="match-help-text text-muted small mt-1">Laissez vide si non applicable (ex: Stage non rémunéré).</p>
+      </div>
+
+      <!-- Actions de validation du formulaire -->
+      <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
+        <a href="{{ url_for('recruteur.candidat_liste', offre_id=candidature.offre_id) }}" class="btn btn-light border px-4 rounded-pill">
+          Annuler
+        </a>
+        <button type="submit" class="btn btn-success px-4 rounded-pill" style="background-color: #16a34a; border-color: #16a34a; font-weight: 700;">
+          <i class="ti ti-user-check"></i> Valider et Enregistrer l'Embauche
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

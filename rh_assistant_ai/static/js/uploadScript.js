@@ -469,5 +469,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+
+    // GESTION DU POP-UP DE CONTRAT DE RECRUTEMENT EN MODE NATIF
+
 });
 

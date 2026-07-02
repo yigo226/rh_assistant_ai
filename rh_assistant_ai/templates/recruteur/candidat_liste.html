@@ -99,14 +99,14 @@
                               </button>
                           </form>
 
+                       
                         {% elif c.statut == 'entretien' %}
-                        <!-- Ce bouton ouvre la modale gérée par uploadScript.js avec la bonne URL de formulaire dynamique -->
-                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3 btn-ouvrir-recrut" 
-                                data-candidature-id="{{ c.id }}"
-                                data-candidat-nom="{{ c.candidat.nom }} {{ c.candidat.prenom }}"
-                                style="background-color: #16a34a; border-color: #16a34a; font-size: 0.75rem; font-weight: 600;">
+                          <!-- 🟢 RECTIFICATION : Redirection propre vers la page dédiée de saisie du contrat (Sans aucun JS) -->
+                          <a href="{{ url_for('recruteur.finaliser_recrutement', candidature_id=c.id) }}" 
+                            class="btn btn-sm btn-success rounded-pill px-3" 
+                            style="background-color: #16a34a; border-color: #16a34a; font-size: 0.75rem; font-weight: 600; text-decoration: none; color: white;">
                             <i class="ti ti-circle-check"></i> Valider l'embauche
-                        </button>
+                          </a>
 
                         {% elif c.statut == 'retenu' %}
                         <span class="text-success small font-weight-bold" style="font-size: 0.75rem;">

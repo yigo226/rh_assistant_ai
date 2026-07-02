@@ -194,6 +194,64 @@ def detail_offre(offre_id):
         
     return render_template("detailOffre.html", offre=offre)
 
+
+@recruteur_bp.route("/finaliser-recrutement/<int:candidature_id>", methods=["GET", "POST"])
+@login_required
+@role_required("recruteur")
+def finaliser_recrutement(candidature_id):
+    candidature = Candidature.query.get_or_404(candidature_id)
+    
+    # Sécurité collaborative : Vérifier que l'offre appartient bien à l'entreprise du recruteur
+    if candidature.offre.recruteur.entreprise_id != current_user.entreprise_id:
+        flash("Action non autorisée.", "danger")
+        return redirect(url_for("recruteur.dashboard"))
+
+    # 🟢 COMPORTEMENT A : ENREGISTREMENT DU CONTRAT (Méthode POST)
+    if request.method == "POST":
+        type_contrat = request.form.get("type_contrat")
+        salaire_raw = request.form.get("salaire_propose")
+        date_debut_raw = request.form.get("date_debut")
+
+        # Validation de base des champs obligatoires
+        if not type_contrat or not date_debut_raw:
+            flash("Veuillez remplir tous les champs obligatoires (*).", "danger")
+            return redirect(request.url)
+
+        try:
+            # 1. Conversion des données reçues du formulaire
+            salaire = float(salaire_raw) if salaire_raw else None
+            date_debut = datetime.strptime(date_debut_raw, "%Y-%m-%d").date()
+
+            # 2. Création et liaison de la fiche de recrutement unique
+            nouveau_recrutement = LesRecrutEntreprise(
+                candidature_id=candidature.id,
+                type_contrat=type_contrat,
+                salaire_propose=salaire,
+                date_debut=date_debut
+            )
+            
+            # 3. Mise à jour officielle du statut de la candidature
+            candidature.statut = "retenu"
+            
+            db.session.add(nouveau_recrutement)
+            db.session.commit()
+            
+            flash(f"Félicitations ! Le recrutement de {candidature.candidat.nom} {candidature.candidat.prenom} a été enregistré avec succès.", "success")
+            return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Une erreur est survenue lors de la création du contrat : {str(e)}", "danger")
+            return redirect(request.url)
+
+    # 🟢 COMPORTEMENT B : AFFICHAGE DU FORMULAIRE ADMINISTRATIF (Méthode GET)
+    return render_template(
+        "recruteur/finaliser_recrutement.html",
+        candidature=candidature,
+        candidat=candidature.candidat,
+        offre=candidature.offre
+    )
+
 @recruteur_bp.route("/refuser-candidature/<int:candidature_id>", methods=["POST"])
 @login_required
 @role_required("recruteur")

@@ -4,7 +4,7 @@ from flask import Blueprint, request, render_template, flash, redirect, url_for,
 from flask_login import current_user, login_required
 from config.decorateurs import role_required
 from config.database import db
-
+from sqlalchemy.orm import joinedload
 # Importations des modèles mis à jour
 from models import CV, Offre, Candidature, MatchResult, CVAnalyser, OffreAnalyser
 
@@ -130,8 +130,6 @@ def postuler_offre(offre_id):
     flash(f"Votre candidature pour « {offre.titre} » a été transmise avec succès après analyse de conformité !", "success")
     return redirect(url_for("candidat.espace_candidat"))
 
-
-from sqlalchemy.orm import joinedload
 
 @candidat_bp.route("/historique", methods=["GET"])
 @login_required

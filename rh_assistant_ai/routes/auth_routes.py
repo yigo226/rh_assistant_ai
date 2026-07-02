@@ -44,7 +44,6 @@ def register():
 
     return render_template("auth/register.html")
 
-
 # ============================================================
 # CONNEXION (Méthode GET — Affichage)
 # ============================================================
@@ -74,7 +73,7 @@ def login_post():
         if isinstance(utilisateur, Recruteur) or utilisateur.est_recruteur():
             return redirect(url_for('recruteur.dashboard'))
         else:
-            return redirect(url_for('home'))
+            return redirect(url_for('candidat.espace_candidat'))
 
     # 🟢 FIX SÉCURITÉ : La route de redirection exacte est auth.login (et non auth_bp.login)
     flash("Identifiants incorrects", "danger")

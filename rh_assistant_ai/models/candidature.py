@@ -1,11 +1,6 @@
 from datetime import datetime, timezone
 from config.database import db
 
-from datetime import datetime, timezone
-from config.database import db
-from datetime import datetime, timezone
-from config.database import db
-
 
 class Candidature(db.Model):
     """
@@ -43,6 +38,14 @@ class Candidature(db.Model):
     offre = db.relationship("Offre", back_populates="candidatures", foreign_keys=[offre_id])
     cv = db.relationship("CV", back_populates="candidatures", foreign_keys=[cv_id])
 
+    entretiens = db.relationship(
+        "Entretien",
+        back_populates="candidature",
+        cascade="all, delete-orphan",
+        order_by="Entretien.date_creation.desc()" # Le dernier planifié apparaît en premier
+    )
+
+    
     # 🟢 PROPRIÉTÉ MAGIQUE 1 : Remonte au candidat sans colonne physique redondante
     @property
     def candidat(self):
@@ -110,53 +113,38 @@ class LesRecrutEntreprise(db.Model):
     def match_result(self):
         return self.candidature.details_matching if self.candidature else None
 
-# class LesRecrutEntreprise(db.Model):
-#     __tablename__ = "les_recrut_entreprise"
 
-#     id = db.Column(db.Integer, primary_key=True)
-#     date_recrutement = db.Column(
-#         db.DateTime(timezone=True), 
-#         default=lambda: datetime.now(timezone.utc), 
-#         nullable=False
-#     )
+class Entretien(db.Model):
+    __tablename__ = "entretiens"
+
+    id = db.Column(db.Integer, primary_key=True)
     
-#     # Informations de finalisation du contrat
-#     type_contrat = db.Column(db.String(50), nullable=False)       # CDI, CDD, Stage, Alternance
-#     salaire_propose = db.Column(db.Float, nullable=True)          
-#     date_debut = db.Column(db.Date, nullable=False)               
-
-#     # 🟢 LES DEUX SEULES CLÉS PHYSIQUES NÉCESSAIRES :
-#     # 1. On garde l'entreprise intacte pour filtrer le registre RH en un éclair
-#     entreprise_id = db.Column(db.Integer, db.ForeignKey("entreprises.id", ondelete="CASCADE"), nullable=False)
+    # Éléments temporels et logistiques collectés
+    date_rendezvous = db.Column(db.Date, nullable=False)
+    heure_rendezvous = db.Column(db.Time, nullable=False)
+    lieu = db.Column(db.String(255), nullable=False) # Bureau physique ou lien Teams/Zoom
     
-#     # 2. Le nouveau lien direct vers la candidature officielle validée
-#     candidature_id = db.Column(db.Integer, db.ForeignKey("candidatures.id", ondelete="CASCADE"), nullable=False)
+    # Suivi de la session d'entretien : 'planifie', 'effectue', 'annule', 'reporte'
+    statut_entretien = db.Column(db.String(30), default="planifie", nullable=False)
+    
+    # Commentaire ou note du recruteur (ex: "Entretien technique 1er tour")
+    notes = db.Column(db.Text, nullable=True)
+    
+    date_creation = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
 
-#     # 🟢 Relations SQLAlchemy bidirectionnelles
-#     entreprise = db.relationship("Entreprise", back_populates="recrutements")
-#     #candidature = db.relationship("Candidature")
-#     candidature = db.relationship("Candidature", backref=db.backref("recrutement", uselist=False))
+    # LIAISON CLÉ UNIQUE : Relié à la candidature
+    candidature_id = db.Column(
+        db.Integer,
+        db.ForeignKey("candidatures.id", ondelete="CASCADE"),
+        nullable=False
+    )
 
-#     # 🟢 PROPRIÉTÉS VIRTUELLES (Pour naviguer facilement sans colonnes doublons)
-#     @property
-#     def candidat(self):
-#         """Remonte directement au candidat à travers la candidature"""
-#         return self.candidature.cv.candidat if self.candidature.cv else None
+    # Relation ORM pour naviguer facilement
+    candidature = db.relationship("Candidature", back_populates="entretiens")
 
-#     @property
-#     def offre(self):
-#         """Remonte directement à l'offre à travers la candidature"""
-#         return self.candidature.offre if self.candidature else None
-
-#     @property
-#     def departement(self):
-#         """Remonte directement au département/service à travers l'offre de la candidature"""
-#         return self.candidature.offre.departement if (self.candidature and self.candidature.offre) else None
-
-#     @property
-#     def match_result(self):
-#         """Remonte directement aux scores de l'IA à travers la candidature"""
-#         return self.candidature.details_matching if self.candidature else None
-
-#     def __repr__(self):
-#         return f"<Recrutement ID={self.id} Entreprise={self.entreprise_id} Candidature={self.candidature_id}>"
+    def __repr__(self):
+        return f"<Entretien ID={self.id} Date={self.date_rendezvous} Statut={self.statut_entretien}>"

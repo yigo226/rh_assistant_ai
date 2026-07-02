@@ -24,10 +24,11 @@
     <span>Historique des analyses</span>
   </button>
 
-  <button class="nav-btn" data-action="comparaison">
+  <!-- 🟢 CORRECTION : Utilisation d'une balise <a> pour activer le lien URL -->
+  <a href="{{ url_for('candidat.historique_candidatures') }}" class="nav-btn" data-action="comparaison" style="text-decoration: none;">
     <i class="nav-icon ti ti-arrows-maximize"></i>
-    <span>Comparer CV & Offre</span>
-  </button>
+    <span>Mes candidatures</span>
+  </a>
 
 
  <button class="nav-btn"

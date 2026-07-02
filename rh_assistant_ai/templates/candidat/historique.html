@@ -1,0 +1,150 @@
+{% extends "squelette/base.html" %}
+
+{% block content %}
+<div class="container-fluid px-md-4 mt-4 mb-5">
+  <div class="matching-page" style="max-width: 100%; width: 100%; margin: 0;">
+
+    <!-- En-tête de la page -->
+    <div class="matching-header mb-4">
+      <h2><i class="ti ti-history text-teal"></i> Mon Historique de Candidatures</h2>
+      <p class="matching-subtitle">
+        Suivez en temps réel l'avancement de vos dossiers auprès des recruteurs et consultez vos rapports de conformité IA.
+      </p>
+    </div>
+
+    <!-- Tableau / Grille fluide de suivi -->
+    <div class="match-card p-0" style="width: 100%; max-width: 100%; overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+      <table class="table align-middle mb-0" style="width: 100%; min-width: 900px; border-collapse: collapse;">
+        <thead class="bg-light" style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+          <tr>
+            <th class="p-3 text-secondary small text-uppercase" style="font-weight: 700;">Poste & Entreprise</th>
+            <th class="p-3 text-secondary small text-uppercase text-center" style="font-weight: 700; width: 150px;">Date d'envoi</th>
+            <th class="p-3 text-secondary small text-uppercase text-center" style="font-weight: 700; width: 130px;">Score IA</th>
+            <th class="p-3 text-secondary small text-uppercase text-center" style="font-weight: 700; width: 150px;">Statut Dossier</th>
+            <th class="p-3 text-secondary small text-uppercase text-end" style="font-weight: 700; width: 180px;">Rapport</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if candidatures %}
+            {% for c in candidatures %}
+              <tr style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
+                
+                <!-- 1. Poste & Entreprise -->
+                <td class="p-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center bg-light text-purple rounded-circle font-weight-bold" style="width: 40px; height: 40px; min-width: 40px;">
+                      <i class="ti ti-briefcase" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-0 font-weight-bold text-dark">{{ c.offre.titre }}</h6>
+                      <span class="text-muted small"><i class="ti ti-building"></i> {{ c.offre.recruteur.entreprise.nom }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- 2. Date d'envoi -->
+                <td class="p-3 text-center text-secondary small">
+                  {{ c.created_at.strftime('%d/%m/%Y') }}
+                </td>
+
+                <!-- 3. Score IA -->
+                <td class="p-3 text-center">
+                  {% set match = c.details_matching %}
+                  {% if match %}
+                    <span class="badge px-2 py-1 rounded font-weight-bold" 
+                          style="font-size: 0.8rem;
+                                 {% if match.score >= 75 %}background-color: #e6fffa; color: #0d9488; border: 1px solid #b2f5ea;
+                                 {% elif match.score >= 50 %}background-color: #fefcbf; color: #b7791f; border: 1px solid #fef3c7;
+                                 {% else %}background-color: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7;{% endif %}">
+                      {{ match.score | int }}%
+                    </span>
+                  {% else %}
+                    <span class="text-muted small">Non évalué</span>
+                  {% endif %}
+                </td>
+
+                <!-- 4. Statut du dossier (Badges dynamiques) -->
+                <!-- <td class="p-3 text-center">
+                  {% if c.statut == 'a_letude' %}
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 rounded small" style="background-color: #f1f5f9; color: #475569; border-color: #cbd5e1;">
+                      <i class="ti ti-hourglass-low"></i> À l'étude
+                    </span>
+                  {% elif c.statut == 'entretien' %}
+                    <span class="badge bg-primary-subtle text-primary border px-2 py-1 rounded small" style="background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+                      <i class="ti ti-calendar-time"></i> Entretien
+                    </span>
+                  {% elif c.statut == 'retenu' %}
+                    <span class="badge bg-success-subtle text-success border px-2 py-1 rounded small" style="background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
+                      <i class="ti ti-circle-check"></i> Retenu
+                    </span>
+                  {% elif c.statut == 'refuse' %}
+                    <span class="badge bg-danger-subtle text-danger border px-2 py-1 rounded small" style="background-color: #fef2f2; color: #dc2626; border-color: #fecaca;">
+                      <i class="ti ti-circle-x"></i> Refusé
+                    </span>
+                  {% endif %}
+                </td> -->
+
+                <!-- 4. Statut du dossier (Badges dynamiques + RDV unique) -->
+                <td class="p-3 text-center">
+                {% if c.statut == 'a_letude' %}
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 rounded small" style="background-color: #f1f5f9; color: #475569; border-color: #cbd5e1;">
+                    <i class="ti ti-hourglass-low"></i> À l'étude
+                    </span>
+                {% elif c.statut == 'entretien' %}
+                    <span class="badge bg-primary-subtle text-primary border px-2 py-1 rounded small mb-1" style="background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+                    <i class="ti ti-calendar-time"></i> Entretien
+                    </span>
+                    
+                    <!-- 🟢 AJOUT : Extraction du dernier rendez-vous d'entretien planifié -->
+                    {% if c.entretiens %}
+                    {% set rdv = c.entretiens[0] %}
+                    <div class="mt-1" style="line-height: 1.3;">
+                        <span class="d-block text-dark font-weight-bold" style="font-size: 0.75rem;">
+                        Le {{ rdv.date_rendezvous.strftime('%d/%m/%Y') }} à {{ rdv.heure_rendezvous.strftime('%H:%M') }}
+                        </span>
+                        <span class="text-muted d-block text-truncate" style="font-size: 0.7rem; max-width: 150px; margin: 0 auto;" title="{{ rdv.lieu }}">
+                        <i class="ti ti-map-pin"></i> {{ rdv.lieu }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                {% elif c.statut == 'retenu' %}
+                    <span class="badge bg-success-subtle text-success border px-2 py-1 rounded small" style="background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
+                    <i class="ti ti-circle-check"></i> Retenu
+                    </span>
+                {% elif c.statut == 'refuse' %}
+                    <span class="badge bg-danger-subtle text-danger border px-2 py-1 rounded small" style="background-color: #fef2f2; color: #dc2626; border-color: #fecaca;">
+                    <i class="ti ti-circle-x"></i> Refusé
+                    </span>
+                {% endif %}
+                </td>
+
+                <!-- 5. Lien vers le rapport d'analyse -->
+                <td class="p-3 text-end">
+                  {% if match %}
+                    <a href="{{ url_for('matching.rapport', match_id=match.id) }}" class="btn btn-sm btn-white text-teal px-3 rounded-pill" style="border-color: #0d9488; font-size: 0.75rem; font-weight: 600;">
+                      <i class="ti ti-file-analytics"></i> Consulter l'analyse
+                    </a>
+                  {% else %}
+                    <span class="text-muted small italic">Indisponible</span>
+                  {% endif %}
+                </td>
+
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-5 text-muted">
+                <i class="ti ti-folder-off d-block display-5 mb-2 text-slate-300"></i>
+                <h5>Aucune candidature envoyée</h5>
+                <p class="small mb-0">Consultez notre catalogue d'offres pour postuler à vos premiers postes.</p>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

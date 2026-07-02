@@ -129,3 +129,25 @@ def postuler_offre(offre_id):
 
     flash(f"Votre candidature pour « {offre.titre} » a été transmise avec succès après analyse de conformité !", "success")
     return redirect(url_for("candidat.espace_candidat"))
+
+
+from sqlalchemy.orm import joinedload
+
+@candidat_bp.route("/historique", methods=["GET"])
+@login_required
+@role_required("candidat")
+def historique_candidatures():
+    # On récupère toutes les candidatures en joignant l'offre et le CV pour aller vite (optimisation)
+    # Grâce à notre architecture, on filtre via les CVs qui appartiennent au candidat connecté
+    from models import Candidature, CV, Offre
+    
+    mes_candidatures = Candidature.query\
+        .join(CV)\
+        .filter(CV.candidat_id == current_user.id)\
+        .order_by(Candidature.created_at.desc())\
+        .all()
+
+    return render_template(
+        "candidat/historique.html",
+        candidatures=mes_candidatures
+    )

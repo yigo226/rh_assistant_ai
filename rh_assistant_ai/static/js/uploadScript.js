@@ -149,6 +149,38 @@ document.addEventListener("DOMContentLoaded", () => {
     // }
     
 
+
+
+    // GESTION DU POP-UP D'ENTRETIEN EN MODE NATIF
+    document.querySelectorAll('.btn-ouvrir-entretien').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const candidatureId = this.getAttribute('data-candidature-id');
+            const candidatNom = this.getAttribute('data-candidat-nom');
+            
+            const modal = document.getElementById('modalPlanifierEntretien');
+            const textNom = document.getElementById('nomCandidatEntretienModal');
+            const form = document.getElementById('formPlanifierEntretien');
+
+            if (modal && textNom && form) {
+                textNom.textContent = candidatNom;
+                // 🟢 Action dirigée vers la route update_statut avec le tiret bas !
+                form.action = `/recruteur/update-statut/${candidatureId}`;
+                modal.style.display = 'flex';
+            }
+        });
+    });
+
+    // Clôture de la modale entretien
+    ['btnFermerEntretienModal', 'btnAnnulerEntretien'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const modal = document.getElementById('modalPlanifierEntretien');
+                if (modal) modal.style.display = 'none';
+            });
+        }
+    });
+
     // ============================================================
     // 5. GESTION DES FENÊTRES POP-UPS & APERÇU PDF
     // ============================================================

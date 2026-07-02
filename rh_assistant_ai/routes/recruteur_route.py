@@ -120,8 +120,39 @@ def update_statut(candidature_id):
     if nouveau_statut in valeurs_autorisees:
         candidature.statut = nouveau_statut
         
-        # Si validation finale d'embauche, insertion dans le registre LesRecrutEntreprise
-        if nouveau_statut == 'retenu':
+        # ============================================================
+        # CAS A : PLANIFICATION D'UNE SESSION D'ENTRETIEN INDÉPENDANTE
+        # ============================================================
+        # ============================================================
+        # CAS A : PLANIFICATION D'UNE SESSION D'ENTRETIEN INDÉPENDANTE
+        # ============================================================
+        if nouveau_statut == 'entretien':
+            date_raw = request.form.get("date_entretien")
+            heure_raw = request.form.get("heure_entretien")
+            lieu = request.form.get("lieu_entretien", "À distance / En ligne")
+            notes = request.form.get("notes_entretien", "Entretien de sélection")
+            
+            # 🟢 SÉCURITÉ ANTI-CRASH : On vérifie que les données du formulaire ne sont pas vides
+            if not date_raw or not heure_raw:
+                flash("Erreur : La date et l'heure de rendez-vous reçues sont vides. Vérifiez les champs HTML.", "danger")
+                return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
+            
+            from models import Entretien
+            
+            nouvelle_session = Entretien(
+                candidature_id=candidature.id,
+                date_rendezvous=datetime.strptime(date_raw, "%Y-%m-%d").date(),
+                heure_rendezvous=datetime.strptime(heure_raw, "%H:%M").time(),
+                lieu=lieu,
+                notes=notes
+            )
+            db.session.add(nouvelle_session)
+            flash(f"Une session d'entretien a été planifiée avec succès pour {candidature.candidat.nom}.", "success")
+
+        # ============================================================
+        # CAS B : VALIDATION FINALE D'EMBAUCHE (LesRecrutEntreprise)
+        # ============================================================
+        elif nouveau_statut == 'retenu':
             type_contrat = request.form.get("type_contrat", "CDI")
             salaire_raw = request.form.get("salaire_propose")
             date_debut_raw = request.form.get("date_debut")
@@ -129,7 +160,6 @@ def update_statut(candidature_id):
             salaire = float(salaire_raw) if salaire_raw else None
             date_debut = datetime.strptime(date_debut_raw, "%Y-%m-%d").date() if date_debut_raw else datetime.now(timezone.utc).date()
 
-            # Enregistrement sans redondance basé sur la Candidature unique !
             nouveau_recrutement = LesRecrutEntreprise(
                 entreprise_id=current_user.entreprise_id,
                 candidature_id=candidature.id,
@@ -138,9 +168,13 @@ def update_statut(candidature_id):
                 date_debut=date_debut
             )
             db.session.add(nouveau_recrutement)
+            flash(f"Félicitations ! {candidature.candidat.nom} a été recruté(e) sous contrat {type_contrat}.", "success")
 
+        # Sauvegarde finale de toutes les modifications (Statut + Tables liées)
         db.session.commit()
-        flash("Le suivi de la candidature a été mis à jour avec succès !", "success")
+        if nouveau_statut not in ['entretien', 'retenu']:
+            flash("Le suivi de la candidature a été mis à jour avec succès !", "success")
+            
     else:
         flash("Statut soumis invalide.", "danger")
 

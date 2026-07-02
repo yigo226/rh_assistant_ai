@@ -147,16 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     //         }
     //     });
     // }
-        // ============================================================
-    // 4. SÉCURITÉ DE SOUMISSION DU FORMULAIRE GLOBAL (CORRIGÉ 🟢)
-    // ============================================================
-    const matchingForm = document.getElementById('matchingForm');
-    if (matchingForm) {
-        // On supprime l'écouteur 'submit' bloquant qui vérifiait les anciens badges
-        // On laisse Flask et les champs cachés HTML piloter la validation de sécurité
-        console.log("Sécurité formulaire : Mode traditionnel actif. Verrous JS désactivés.");
-    }
-
+    
 
     // ============================================================
     // 5. GESTION DES FENÊTRES POP-UPS & APERÇU PDF
@@ -231,40 +222,121 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 if (response.ok && data.success) {
                     // 4. Construction et injection dynamique du rapport au format HTML
+                    // modalAnalyseContenu.innerHTML = `
+                    //     <div class="row align-items-center mb-4">
+                    //         <div class="col-sm-4 text-center">
+                    //             <div class="d-inline-flex align-items-center justify-content-center rounded-circle border border-4 border-success" style="width: 100px; height: 100px;">
+                    //                 <span class="h2 font-weight-bold mb-0 text-dark">${Math.floor(data.score)}%</span>
+                    //             </div>
+                    //             <span class="d-block text-muted small mt-2">Score d'adéquation</span>
+                    //         </div>
+                    //         <div class="col-sm-8 border-start">
+                    //             <h6 class="font-weight-bold text-uppercase small text-secondary"><i class="ti ti-message-chatbot"></i> Synthèse de l'assistant</h6>
+                    //             <p class="text-dark small mb-0" style="line-height: 1.5;">${data.recommendation}</p>
+                    //         </div>
+                    //     </div>
+
+                    //     <div class="d-flex flex-column gap-3">
+                    //         <div>
+                    //             <h6 class="text-success font-weight-bold small text-uppercase mb-2"><i class="ti ti-circle-check"></i> Compétences Validées (${data.matching_skills.length})</h6>
+                    //             <div class="d-flex flex-wrap gap-1">
+                    //                 ${data.matching_skills.map(s => `<span class="badge px-2 py-1 small rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucune correspondance.</span>'}
+                    //             </div>
+                    //         </div>
+                    //         <div>
+                    //             <h6 class="text-danger font-weight-bold small text-uppercase mb-2"><i class="ti ti-circle-x"></i> Compétences Manquantes (${data.missing_skills.length})</h6>
+                    //             <div class="d-flex flex-wrap gap-1">
+                    //                 ${data.missing_skills.map(s => `<span class="badge px-2 py-1 small rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca;">${s}</span>`).join('') || '<span class="text-success small fw-bold">Parfait ! Rien ne manque.</span>'}
+                    //             </div>
+                    //         </div>
+                    //         <div>
+                    //             <h6 class="text-primary font-weight-bold small text-uppercase mb-2"><i class="ti ti-plus"></i> Compétences Extra (${data.extra_skills.length})</h6>
+                    //             <div class="d-flex flex-wrap gap-1">
+                    //                 ${data.extra_skills.map(s => `<span class="badge px-2 py-1 small rounded text-primary" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucun bonus.</span>'}
+                    //             </div>
+                    //         </div>
+                    //     </div>`;
+
+                    // Injection complète et compartimentée dans la fenêtre modale
                     modalAnalyseContenu.innerHTML = `
-                        <div class="row align-items-center mb-4">
+                        <!-- En-tête : Score & Synthèse -->
+                        <div class="row align-items-center mb-4 bg-light p-3 rounded" style="margin: 0;">
                             <div class="col-sm-4 text-center">
-                                <div class="d-inline-flex align-items-center justify-content-center rounded-circle border border-4 border-success" style="width: 100px; height: 100px;">
-                                    <span class="h2 font-weight-bold mb-0 text-dark">${Math.floor(data.score)}%</span>
+                                <div class="d-inline-flex align-items-center justify-content-center rounded-circle border border-4 border-success bg-white" style="width: 90px; height: 90px;">
+                                    <span class="h3 font-weight-bold mb-0 text-dark">${Math.floor(data.score)}%</span>
                                 </div>
-                                <span class="d-block text-muted small mt-2">Score d'adéquation</span>
+                                <span class="d-block text-muted small mt-1 font-weight-bold">Score de match</span>
                             </div>
-                            <div class="col-sm-8 border-start">
-                                <h6 class="font-weight-bold text-uppercase small text-secondary"><i class="ti ti-message-chatbot"></i> Synthèse de l'assistant</h6>
+                            <div class="col-sm-8 border-start-sm">
+                                <h6 class="font-weight-bold text-uppercase small text-secondary mb-1"><i class="ti ti-message-chatbot"></i> Synthèse de l'assistant</h6>
                                 <p class="text-dark small mb-0" style="line-height: 1.5;">${data.recommendation}</p>
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column gap-3">
-                            <div>
-                                <h6 class="text-success font-weight-bold small text-uppercase mb-2"><i class="ti ti-circle-check"></i> Compétences Validées (${data.matching_skills.length})</h6>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${data.matching_skills.map(s => `<span class="badge px-2 py-1 small rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucune correspondance.</span>'}
+                        <!-- Accordéon ou blocs d'analyses scindés -->
+                        <div class="d-flex flex-column gap-4">
+                            
+                            <!-- SECTION 1 : COMPÉTENCES -->
+                            <div class="p-3 border rounded" style="border-radius: 12px; background: #ffffff;">
+                                <h6 class="font-weight-bold text-dark mb-3 border-bottom pb-2"><i class="ti ti-settings text-teal"></i> Cartographie des Compétences</h6>
+                                <div class="mb-3">
+                                    <span class="d-block text-success small font-weight-bold mb-1">✔️ Validées (${data.matching_skills.length})</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${data.matching_skills.map(s => `<span class="badge px-2 py-1 small rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.75rem;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucune correspondance.</span>'}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <span class="d-block text-danger small font-weight-bold mb-1">❌ Manquantes (${data.missing_skills.length})</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${data.missing_skills.map(s => `<span class="badge px-2 py-1 small rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca; font-size: 0.75rem;">${s}</span>`).join('') || '<span class="text-success small fw-bold">Parfait ! Rien ne manque.</span>'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="d-block text-primary small font-weight-bold mb-1">➕ Bonus / Extra (${data.extra_skills.length})</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${data.extra_skills.map(s => `<span class="badge px-2 py-1 small rounded text-primary" style="background-color: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.75rem;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucun bonus.</span>'}
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <h6 class="text-danger font-weight-bold small text-uppercase mb-2"><i class="ti ti-circle-x"></i> Compétences Manquantes (${data.missing_skills.length})</h6>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${data.missing_skills.map(s => `<span class="badge px-2 py-1 small rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca;">${s}</span>`).join('') || '<span class="text-success small fw-bold">Parfait ! Rien ne manque.</span>'}
+
+                            <!-- SECTION 2 : ÉTUDES & DIPLÔMES (🟢 AJOUTÉ) -->
+                            <div class="p-3 border rounded" style="border-radius: 12px; background: #ffffff;">
+                                <h6 class="font-weight-bold text-dark mb-3 border-bottom pb-2"><i class="ti ti-school text-purple"></i> Niveau d'Études & Diplômes</h6>
+                                <div class="mb-3">
+                                    <span class="d-block text-success small font-weight-bold mb-1">✔️ Validés (${data.diplomes_valides.length})</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${data.diplomes_valides.map(d => `<span class="badge px-2 py-1 small rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.75rem;">${d}</span>`).join('') || '<span class="text-muted small italic">Aucun diplôme en commun.</span>'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="d-block text-danger small font-weight-bold mb-1">❌ Requis mais manquants (${data.diplomes_manquants.length})</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${data.diplomes_manquants.map(d => `<span class="badge px-2 py-1 small rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca; font-size: 0.75rem;">${d}</span>`).join('') || '<span class="text-success small fw-bold">Votre cursus répond parfaitement.</span>'}
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <h6 class="text-primary font-weight-bold small text-uppercase mb-2"><i class="ti ti-plus"></i> Compétences Extra (${data.extra_skills.length})</h6>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${data.extra_skills.map(s => `<span class="badge px-2 py-1 small rounded text-primary" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">${s}</span>`).join('') || '<span class="text-muted small italic">Aucun bonus.</span>'}
+
+                            <!-- SECTION 3 : PARCOURS PROFESSIONNEL (🟢 AJOUTÉ) -->
+                            <div class="p-3 border rounded" style="border-radius: 12px; background: #ffffff;">
+                                <h6 class="font-weight-bold text-dark mb-3 border-bottom pb-2"><i class="ti ti-history text-warning"></i> Parcours Professionnel & Expériences</h6>
+                                <div class="mb-3">
+                                    <span class="d-block text-success small font-weight-bold mb-1">✔️ Validées (${data.experiences_validees.length})</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${data.experiences_validees.map(e => `<span class="badge px-2 py-1 small rounded text-success" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.75rem;">${e}</span>`).join('') || '<span class="text-muted small italic">Aucune correspondance d\'expérience.</span>'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="d-block text-danger small font-weight-bold mb-1">❌ À renforcer ou manquantes (${data.experiences_manquantes.length})</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        ${data.experiences_manquantes.map(e => `<span class="badge px-2 py-1 small rounded text-danger" style="background-color: #fef2f2; border: 1px solid #fecaca; font-size: 0.75rem;">${e}</span>`).join('') || '<span class="text-success small fw-bold">Votre expérience couvre les besoins du poste.</span>'}
+                                    </div>
                                 </div>
                             </div>
+
                         </div>`;
+
+
+
                 } else {
                     modalAnalyseContenu.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
                 }

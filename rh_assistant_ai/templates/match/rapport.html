@@ -21,10 +21,35 @@
     <!-- PANNEAU GAUCHE : Score et Recommandation -->
     <div class="col-lg-4 mb-4">
       <!-- Carte button de candidature à un offre de l' -->
-      <div class="match-card p-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <button class="btn btn-primary w-100">
-          <i class="ti ti-briefcase"></i> Postuler à cette offre
-        </button>
+      <!-- BLOC D'ACTION RAPIDE : POSTULATION DIRECTE DEPUIS LE RAPPORT -->
+      <div class="match-card p-4 text-center" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 1.5rem;">
+        
+        <!-- Vérification : On regarde si l'offre liée possède déjà une candidature validée -->
+        {% set deja_postule = false %}
+        {% if offre and offre.candidatures %}
+          {% for c in offre.candidatures %}
+            {% if c.cv and c.cv.candidat_id == current_user.id %}
+              {% set deja_postule = true %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        {% if deja_postule %}
+          <!-- Cas A : Le candidat a déjà cliqué sur postuler auparavant -->
+          <button type="button" class="btn btn-secondary w-100 py-2 font-weight-bold rounded-pill" 
+                  style="background-color: #e2e8f0; border-color: #cbd5e1; color: #475569; cursor: not-allowed;" 
+                  disabled>
+            <i class="ti ti-circle-check-filled"></i> Candidature déjà transmise
+          </button>
+        {% else %}
+          <!-- Cas B : Le score est vu, le candidat clique pour valider son envoi officiel -->
+          <a href="{{ url_for('candidat.postuler_offre', offre_id=offre.id if offre else 0) }}" 
+            class="btn btn-primary w-100 py-2 font-weight-bold rounded-pill d-flex align-items-center justify-content-center gap-2"
+            style="background-color: #0d9488; border-color: #0d9488; color: white; text-decoration: none;">
+            <i class="ti ti-send"></i> Postuler immédiatement à cette offre
+          </a>
+        {% endif %}
+
       </div>
 
       <!-- Carte Score -->

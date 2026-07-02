@@ -34,7 +34,7 @@ class Candidature(db.Model):
         nullable=False
     )
 
-    # 🟢 Relations ORM bidirectionnelles
+    # Relations bidirectionnelles
     offre = db.relationship("Offre", back_populates="candidatures", foreign_keys=[offre_id])
     cv = db.relationship("CV", back_populates="candidatures", foreign_keys=[cv_id])
 
@@ -45,14 +45,14 @@ class Candidature(db.Model):
         order_by="Entretien.date_creation.desc()" # Le dernier planifié apparaît en premier
     )
 
-    
-    # 🟢 PROPRIÉTÉ MAGIQUE 1 : Remonte au candidat sans colonne physique redondante
+
+    # Remonte au candidat sans colonne physique redondante
     @property
     def candidat(self):
         """Retrouve le candidat propriétaire du CV attaché à cette candidature"""
         return self.cv.candidat if self.cv else None
 
-    # 🟢 PROPRIÉTÉ MAGIQUE 2 : Retrouve le score IA sans stocker de clé supplémentaire
+    # Retrouve le score IA sans stocker de clé supplémentaire
     @property
     def details_matching(self):
         """Retrouve le résultat du matching IA entre ce CV et cette offre"""

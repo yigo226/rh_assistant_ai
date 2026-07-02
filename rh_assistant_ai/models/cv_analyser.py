@@ -14,8 +14,6 @@ class CVAnalyser(db.Model):
     diplomes = db.Column(db.JSON, nullable=True)
     experiences = db.Column(db.JSON, nullable=True)
     
-    #score = db.Column(db.Float, nullable=True)
-
     # Suivi temporel moderne en UTC
     created_at = db.Column(
         db.DateTime(timezone=True),

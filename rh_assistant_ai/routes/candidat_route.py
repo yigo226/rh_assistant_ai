@@ -22,12 +22,12 @@ candidat_bp = Blueprint(
 @login_required
 @role_required("candidat")
 def espace_candidat():
-    # 🟢 CORRECTION : Filtrage sur candidat_id au lieu de user_id
+    # Filtrage sur candidat_id au lieu de user_id
     cv_existant = CV.query.filter_by(candidat_id=current_user.id, est_actif=True).first()
-    # 1. Récupération du filtre de recherche textuelle
+    # filtre de recherche textuelle
     recherche = request.args.get('search', '').strip()
     
-    # 2. Requête de filtrage sur le catalogue d'offres
+    # filtrage sur le catalogue d'offres
     requete_offres = Offre.query
     if recherche:
         requete_offres = requete_offres.filter(
@@ -94,7 +94,7 @@ def postuler_offre(offre_id):
         offre_analyser_id=analyse_offre.id
     ).first()
     
-    # 🧠 INTÉGRATION IA (Cas B) : Si non testé, exécution transparente du matching à la volée avant envoi
+    # Si non testé, exécution transparente du matching à la volée avant envoi
     if not match_existant:
         try:
             metriques = calculer_matching(analyse_cv, analyse_offre)
@@ -108,7 +108,7 @@ def postuler_offre(offre_id):
             return redirect(url_for("candidat.espace_candidat"))
 
     # 3. ENREGISTREMENT SÉCURISÉ DE LA CANDIDATURE CONFORME À LA RÉALITÉ MÉTIER
-    # 🟢 CORRECTION : On vérifie si le candidat a déjà postulé en filtrant par cv_id et offre_id
+    # si le candidat a déjà postulé en filtrant par cv_id et offre_id
     deja_postule = Candidature.query.filter_by(
         cv_id=cv_actif.id, 
         offre_id=offre.id

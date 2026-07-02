@@ -28,7 +28,7 @@ def register():
         # Hachage du mot de passe
         hashed_password = generate_password_hash(password)
 
-        # 🟢 SÉCURITÉ : Tout le monde s'inscrit en tant que "Candidat"
+        # Tout le monde s'inscrit en tant que "Candidat"
         nouveau_candidat = Candidat(
             nom=nom,
             prenom=prenom,
@@ -75,7 +75,8 @@ def login_post():
         else:
             return redirect(url_for('candidat.espace_candidat'))
 
-    # 🟢 FIX SÉCURITÉ : La route de redirection exacte est auth.login (et non auth_bp.login)
+    #  La route de redirection en cas d'échec de connexion 
+    # est la même pour tous les utilisateurs
     flash("Identifiants incorrects", "danger")
     return redirect(url_for("auth.login")) 
 

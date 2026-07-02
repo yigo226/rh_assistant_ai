@@ -62,9 +62,5 @@ def embaucher_candidat(id_candidat, id_departement, id_entreprise):
         candidat.entreprise_id = id_entreprise
         candidat.departement_id = id_departement
         
-        # Optionnel : Vous pouvez changer son rôle en "employe" ou le laisser "candidat" 
-        # selon la logique des permissions de votre application
-        # candidat.role = "employe" 
-        
         db.session.commit()
         print(f"{candidat.prenom} a été intégré au département avec succès !")

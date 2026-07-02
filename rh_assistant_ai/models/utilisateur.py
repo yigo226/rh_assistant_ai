@@ -68,12 +68,6 @@ class Candidat(Utilisateur):
         back_populates="candidat", 
         cascade="all, delete-orphan"
     )
-    
-    # candidatures = db.relationship(
-    #     "Candidature", 
-    #     back_populates="candidat", 
-    #     cascade="all, delete-orphan"
-    # )
 
     @property
     def candidatures(self):

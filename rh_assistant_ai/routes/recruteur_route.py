@@ -273,7 +273,7 @@ def refuser_candidature(candidature_id):
 @login_required
 @role_required("recruteur")
 def registre_recrutements():    
-    # 🟢 CORRECTION CHIRURGICALE : Jointure propre et limpide par étapes
+    # Jointure par étapes
     # On sélectionne les contrats validés dont l'offre d'emploi a été publiée 
     # par un recruteur appartenant à la même entreprise que l'utilisateur connecté.
     tous_les_recrutements = LesRecrutEntreprise.query\

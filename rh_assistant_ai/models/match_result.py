@@ -20,18 +20,18 @@ class MatchResult(db.Model):
         nullable=False
     )
 
-    # 🟢 COMPLETION & TRADUCTION : Les 3 dimensions du matching (Compétences, Diplômes, Expériences)
+    # LES  dimensions du matching (Compétences, Diplômes, Expériences)
     
     # 1. Le bloc Compétences
     competences_validees = db.Column(db.JSON, nullable=True) # matching_skills
     competences_manquantes = db.Column(db.JSON, nullable=True) # missing_skills
     competences_bonus = db.Column(db.JSON, nullable=True) # extra_skills
 
-    # 2. Le bloc Diplômes (🟢 Ajouté)
+    # 2. Le bloc Diplômes 
     diplomes_valides = db.Column(db.JSON, nullable=True)
     diplomes_manquants = db.Column(db.JSON, nullable=True)
 
-    # 3. Le bloc Expériences (🟢 Ajouté)
+    # 3. Le bloc Expériences 
     experiences_validees = db.Column(db.JSON, nullable=True)
     experiences_manquantes = db.Column(db.JSON, nullable=True)
     

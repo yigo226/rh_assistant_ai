@@ -66,7 +66,7 @@ class Offre(db.Model):
 
     @property
     def total_postulants(self):
-        # 🟢 SUGGESTION SÉCURITÉ : Protection si la relation candidatures n'est pas encore initialisée
+        # Protection si la relation candidatures n'est pas encore initialisée
         return len(self.candidatures) if self.candidatures else 0
     
     # À ajouter dans votre classe Offre (models.py) si ce n'est pas déjà fait :

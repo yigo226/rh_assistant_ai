@@ -132,7 +132,7 @@
               <!-- Cas 2 : Non testé -> Bouton Comparer -->
               <button type="button" class="btn btn-sm btn-outline-primary px-2 rounded-pill btn-analyser-offre" 
                       data-offre-id="{{ offre.id }}"
-                      data-matching-url="{{ url_for('global.matching') }}"
+                      data-matching-url="{{ url_for('matching.start_match') }}"
                       style="color: #0d9488; border-color: #0d9488; font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
                 <i class="ti ti-arrows-diff"></i> Comparer à mon CV
               </button>
@@ -154,24 +154,31 @@
             {% endif %}
 
             <!-- ÉLÉMENT DROIT : Le nouveau bouton Postuler (Candidature) -->
-            <!-- ÉLÉMENT DROIT : Le bouton Postuler dynamique -->
-            {% if offre.id in scores_deja_calcules %}
-              <!-- Cas A : Déjà testé -> Postulation directe classique -->
+            {% if offre.id in offres_postulees %}
+              <!-- CAS 1 : Le candidat a DÉJÀ validé sa candidature pour ce poste -->
+              <button type="button" class="btn btn-sm btn-secondary px-2 rounded-pill" 
+                      style="background-color: #e2e8f0; border-color: #cbd5e1; color: #475569; font-weight: 600; font-size: 0.75rem; white-space: nowrap; cursor: not-allowed;" 
+                      disabled>
+                <i class="ti ti-circle-check-filled"></i> Déjà postulé
+              </button>
+
+            {% elif offre.id in scores_deja_calcules %}
+              <!-- CAS 2 : Comparaison faite mais pas encore postulé -> Postulation directe classique ultra-rapide -->
               <a href="{{ url_for('candidat.postuler_offre', offre_id=offre.id) }}" 
                 class="btn btn-sm btn-primary px-2 rounded-pill" 
-                style="background-color: #0d9488; border-color: #0d9488; font-weight: 500; font-size: 0.75rem; white-space: nowrap;">
+                style="background-color: #0d9488; border-color: #0d9488; font-weight: 600; font-size: 0.75rem; white-space: nowrap;">
                 <i class="ti ti-send"></i> Postuler
               </a>
+
             {% else %}
-              <!-- Cas B : Non testé -> Postulation avec déclencheur de matching  transparent -->
+              <!-- CAS 3 : Aucun historique (Ni match ni postulation) -> Déclencheur transparent Match IA + Postulation -->
               <a href="{{ url_for('candidat.postuler_offre', offre_id=offre.id) }}" 
                 class="btn btn-sm btn-outline-secondary px-2 rounded-pill" 
-                style="color: #64748b; border-color: #cbd5e1; font-weight: 500; font-size: 0.75rem; white-space: nowrap;"
-                title="L'IA analysera votre profil automatiquement lors de la validation">
+                style="color: #475569; border-color: #cbd5e1; font-weight: 500; font-size: 0.75rem; white-space: nowrap;"
+                title="L'IA calculera votre score de conformité automatiquement avant d'envoyer votre dossier">
                 <i class="ti ti-bolt"></i> Postuler (Match IA)
               </a>
             {% endif %}
-
           </div>
 
         </div>

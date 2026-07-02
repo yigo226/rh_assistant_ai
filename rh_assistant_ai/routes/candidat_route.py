@@ -41,6 +41,7 @@ def espace_candidat():
     # 3. Récupération optimisée des scores via la chaîne relationnelle de la BDD
     # On remonte du MatchResult -> CVAnalyser -> CV pour cibler l'id du candidat connecté
     scores_deja_calcules = {}
+    offres_postulees = []
     if cv_existant and cv_existant.analyse:
         matchings_utilisateur = MatchResult.query.filter_by(cv_analyser_id=cv_existant.analyse.id).all()
         
@@ -48,13 +49,18 @@ def espace_candidat():
         for m in matchings_utilisateur:
             if m.offre_analyser:
                 scores_deja_calcules[m.offre_analyser.offre_id] = m.score
+        # 🟢 AJOUT : On récupère toutes les candidatures validées par ce candidat avec son CV actif
+        from models import Candidature
+        candidatures_valides = Candidature.query.filter_by(cv_id=cv_existant.id).all()
+        offres_postulees = [c.offre_id for c in candidatures_valides]
 
     return render_template(
         "offre/ListeOffre.html",
         offres=offres,
         scores_deja_calcules=scores_deja_calcules,
         recherche=recherche,
-        cv_existant=cv_existant # Variable renommée existant_cv pour s'aligner sur votre vue HTML
+        cv_existant=cv_existant,
+        offres_postulees=offres_postulees
     )
 
 

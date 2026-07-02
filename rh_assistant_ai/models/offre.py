@@ -69,5 +69,12 @@ class Offre(db.Model):
         # 🟢 SUGGESTION SÉCURITÉ : Protection si la relation candidatures n'est pas encore initialisée
         return len(self.candidatures) if self.candidatures else 0
     
+    # À ajouter dans votre classe Offre (models.py) si ce n'est pas déjà fait :
+    @property
+    def nom_entreprise(self):
+        """Remonte dynamiquement le nom de l'entreprise sans colonne doublon"""
+        return self.departement.entreprise.nom if (self.departement and self.departement.entreprise) else "Inconnue"
+
+    
     def __repr__(self):
         return f"<Offre {self.titre}>"

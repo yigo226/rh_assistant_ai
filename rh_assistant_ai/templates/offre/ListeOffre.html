@@ -236,5 +236,60 @@
   </div>
 </div>
 
+<script>
+  // 🟢 RECTIFICATION PARFAITE DE L'ENVOI POUR ÉLIMINER LE CODE 415
+const btnLaunchMatch = document.getElementById('btnLaunchMatch');
+
+if (btnLaunchMatch) {
+    btnLaunchMatch.addEventListener('click', async function(e) {
+        e.preventDefault(); // Bloque toute soumission de formulaire classique du navigateur
+
+        // Récupération des IDs cachés du HTML
+        const cvId = document.getElementById('hiddenCvId')?.value;
+        const offreId = document.getElementById('hiddenOffreId')?.value;
+
+        if (!cvId || !offreId) {
+            alert("Erreur : Impossible de lancer le calcul. Identifiants manquants.");
+            return;
+        }
+
+        // Effet visuel d'attente
+        this.disabled = true;
+        this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Analyse IA...`;
+
+        try {
+            // FETCH FORCÉ EN APPLICATION/JSON
+            const response = await fetch('/matching/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json', // 👈 LA LIGNE CRUCIALE CONTRE L'ERREUR 415
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    cv_id: parseInt(cvId),
+                    offre_id: parseInt(offreId)
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                // Redirection immédiate vers le rapport d'adéquation en cas de succès !
+                window.location.href = `/matching/rapport/${result.data.id}`;
+            } else {
+                alert("Erreur IA : " + (result.message || "Calcul impossible."));
+                this.disabled = false;
+                this.innerHTML = `<i class="ti ti-arrows-diff"></i> Comparer cette offre à mon CV`;
+            }
+        } catch (error) {
+            console.error("Erreur réseau :", error);
+            alert("L'assistant IA est injoignable pour le moment.");
+            this.disabled = false;
+            this.innerHTML = `<i class="ti ti-arrows-diff"></i> Comparer cette offre à mon CV`;
+        }
+    });
+}
+
+</script>
 
 {% endblock %}

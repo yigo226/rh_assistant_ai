@@ -3,6 +3,14 @@ from flask_login import login_required, current_user
 from models import CV, Offre, MatchResult, CVAnalyser, OffreAnalyser
 from models.utilisateur import Candidat
 from services.matching_service import calculer_matching, enregistrer_match_result
+from datetime import datetime, timezone
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, abort
+from flask_login import login_required, current_user
+from config.database import db
+
+# Importations unifiées de vos modèles et services francisés
+from models import CV, Offre, MatchResult, CVAnalyser, OffreAnalyser
+from services.matching_service import calculer_matching, enregistrer_match_result
 
 matching_bp = Blueprint(
     "matching",
@@ -11,17 +19,70 @@ matching_bp = Blueprint(
 )
 
 # ============================================================
-# 1. ÉCRAN D'ACCUEIL DU MATCHING (Sélection Catalogue & Dépôt)
+# 🟢 ROUTE UNIFIÉE : AFFICHAGE (GET) ET CALCUL SYNCHRONE (POST)
 # ============================================================
-@matching_bp.route("/start_match", methods=["GET"])
+@matching_bp.route("/start_match", methods=["GET", "POST"])
 @login_required
 def start_match():
-    # 🟢 SYNC : Recherche du CV unique ACTIF lié au Candidat connecté
-    existing_cv = (
-        CV.query
-        .filter_by(candidat_id=current_user.id, est_actif=True)
-        .first()
-    )
+    
+    # --------------------------------------------------------
+    # COMPORTEMENT TRAITEMENT : MÉTHODE POST (Lancement du Match)
+    # --------------------------------------------------------
+    if request.method == "POST":
+        # 1. Récupération des IDs envoyés par le formulaire traditionnel
+        cv_id_form = request.form.get("cv_id")
+        offre_id_form = request.form.get("offre_id")
+
+        if not cv_id_form or not offre_id_form:
+            flash("Action impossible : Les identifiants du CV et de l'offre sont requis.", "danger")
+            return redirect(url_for("matching.start_match"))
+
+        # 2. Récupération des objets physiques et de leurs analyses IA
+        cv_physique = CV.query.get_or_404(int(cv_id_form))
+        offre_physique = Offre.query.get_or_404(int(offre_id_form))
+
+        analyse_cv = cv_physique.analyse
+        analyse_offre = offre_physique.analyse
+
+        if not analyse_cv or not analyse_offre:
+            flash("Action impossible : Les analyses structurelles IA sont introuvables.", "danger")
+            return redirect(url_for("matching.start_match"))
+
+        # 3. Vérification de l'historique : si le match existe déjà, on ne réveille pas l'IA
+        match_permanent = MatchResult.query.filter_by(
+            cv_analyser_id=analyse_cv.id, 
+            offre_analyser_id=analyse_offre.id
+        ).first()
+
+        # 4. Si non testé, calcul algorithmique et persistance en base de données
+        if not match_permanent:
+            try:
+                metriques = calculer_matching(analyse_cv, analyse_offre)
+                match_permanent = enregistrer_match_result(
+                    analyse_cv=analyse_cv, 
+                    analyse_offre=analyse_offre, 
+                    metriques=metriques
+                )
+            except Exception as e:
+                flash(f"Erreur lors de l'exécution de l'analyse comparative : {str(e)}", "danger")
+                return redirect(url_for("matching.start_match"))
+
+        # 5. Redirection immédiate vers l'URL fixe et propre du rapport
+        return redirect(url_for("matching.rapport", match_id=match_permanent.id))
+
+    # --------------------------------------------------------
+    # COMPORTEMENT ENTRÉE : MÉTHODE GET (Affichage de l'interface)
+    # --------------------------------------------------------
+    # Interception d'une sélection rapide issue du catalogue candidat
+    url_offre_id = request.args.get('select_offre_id')
+    if url_offre_id:
+        offre_selectionnee = Offre.query.get(url_offre_id)
+        if offre_selectionnee:
+            session['current_offre_id'] = offre_selectionnee.id
+            flash(f"Offre « {offre_selectionnee.titre} » chargée pour la comparaison.", "success")
+
+    # Recherche du CV unique ACTIF lié au Candidat connecté
+    existing_cv = CV.query.filter_by(candidat_id=current_user.id, est_actif=True).first()
 
     # Récupération de l'offre d'emploi active enregistrée en session
     existing_offre = None
@@ -30,21 +91,17 @@ def start_match():
     if current_offre_id:
         existing_offre = Offre.query.get(current_offre_id)
     
-    # Sécurité Plan A : Si la session s'est vidée, on sélectionne la toute dernière offre publique
+    # Sécurité Plan A : Si la session s'est vidée, sélection de la toute dernière offre publique
     if not existing_offre:
-        existing_offre = (
-            Offre.query
-            .order_by(Offre.date_creation.desc())
-            .first()
-        )
+        existing_offre = Offre.query.order_by(Offre.date_creation.desc()).first()
         if existing_offre:
             session['current_offre_id'] = existing_offre.id
 
-    # Chargement de la liste de toutes les offres pour alimenter votre sélecteur de catalogue
     offres_publiees = Offre.query.all()
 
+    # Rendu du formulaire (Votre fichier upload.html renommé ou configuré)
     return render_template(
-        "match/start_match.html", 
+        "upload.html", 
         existing_cv=existing_cv,
         existing_offre=existing_offre,
         offres_publiees=offres_publiees
@@ -52,64 +109,16 @@ def start_match():
 
 
 # ============================================================
-# 2. EXECUTION DU MATCHING (Requête Asynchrone JSON)
-# ============================================================
-@matching_bp.route("/run", methods=["POST"])
-@login_required
-def run_matching():
-    print("Run exécuté")
-    data = request.get_json()
-
-    cv_analyser_id = data.get("cv_id")  
-    offre_analyser_id = data.get("offre_id")  
-
-    if not cv_analyser_id or not offre_analyser_id:
-        return jsonify({
-            "success": False,
-            "message": "Les identifiants du CV et de l'offre sont obligatoires."
-        }), 400
-
-    try:
-        analyse_cv = CVAnalyser.query.get_or_404(cv_analyser_id)
-        analyse_offre = OffreAnalyser.query.get_or_404(offre_analyser_id)
-
-        # Calcul algorithmique
-        metriques = calculer_matching(analyse_cv, analyse_offre)
-
-        # Enregistrement dans la table match_results
-        match_permanent = enregistrer_match_result(
-            analyse_cv=analyse_cv, 
-            analyse_offre=analyse_offre, 
-            metriques=metriques, 
-        )
-
-        return jsonify({
-            "success": True,
-            "data": {
-                "id": match_permanent.id,
-                "score": match_permanent.score
-            }
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"Une erreur est survenue lors du calcul du matching : {str(e)}"
-        }), 500
-
-
-# ============================================================
-# 3. COMPTE-RENDU VISUEL RAPPORT (Rapport d'adéquation global)
+# 3. COMPTE-RENDU VISUEL FIXE (Rapport d'adéquation global)
 # ============================================================
 @matching_bp.route("/rapport/<int:match_id>", methods=["GET"])
 @login_required
 def rapport(match_id):
     resultat = MatchResult.query.get_or_404(match_id)
     
-    # 🟢 SÉCURITÉ : Remonte la chaîne pour vérifier si le rapport appartient bien au candidat connecté
+    # Sécurité d'accès : Remonte la chaîne pour valider la propriété du dossier
     if resultat.cv_analyser.cv.candidat_id != current_user.id:
-        flash("Vous n'êtes pas autorisé à consulter ce rapport.", "danger")
-        return redirect(url_for('matching.start_match'))
+        abort(403)
 
     analyse_cv = resultat.cv_analyser
     analyse_offre = resultat.offre_analyser
@@ -123,6 +132,126 @@ def rapport(match_id):
         cv=cv_brut,
         offre=offre_brut
     )
+
+# matching_bp = Blueprint(
+#     "matching",
+#     __name__,
+#     url_prefix="/matching"
+# )
+
+# # ============================================================
+# # 1. ÉCRAN D'ACCUEIL DU MATCHING (Sélection Catalogue & Dépôt)
+# # ============================================================
+# @matching_bp.route("/start_match", methods=["GET"])
+# @login_required
+# def start_match():
+#     # 🟢 SYNC : Recherche du CV unique ACTIF lié au Candidat connecté
+#     existing_cv = (
+#         CV.query
+#         .filter_by(candidat_id=current_user.id, est_actif=True)
+#         .first()
+#     )
+
+#     # Récupération de l'offre d'emploi active enregistrée en session
+#     existing_offre = None
+#     current_offre_id = session.get('current_offre_id')
+    
+#     if current_offre_id:
+#         existing_offre = Offre.query.get(current_offre_id)
+    
+#     # Sécurité Plan A : Si la session s'est vidée, on sélectionne la toute dernière offre publique
+#     if not existing_offre:
+#         existing_offre = (
+#             Offre.query
+#             .order_by(Offre.date_creation.desc())
+#             .first()
+#         )
+#         if existing_offre:
+#             session['current_offre_id'] = existing_offre.id
+
+#     # Chargement de la liste de toutes les offres pour alimenter votre sélecteur de catalogue
+#     offres_publiees = Offre.query.all()
+
+#     return render_template(
+#         "match/start_match.html", 
+#         existing_cv=existing_cv,
+#         existing_offre=existing_offre,
+#         offres_publiees=offres_publiees
+#     )
+
+
+# # ============================================================
+# # 2. EXECUTION DU MATCHING (Requête Asynchrone JSON)
+# # ============================================================
+# @matching_bp.route("/run", methods=["POST"])
+# @login_required
+# def run_matching():
+#     print("Run exécuté")
+#     data = request.get_json()
+
+#     cv_analyser_id = data.get("cv_id")  
+#     offre_analyser_id = data.get("offre_id")  
+
+#     if not cv_analyser_id or not offre_analyser_id:
+#         return jsonify({
+#             "success": False,
+#             "message": "Les identifiants du CV et de l'offre sont obligatoires."
+#         }), 400
+
+#     try:
+#         analyse_cv = CVAnalyser.query.get_or_404(cv_analyser_id)
+#         analyse_offre = OffreAnalyser.query.get_or_404(offre_analyser_id)
+
+#         # Calcul algorithmique
+#         metriques = calculer_matching(analyse_cv, analyse_offre)
+
+#         # Enregistrement dans la table match_results
+#         match_permanent = enregistrer_match_result(
+#             analyse_cv=analyse_cv, 
+#             analyse_offre=analyse_offre, 
+#             metriques=metriques, 
+#         )
+
+#         return jsonify({
+#             "success": True,
+#             "data": {
+#                 "id": match_permanent.id,
+#                 "score": match_permanent.score
+#             }
+#         }), 200
+
+#     except Exception as e:
+#         return jsonify({
+#             "success": False,
+#             "message": f"Une erreur est survenue lors du calcul du matching : {str(e)}"
+#         }), 500
+
+
+# # ============================================================
+# # 3. COMPTE-RENDU VISUEL RAPPORT (Rapport d'adéquation global)
+# # ============================================================
+# @matching_bp.route("/rapport/<int:match_id>", methods=["GET"])
+# @login_required
+# def rapport(match_id):
+#     resultat = MatchResult.query.get_or_404(match_id)
+    
+#     # 🟢 SÉCURITÉ : Remonte la chaîne pour vérifier si le rapport appartient bien au candidat connecté
+#     if resultat.cv_analyser.cv.candidat_id != current_user.id:
+#         flash("Vous n'êtes pas autorisé à consulter ce rapport.", "danger")
+#         return redirect(url_for('matching.start_match'))
+
+#     analyse_cv = resultat.cv_analyser
+#     analyse_offre = resultat.offre_analyser
+    
+#     cv_brut = analyse_cv.cv if analyse_cv else None
+#     offre_brut = analyse_offre.offre if analyse_offre else None
+
+#     return render_template(
+#         "match/rapport.html",
+#         resultat=resultat,
+#         cv=cv_brut,
+#         offre=offre_brut
+#     )
 
 
 # ============================================================

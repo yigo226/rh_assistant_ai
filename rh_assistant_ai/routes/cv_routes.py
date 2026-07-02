@@ -30,15 +30,15 @@ def chargement_cv():
             flash("Aucun fichier sélectionné ou le fichier est obligatoire", "danger")
             return redirect(request.url)
 
-        # 🟢 CORRECTION : Filtrage sur la bonne clé candidat_id
+        #  Filtrage sur la bonne clé candidat_id
         ancien_cv = CV.query.filter_by(candidat_id=current_user.id, est_actif=True).first()
         if ancien_cv:
             ancien_cv.est_actif = False
             db.session.commit()
 
-        # 🟢 CORRECTION : Passage de l'argument typé candidat (conforme au nouveau service)
+        #  Passage de l'argument typé candidat (conforme au nouveau service)
         cv, synthese_cv, infos_ia = save_cv(
-            file=file, 
+            fichier=file, 
             candidat=current_user
         )
 

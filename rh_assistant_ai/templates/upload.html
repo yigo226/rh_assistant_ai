@@ -1,54 +1,39 @@
 {% extends "squelette/base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="matching-page">
+<div class="container-fluid px-md-4 mt-4 mb-5">
+  <div class="matching-page" style="max-width: 100%; width: 100%; margin: 0;">
 
-    <div class="matching-header">
-      <h2>Comparer mon CV à une offre</h2>
-      <p class="matching-subtitle">
-        Importez une offre d'emploi (PDF) trouvée sur une plateforme pour évaluer
-        sa compatibilité avec votre profil.
-      </p>
-    </div>
-
-    <!-- Le formulaire global ne gère plus l'upload direct mais la soumission finale -->
-    <form method="POST" action="/matching/run" id="matchingForm">
-      
-      <!-- 🟢 SOLUTIONS AUX BUGS : Injection des IDs masqués nécessaires pour matching.js -->
-      <input type="hidden" name="cv_id" id="hiddenCvId" value="{{ existing_cv.id if existing_cv else '' }}">
-      <input type="hidden" name="offre_id" id="hiddenOffreId" value="{{ existing_offre.id if existing_offre else '' }}">
-<div class="container mt-4">
-  <div class="matching-page">
-
-    <div class="matching-header">
+    <div class="matching-header mb-4">
       <h2>Comparer mon CV à une offre</h2>
       <p class="matching-subtitle">
         Sélectionnez une offre d'emploi officielle pour évaluer sa compatibilité avec votre profil candidat grâce à l'assistant IA.
       </p>
     </div>
 
-    <!-- 🟢 RECTIFICATION : Ouverture propre du conteneur de formulaire sans action brute perturbatrice -->
-    <form id="matchingForm" onsubmit="return false;">
+    <!-- 🟢 RECTIFICATION PARFAITE : Soumission POST traditionnelle directe vers votre route de matching -->
+    <form method="POST" action="{{ url_for('matching.start_match') }}" id="matchingForm">
       
-      <!-- 🟢 DEUX CHAMPS REQUIS : Permettent à matching.js de lire instantanément les IDs d'analyses -->
-      <input type="hidden" id="hiddenCvId" value="{{ existing_cv.analyse.id if (existing_cv and existing_cv.analyse) else '' }}">
-      <input type="hidden" id="hiddenOffreId" value="{{ existing_offre.analyse.id if (existing_offre and existing_offre.analyse) else '' }}">
+      <!-- 🟢 CHAMPS PHYSIQUES STANDARD : Transmettent les IDs réels des objets parents lors du submit -->
+      <input type="hidden" name="cv_id" id="hiddenCvId" value="{{ existing_cv.id if existing_cv else '' }}">
+      <input type="hidden" name="offre_id" id="hiddenOffreId" value="{{ existing_offre.id if existing_offre else '' }}">
 
       <!-- ============================================================
            BLOC 1 — CV
       ============================================================ -->
-      <div class="match-card">
-        <div class="match-card-header">
-          <span class="match-card-icon match-card-icon--teal">
-            <i class="ti ti-file-text"></i>
-          </span>
-          <div class="match-card-heading">
-            <h3 class="match-card-title">Votre CV</h3>
-            <p class="match-card-sub">Obligatoire pour lancer la comparaison</p>
+      <div class="match-card mb-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="match-card-header p-3 d-flex align-items-center justify-content-between border-bottom">
+          <div class="d-flex align-items-center gap-3">
+            <span class="match-card-icon match-card-icon--teal text-teal h3 mb-0">
+              <i class="ti ti-file-text"></i>
+            </span>
+            <div class="match-card-heading">
+              <h3 class="match-card-title h5 mb-0 font-weight-bold">Votre CV</h3>
+              <p class="match-card-sub text-muted small mb-0">Obligatoire pour lancer la comparaison</p>
+            </div>
           </div>
 
-          <span class="match-status-badge {% if existing_cv %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="cvStatusBadge">            
+          <span class="badge {% if existing_cv %}bg-success-subtle text-success border border-success-subtle{% else %}bg-warning-subtle text-warning border border-warning-subtle{% endif %} px-2 py-1 rounded small" id="cvStatusBadge">            
             {% if existing_cv %}
               <i class="ti ti-circle-check"></i> Chargé
             {% else %}
@@ -57,50 +42,44 @@
           </span>
         </div>
 
-        <div class="match-card-body">
+        <div class="match-card-body p-3">
           {% if existing_cv %}
             <!-- CV déjà chargé : aperçu -->
-            <div class="match-file-loaded" id="cvLoadedView">
-              <div class="match-file-chip">
-                <i class="ti ti-file-text match-file-icon"></i>
+            <div class="match-file-loaded d-flex align-items-center justify-content-between" id="cvLoadedView">
+              <div class="match-file-chip d-flex align-items-center gap-2 bg-light p-2 rounded">
+                <i class="ti ti-file-text match-file-icon text-secondary h4 mb-0"></i>
                 <div class="match-file-info">
-                  <span class="match-file-name" id="cvCurrentName">{{ existing_cv.nom_fichier }}</span>
-                  <span class="match-file-meta">PDF Actif</span>
+                  <span class="match-file-name font-weight-bold small text-dark d-block" id="cvCurrentName">{{ existing_cv.nom_fichier }}</span>
+                  <span class="match-file-meta text-muted small">PDF Actif</span>
                 </div>
               </div>
-              <button type="button" class="match-edit-btn" id="cvEditBtn">
-                <i class="ti ti-edit"></i> Remplacer
-              </button>
-              <button type="button" class="btn btn-outline-secondary btnVoirAnalyse" 
-                      data-type="cv"
-                      data-analysis-id="{{ existing_cv.analyse.id if (existing_cv and existing_cv.analyse) else '' }}">
-                <i class="ti ti-eye"></i> Voir
-              </button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-light border" id="cvEditBtn">
+                  <i class="ti ti-edit"></i> Remplacer
+                </button>
+                <a href="{{ url_for('cv.view_result', analysis_id=existing_cv.analyse.id) if existing_cv.analyse else '#' }}" class="btn btn-sm btn-outline-secondary">
+                  <i class="ti ti-eye"></i> Voir l'analyse
+                </a>
+              </div>
             </div>
 
             <!-- Input masqué initialement si déjà chargé -->
             <div class="match-file-input-wrap" id="cvInputWrap" style="display:none">
-              <label class="form-label" for="cvFileInput">Choisir un nouveau CV (PDF)</label>
+              <label class="form-label small font-weight-bold" for="cvFileInput">Choisir un nouveau CV (PDF)</label>
               <div class="input-group">
-                <input type="file" id="cvFileInput" class="form-control" accept=".pdf">
-                <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="cv">
-                  <i class="ti ti-upload"></i> Uploader
-                </button>
+                <input type="file" id="cvFileInput" class="form-control form-control-sm" accept=".pdf">
               </div>
-              <p class="match-help-text" id="cvFileLabel">Aucun nouveau fichier sélectionné</p>
+              <p class="match-help-text text-muted small mt-1" id="cvFileLabel">Aucun nouveau fichier sélectionné</p>
             </div>
 
           {% else %}
-            <!-- Aucun CV : Input direct avec bouton Uploader -->
+            <!-- Aucun CV : Input direct -->
             <div class="match-file-input-wrap" id="cvInputWrap">
-              <label class="form-label" for="cvFileInput">Choisir un CV (PDF)</label>
+              <label class="form-label small font-weight-bold" for="cvFileInput">Choisir un CV (PDF)</label>
               <div class="input-group">
-                <input type="file" id="cvFileInput" class="form-control" accept=".pdf">
-                <button type="button" class="btn btn-outline-secondary btn-upload-ajax" data-target="cv">
-                  <i class="ti ti-upload"></i> Uploader
-                </button>
+                <input type="file" id="cvFileInput" class="form-control form-control-sm" accept=".pdf">
               </div>
-              <p class="match-help-text" id="cvFileLabel">Aucun fichier sélectionné</p>
+              <p class="match-help-text text-muted small mt-1" id="cvFileLabel">Aucun fichier sélectionné</p>
             </div>
           {% endif %}
         </div>
@@ -109,17 +88,19 @@
       <!-- ============================================================
            BLOC 2 — Offre d'emploi (Sélection dynamique catalogue)
       ============================================================ -->
-      <div class="match-card">
-        <div class="match-card-header">
-          <span class="match-card-icon match-card-icon--purple">
-            <i class="ti ti-briefcase"></i>
-          </span>
-          <div class="match-card-heading">
-            <h3 class="match-card-title">Offre d'emploi</h3>
-            <p class="match-card-sub">Sélectionnez une offre publiée pour lancer la comparaison</p>
+      <div class="match-card mb-4" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="match-card-header p-3 d-flex align-items-center justify-content-between border-bottom">
+          <div class="d-flex align-items-center gap-3">
+            <span class="match-card-icon match-card-icon--purple text-purple h3 mb-0">
+              <i class="ti ti-briefcase"></i>
+            </span>
+            <div class="match-card-heading">
+              <h3 class="match-card-title h5 mb-0 font-weight-bold">Offre d'emploi</h3>
+              <p class="match-card-sub text-muted small mb-0">Sélectionnez une offre publiée pour lancer la comparaison</p>
+            </div>
           </div>
 
-          <span class="match-status-badge {% if existing_offre %}match-status-badge--ok{% else %}match-status-badge--warn{% endif %}" id="offreStatusBadge">
+          <span class="badge {% if existing_offre %}bg-success-subtle text-success border border-success-subtle{% else %}bg-warning-subtle text-warning border border-warning-subtle{% endif %} px-2 py-1 rounded small" id="offreStatusBadge">
             {% if existing_offre %}
               <i class="ti ti-circle-check"></i> Sélectionnée
             {% else %}
@@ -128,28 +109,24 @@
           </span>
         </div>
 
-        <div class="match-card-body">
+        <div class="match-card-body p-3">
           <div class="form-group">
-            <label class="form-label" for="offreSelectInput" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+            <label class="form-label small font-weight-bold mb-2 d-block" for="offreSelectInput">
               Choisir un poste parmi le catalogue officiel *
             </label>
             
             <div class="input-group">
-              <select id="offreSelectInput" class="form-control" style="background-color: white; height: 46px;" onchange="updateOffreSelection(this)">
+              <select id="offreSelectInput" class="form-control" style="background-color: white; height: 44px; border-radius: 6px;" onchange="updateOffreSelection(this)">
                 <option value="" disabled {% if not existing_offre %}selected{% endif %}>-- Sélectionnez une offre d'emploi --</option>
                 {% for o in offres_publiees %}
-                  <option value="{{ o.id }}" 
-                          data-analysis-id="{{ o.analyse.id if o.analyse else '' }}"
-                          data-titre="{{ o.titre }}" 
-                          data-entreprise="{{ o.entreprise or (o.departement.entreprise.nom if o.departement else 'Entreprise') }}"
-                          {% if existing_offre and existing_offre.id == o.id %}selected{% endif %}>
-                    {{ o.titre }} — {{ o.entreprise or (o.departement.entreprise.nom if o.departement else 'Entreprise') }}
+                  <option value="{{ o.id }}" {% if existing_offre and existing_offre.id == o.id %}selected{% endif %}>
+                    {{ o.titre }} — {{ o.recruteur.entreprise.nom if (o.recruteur and o.recruteur.entreprise) else 'Entreprise' }}
                   </option>
                 {% endfor %}
               </select>
             </div>
             
-            <p class="match-help-text mt-2" id="offreSelectLabel">
+            <p class="match-help-text small mt-2 text-secondary" id="offreSelectLabel">
               {% if existing_offre %}
                 Poste sélectionné actuellement : <strong>{{ existing_offre.titre }}</strong>
               {% else %}
@@ -164,23 +141,19 @@
           ACTIONS GLOBALES
       ============================================================ -->
       <div class="d-flex flex-wrap gap-3 mt-4">
-        <button type="button" class="match-submit-btn flex-grow-1" id="btnLaunchMatch" {% if not existing_cv or not existing_offre %}disabled{% endif %}>
+        <!-- 🟢 NOUVEAU BOUTON SYNCHRONE : Exécute le POST et ouvre directement le rapport -->
+        <button type="submit" class="btn btn-primary flex-grow-1 py-2 font-weight-bold rounded-pill" id="btnLaunchMatch" 
+                style="background-color: #0d9488; border-color: #0d9488;"
+                {% if not existing_cv or not existing_offre %}disabled{% endif %}>
           <i class="ti ti-arrows-diff"></i> Comparer cette offre à mon CV
-        </button>
-
-        <button type="button" class="btn btn-outline-secondary flex-grow-1 align-items-center justify-content-center gap-2" 
-                id="btnVoirResultatGlobal" 
-                style="display: none;" 
-                data-match-url="">
-          <i class="ti ti-eye"></i> Voir le résultat
         </button>
       </div>
 
-      <p class="match-help-text text-center mt-2" id="formValidationMessage">
+      <p class="match-help-text text-center small mt-3" id="formValidationMessage">
         {% if not existing_cv or not existing_offre %}
           Veuillez posséder un CV chargé et sélectionner un poste pour exécuter le matching.
         {% else %}
-          Prêt à lancer l'analyse comparative !
+          Prêt à lancer l'analyse comparative et générer le rapport !
         {% endif %}
       </p>
 
@@ -188,6 +161,28 @@
   </div>
 </div>
 
+<!-- Script léger de mise à jour des IDs au changement de select -->
+<script>
+function updateOffreSelection(selectElement) {
+    const value = selectElement.value;
+    const label = document.getElementById('offreSelectLabel');
+    const hiddenOffreId = document.getElementById('hiddenOffreId');
+    const badge = document.getElementById('offreStatusBadge');
+    const submitBtn = document.getElementById('btnLaunchMatch');
+    const cvLoaded = "{{ 'true' if existing_cv else 'false' }}";
 
-
+    if (value) {
+        hiddenOffreId.value = value;
+        const selectedText = selectElement.options[selectElement.selectedIndex].text;
+        label.innerHTML = `Poste sélectionné actuellement : <strong>${selectedText.split('—')[0].strip()}</strong>`;
+        
+        badge.className = "badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded small";
+        badge.innerHTML = '<i class="ti ti-circle-check"></i> Sélectionnée';
+        
+        if (cvLoaded === 'true') {
+            submitBtn.removeAttribute('disabled');
+        }
+    }
+}
+</script>
 {% endblock %}

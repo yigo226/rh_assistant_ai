@@ -25,9 +25,9 @@
         onclick="window.location='{{ url_for('offre.creer_offre') }}'">
         <i class="ti ti-plus"></i> Publier une offre
       </button>
-      <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNouveauDept">
+      <!-- <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNouveauDept">
         <i class="ti ti-folder-plus"></i> Ajouter un service
-      </button>
+      </button> -->
     </div>
   </div>
 
@@ -161,8 +161,11 @@
             <i class="ti ti-briefcase text-muted display-4 mb-3 d-block"></i>
             <h5 class="font-weight-bold text-secondary">Aucune offre d'emploi publiée</h5>
             <p class="text-muted small px-4">Commencez dès maintenant en publiant la première offre de votre entreprise pour y soumettre des CV.</p>
-            <button type="button" class="btn btn-sm btn-primary mt-2" style="background-color: #0d9488; border-color: #0d9488;" data-bs-toggle="modal" data-bs-target="#modalNouvelleOffre">
-              Créer un poste
+            <button type="button" 
+            class="btn btn-sm btn-primary mt-2" style="background-color: #0d9488; border-color: #0d9488;" data-bs-toggle="modal" data-bs-target="#modalNouvelleOffre"
+            onclick="window.location='{{ url_for('offre.creer_offre') }}'"
+            >
+              Créer un offre
             </button>
           </div>
         {% endif %}

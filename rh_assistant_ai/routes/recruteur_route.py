@@ -54,7 +54,10 @@ def dashboard():
 
     total_employes = (
         LesRecrutEntreprise.query
-        .filter_by(entreprise_id=current_user.entreprise_id)
+        .join(Candidature)
+        .join(Offre)
+        .join(Departement)
+        .filter(Departement.entreprise_id == current_user.entreprise_id)
         .count()
     )
 

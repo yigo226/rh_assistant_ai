@@ -125,28 +125,38 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================================================
     // 4. SÉCURITÉ DE SOUMISSION DU FORMULAIRE GLOBAL
     // ============================================================
+    // const matchingForm = document.getElementById('matchingForm');
+    // if (matchingForm) {
+    //     matchingForm.addEventListener('submit', function (event) {
+    //         const cvBadge = document.getElementById('cvStatusBadge');
+    //         const offreBadge = document.getElementById('offreStatusBadge');
+            
+    //         const cvStatus = cvBadge ? cvBadge.getAttribute('data-status') : 'empty';
+    //         const offreStatus = offreBadge ? offreBadge.getAttribute('data-status') : 'empty';
+    //         let errors = [];
+
+    //         if (cvStatus === 'empty') errors.push("Votre CV est requis.");
+    //         if (cvStatus === 'dirty') errors.push("Un nouveau CV est sélectionné. Cliquez sur 'Uploader' avant de comparer.");
+
+    //         if (offreStatus === 'empty') errors.push("L'offre d'emploi est requise.");
+    //         if (offreStatus === 'dirty') errors.push("Une nouvelle offre est sélectionnée. Cliquez sur 'Uploader' avant de comparer.");
+
+    //         if (errors.length > 0) {
+    //             event.preventDefault();
+    //             alert("Action impossible :\n\n" + errors.join("\n"));
+    //         }
+    //     });
+    // }
+        // ============================================================
+    // 4. SÉCURITÉ DE SOUMISSION DU FORMULAIRE GLOBAL (CORRIGÉ 🟢)
+    // ============================================================
     const matchingForm = document.getElementById('matchingForm');
     if (matchingForm) {
-        matchingForm.addEventListener('submit', function (event) {
-            const cvBadge = document.getElementById('cvStatusBadge');
-            const offreBadge = document.getElementById('offreStatusBadge');
-            
-            const cvStatus = cvBadge ? cvBadge.getAttribute('data-status') : 'empty';
-            const offreStatus = offreBadge ? offreBadge.getAttribute('data-status') : 'empty';
-            let errors = [];
-
-            if (cvStatus === 'empty') errors.push("Votre CV est requis.");
-            if (cvStatus === 'dirty') errors.push("Un nouveau CV est sélectionné. Cliquez sur 'Uploader' avant de comparer.");
-
-            if (offreStatus === 'empty') errors.push("L'offre d'emploi est requise.");
-            if (offreStatus === 'dirty') errors.push("Une nouvelle offre est sélectionnée. Cliquez sur 'Uploader' avant de comparer.");
-
-            if (errors.length > 0) {
-                event.preventDefault();
-                alert("Action impossible :\n\n" + errors.join("\n"));
-            }
-        });
+        // On supprime l'écouteur 'submit' bloquant qui vérifiait les anciens badges
+        // On laisse Flask et les champs cachés HTML piloter la validation de sécurité
+        console.log("Sécurité formulaire : Mode traditionnel actif. Verrous JS désactivés.");
     }
+
 
     // ============================================================
     // 5. GESTION DES FENÊTRES POP-UPS & APERÇU PDF

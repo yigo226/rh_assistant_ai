@@ -82,19 +82,22 @@
                 </td>
 
                 <!-- 5. Sélecteur d'action rapide pour update le statut -->
-
                 <td class="p-3 text-end">
                     <div class="d-inline-flex gap-2 justify-content-end align-items-center w-100">
                         
                         {% if c.statut == 'a_letude' %}
-                        <form method="POST" action="{{ url_for('candidat.avancer_statut', candidature_id=c.id) }}">
-                            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" style="background-color: #2563eb; border-color: #2563eb; font-size: 0.75rem; font-weight: 600;">
-                            <i class="ti ti-calendar-event"></i> Planifier l'entretien
-                            </button>
-                        </form>
+                       <!-- 🟢 CORRECTION : Remplacement de update-statut par update_statut -->
+                          <form method="POST" action="{{ url_for('recruteur.update_statut', candidature_id=c.id) }}">
+                              <!-- Champ masqué indispensable pour lui indiquer le statut 'entretien' pour ce bouton -->
+                              <input type="hidden" name="nouveau_statut" value="entretien">
+                              
+                              <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" style="background-color: #0d9488; border-color: #0d9488; font-size: 0.75rem; font-weight: 600;">
+                                <i class="ti ti-calendar-event"></i> Planifier l'entretien
+                              </button>
+                          </form>
 
                         {% elif c.statut == 'entretien' %}
-                        <!--  MODIFIÉ : Ce bouton ouvre le formulaire pop-up de contrat au lieu de soumettre à l'aveugle -->
+                        <!-- Ce bouton ouvre la modale gérée par uploadScript.js avec la bonne URL de formulaire dynamique -->
                         <button type="button" class="btn btn-sm btn-success rounded-pill px-3 btn-ouvrir-recrut" 
                                 data-candidature-id="{{ c.id }}"
                                 data-candidat-nom="{{ c.candidat.nom }} {{ c.candidat.prenom }}"
@@ -111,9 +114,11 @@
                         {% endif %}
 
                         {% if c.statut in ['a_letude', 'entretien'] %}
-                        <form method="POST" action="{{ url_for('candidat.refuser_candidature', candidature_id=c.id) }}" onsubmit="return confirm('Écarter définitivement ce candidat ?');">
+                        <!-- 🟢 CORRECTION 2 : Changement de candidat.refuser_candidature à recruteur.refuse_candidature -->
+                        <!-- Note : Vérifiez le nom exact dans recruteur.py, ici aligné sur 'refuser_candidature' -->
+                        <form method="POST" action="{{ url_for('recruteur.refuser_candidature', candidature_id=c.id) }}" onsubmit="return confirm('Écarter définitivement ce candidat ?');">
                             <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;" title="Refuser le candidat">
-                            <i class="ti ti-x" style="font-size: 1rem;"></i>
+                              <i class="ti ti-x" style="font-size: 1rem;"></i>
                             </button>
                         </form>
                         {% endif %}

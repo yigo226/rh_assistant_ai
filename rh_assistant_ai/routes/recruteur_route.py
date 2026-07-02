@@ -269,6 +269,32 @@ def refuser_candidature(candidature_id):
     flash(f"La candidature de {candidature.candidat.nom} a été écartée.", "info")
     return redirect(url_for("recruteur.candidat_liste", offre_id=candidature.offre_id))
 
+@recruteur_bp.route("/registre-recrutements", methods=["GET"])
+@login_required
+@role_required("recruteur")
+def registre_recrutements():    
+    # 🟢 CORRECTION CHIRURGICALE : Jointure propre et limpide par étapes
+    # On sélectionne les contrats validés dont l'offre d'emploi a été publiée 
+    # par un recruteur appartenant à la même entreprise que l'utilisateur connecté.
+    tous_les_recrutements = LesRecrutEntreprise.query\
+        .join(Candidature)\
+        .join(Offre)\
+        .join(Recruteur, Offre.recruteur_id == Recruteur.id)\
+        .filter(Recruteur.entreprise_id == current_user.entreprise_id)\
+        .order_by(LesRecrutEntreprise.date_recrutement.desc())\
+        .all()
+
+    # Calcul de la masse salariale totale engagée
+    masse_salariale = sum(r.salaire_propose for r in tous_les_recrutements if r.salaire_propose)
+
+    return render_template(
+        "recruteur/registre_recrutements.html",
+        recrutements=tous_les_recrutements,
+        total_recrutements=len(tous_les_recrutements),
+        masse_salariale=masse_salariale
+    )
+
+
 def obtenir_classement_recrutement(id_de_loffre):
     """
     Retourne la liste de tous les candidats ayant postulé à une offre,

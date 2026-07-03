@@ -88,7 +88,6 @@ def candidat_liste(offre_id):
     candidatures = Candidature.query.filter_by(offre_id=offre.id).all()
 
     # Tri manuel côté Python si votre propriété dynamique details_matching est appelée
-    # (Ou via une jointure si vous préférez le SQL brut)
     try:
         candidatures.sort(key=lambda c: c.details_matching.score if c.details_matching else 0, reverse=True)
     except Exception:
@@ -121,10 +120,7 @@ def update_statut(candidature_id):
         candidature.statut = nouveau_statut
         
         # ============================================================
-        # CAS A : PLANIFICATION D'UNE SESSION D'ENTRETIEN INDÉPENDANTE
-        # ============================================================
-        # ============================================================
-        # CAS A : PLANIFICATION D'UNE SESSION D'ENTRETIEN INDÉPENDANTE
+        # PLANIFICATION D'UNE SESSION D'ENTRETIEN INDÉPENDANTE
         # ============================================================
         if nouveau_statut == 'entretien':
             date_raw = request.form.get("date_entretien")
@@ -150,7 +146,7 @@ def update_statut(candidature_id):
             flash(f"Une session d'entretien a été planifiée avec succès pour {candidature.candidat.nom}.", "success")
 
         # ============================================================
-        # CAS B : VALIDATION FINALE D'EMBAUCHE (LesRecrutEntreprise)
+        # VALIDATION FINALE D'EMBAUCHE (LesRecrutEntreprise)
         # ============================================================
         elif nouveau_statut == 'retenu':
             type_contrat = request.form.get("type_contrat", "CDI")
@@ -206,7 +202,7 @@ def finaliser_recrutement(candidature_id):
         flash("Action non autorisée.", "danger")
         return redirect(url_for("recruteur.dashboard"))
 
-    # 🟢 COMPORTEMENT A : ENREGISTREMENT DU CONTRAT (Méthode POST)
+    # ENREGISTREMENT DU CONTRAT (Méthode POST)
     if request.method == "POST":
         type_contrat = request.form.get("type_contrat")
         salaire_raw = request.form.get("salaire_propose")
@@ -244,7 +240,7 @@ def finaliser_recrutement(candidature_id):
             flash(f"Une erreur est survenue lors de la création du contrat : {str(e)}", "danger")
             return redirect(request.url)
 
-    # 🟢 COMPORTEMENT B : AFFICHAGE DU FORMULAIRE ADMINISTRATIF (Méthode GET)
+    # AFFICHAGE DU FORMULAIRE ADMINISTRATIF (Méthode GET)
     return render_template(
         "recruteur/finaliser_recrutement.html",
         candidature=candidature,

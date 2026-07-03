@@ -19,7 +19,7 @@ matching_bp = Blueprint(
 )
 
 # ============================================================
-# 🟢 ROUTE UNIFIÉE : AFFICHAGE (GET) ET CALCUL SYNCHRONE (POST)
+#  AFFICHAGE (GET) ET CALCUL SYNCHRONE (POST)
 # ============================================================
 @matching_bp.route("/start_match", methods=["GET", "POST"])
 @login_required
@@ -109,7 +109,7 @@ def start_match():
 
 
 # ============================================================
-# 3. COMPTE-RENDU VISUEL FIXE (Rapport d'adéquation global)
+# COMPTE-RENDU VISUEL FIXE (Rapport d'adéquation global)
 # ============================================================
 @matching_bp.route("/rapport/<int:match_id>", methods=["GET"])
 @login_required
@@ -134,7 +134,7 @@ def rapport(match_id):
     )
 
 # ============================================================
-# 4. API UTILS : Récupérer l'ID du match pour une offre
+# Récupérer l'ID du match pour une offre
 # ============================================================
 @matching_bp.route("/recuperer-id-resultat/<int:offre_id>", methods=["GET"])
 @login_required
@@ -156,7 +156,7 @@ def obtenir_id_matching(offre_id):
 
 
 # ============================================================
-# 5. API UTILS : Extraire les métriques JSON (Pour le pop-up de détails)
+# Extraire les métriques JSON (Pour le pop-up de détails)
 # ============================================================
 @matching_bp.route("/recuperer-details-json/<int:offre_id>", methods=["GET"])
 @login_required
@@ -167,7 +167,7 @@ def obtenir_details_matching_json(offre_id):
         .join(OffreAnalyser, MatchResult.offre_analyser_id == OffreAnalyser.id)\
         .filter(CV.candidat_id == current_user.id, OffreAnalyser.offre_id == offre_id)\
         .order_by(MatchResult.date_creation.desc())\
-        .first() # 🟢 CORRECTION : date_creation au lieu de created_at
+        .first() # 
     
     if not resultat:
         return jsonify({"success": False, "message": "Aucun rapport d'adéquation trouvé en base de données."}), 404
@@ -176,79 +176,17 @@ def obtenir_details_matching_json(offre_id):
         "score": resultat.score,
         "recommendation": resultat.recommandation or "Aucune synthèse disponible.",
         
-        # 1. Le bloc Compétences
+        # Compétences
         "matching_skills": resultat.competences_validees or [],
         "missing_skills": resultat.competences_manquantes or [],
         "extra_skills": resultat.competences_bonus or [],
         
-        # 2. Le bloc Études & Diplômes (🟢 Ajouté à l'export API)
+        # Études & Diplômes  
         "diplomes_valides": resultat.diplomes_valides or [],
         "diplomes_manquants": resultat.diplomes_manquants or [],
         
-        # 3. Le bloc Expériences (🟢 Ajouté à l'export API)
+        # Expériences  
         "experiences_validees": resultat.experiences_validees or [],
         "experiences_manquantes": resultat.experiences_manquantes or []
     }), 200
 
-    # return jsonify({
-    #     "success": True,
-    #     "score": resultat.score,
-    #     "matching_skills": resultat.competences_validees or [], # 🟢 Raccordement aux noms FR
-    #     "missing_skills": resultat.competences_manquantes or [], # 🟢 Raccordement aux noms FR
-    #     "extra_skills": resultat.competences_bonus or [],       # 🟢 Raccordement aux noms FR
-    #     "recommendation": resultat.recommandation or "Aucune synthèse disponible." # 🟢 Raccordement aux noms FR
-    # }), 200
-
-
-
-
-
-# ============================================================
-# 4. API UTILS : Récupérer l'ID du match pour une offre
-# ============================================================
-# @matching_bp.route("/recuperer-id-resultat/<int:offre_id>", methods=["GET"])
-# @login_required
-# def obtenir_id_matching(offre_id):
-#     # 🟢 REQUÊTE SYNC : Filtre à travers l'arborescence de jointure pour cibler le candidat
-#     resultat = MatchResult.query\
-#         .join(CVAnalyser, MatchResult.cv_analyser_id == CVAnalyser.id)\
-#         .join(CV, CVAnalyser.cv_id == CV.id)\
-#         .filter(CV.candidat_id == current_user.id, MatchResult.offre_analyser_id == Offre.analyse)\
-#         .order_by(MatchResult.created_at.desc())\
-#         .first()
-    
-#     if not resultat:
-#         return jsonify({"success": False, "message": "Aucun rapport trouvé pour cette offre d'emploi."}), 404
-        
-#     return jsonify({
-#         "success": True,
-#         "match_result_id": resultat.id
-#     }), 200
-
-
-# # ============================================================
-# # 5. API UTILS : Extraire les métriques JSON (Pour le pop-up de détails)
-# # ============================================================
-# @matching_bp.route("/recuperer-details-json/<int:offre_id>", methods=["GET"])
-# @login_required
-# def obtenir_details_matching_json(offre_id):
-#     # 🟢 REQUÊTE SYNC : Liaison dynamique à l'aide des tables d'analyses de votre SIRH
-#     resultat = MatchResult.query\
-#         .join(CVAnalyser, MatchResult.cv_analyser_id == CVAnalyser.id)\
-#         .join(CV, CVAnalyser.cv_id == CV.id)\
-#         .join(OffreAnalyser, MatchResult.offre_analyser_id == OffreAnalyser.id)\
-#         .filter(CV.candidat_id == current_user.id, OffreAnalyser.offre_id == offre_id)\
-#         .order_by(MatchResult.created_at.desc())\
-#         .first()
-    
-#     if not resultat:
-#         return jsonify({"success": False, "message": "Aucun rapport d'adéquation trouvé en base de données."}), 404
-        
-#     return jsonify({
-#         "success": True,
-#         "score": resultat.score,
-#         "matching_skills": resultat.matching_skills or [],
-#         "missing_skills": resultat.missing_skills or [],
-#         "extra_skills": resultat.extra_skills or [],
-#         "recommendation": resultat.recommendation or "Aucune synthèse disponible pour le moment."
-#     }), 200

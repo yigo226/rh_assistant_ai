@@ -11,10 +11,10 @@
       </p>
     </div>
 
-    <!-- 🟢 RECTIFICATION PARFAITE : Soumission POST traditionnelle directe vers votre route de matching -->
+    <!-- Soumission POST traditionnelle directe vers votre route de matching -->
     <form method="POST" action="{{ url_for('matching.start_match') }}" id="matchingForm">
       
-      <!-- 🟢 CHAMPS PHYSIQUES STANDARD : Transmettent les IDs réels des objets parents lors du submit -->
+      <!-- Transmettent les IDs réels des objets parents lors du submit -->
       <input type="hidden" name="cv_id" id="hiddenCvId" value="{{ existing_cv.id if existing_cv else '' }}">
       <input type="hidden" name="offre_id" id="hiddenOffreId" value="{{ existing_offre.id if existing_offre else '' }}">
 
@@ -150,11 +150,6 @@
       </div>
 
       <p class="match-help-text text-center small mt-3" id="formValidationMessage">
-        {% if not existing_cv or not existing_offre %}
-          Veuillez posséder un CV chargé et sélectionner un poste pour exécuter le matching.
-        {% else %}
-          Prêt à lancer l'analyse comparative et générer le rapport !
-        {% endif %}
       </p>
 
     </form>

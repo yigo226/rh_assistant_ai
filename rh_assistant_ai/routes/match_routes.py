@@ -10,7 +10,6 @@ from config.database import db
 
 # Importations unifiées de vos modèles et services francisés
 from models import CV, Offre, MatchResult, CVAnalyser, OffreAnalyser
-from services.matching_service import calculer_matching, enregistrer_match_result
 
 matching_bp = Blueprint(
     "matching",
@@ -24,15 +23,16 @@ matching_bp = Blueprint(
 @matching_bp.route("/start_match", methods=["GET", "POST"])
 @login_required
 def start_match():
-    
+    print(f"🔍 Début du processus de matching pour Candidat ID={current_user.id} à {datetime.now(timezone.utc)}")
     # --------------------------------------------------------
     # COMPORTEMENT TRAITEMENT : MÉTHODE POST (Lancement du Match)
     # --------------------------------------------------------
     if request.method == "POST":
+        print("Méthode post")
         # 1. Récupération des IDs envoyés par le formulaire traditionnel
         cv_id_form = request.form.get("cv_id")
         offre_id_form = request.form.get("offre_id")
-
+        print(f"CV ID reçu: {cv_id_form}, Offre ID reçu: {offre_id_form}")
         if not cv_id_form or not offre_id_form:
             flash("Action impossible : Les identifiants du CV et de l'offre sont requis.", "danger")
             return redirect(url_for("matching.start_match"))
@@ -45,6 +45,7 @@ def start_match():
         analyse_offre = offre_physique.analyse
 
         if not analyse_cv or not analyse_offre:
+            print("Je constaté aucune analyse structurelle IA pour le CV ou l'offre. Vérification des objets.")
             flash("Action impossible : Les analyses structurelles IA sont introuvables.", "danger")
             return redirect(url_for("matching.start_match"))
 
@@ -54,20 +55,22 @@ def start_match():
             offre_analyser_id=analyse_offre.id
         ).first()
 
-        # 4. Si non testé, calcul algorithmique et persistance en base de données
         if not match_permanent:
             try:
                 metriques = calculer_matching(analyse_cv, analyse_offre)
+                print(f"======= Résultat du calcul de matching  dans la route start_matchnib: {metriques}")
                 match_permanent = enregistrer_match_result(
                     analyse_cv=analyse_cv, 
                     analyse_offre=analyse_offre, 
                     metriques=metriques
                 )
             except Exception as e:
+                print("======= Erreur lors de l'exécution de l'analyse comparative :", str(e))
                 flash(f"Erreur lors de l'exécution de l'analyse comparative : {str(e)}", "danger")
                 return redirect(url_for("matching.start_match"))
 
         # 5. Redirection immédiate vers l'URL fixe et propre du rapport
+        print("======= Allons chez le rapport")
         return redirect(url_for("matching.rapport", match_id=match_permanent.id))
 
     # --------------------------------------------------------
@@ -114,6 +117,7 @@ def start_match():
 @matching_bp.route("/rapport/<int:match_id>", methods=["GET"])
 @login_required
 def rapport(match_id):
+    print(f"🔍 Accès au rapport d'adéquation pour MatchResult ID={match_id} par Candidat ID={current_user.id}  ")
     resultat = MatchResult.query.get_or_404(match_id)
     
     # Sécurité d'accès : Remonte la chaîne pour valider la propriété du dossier

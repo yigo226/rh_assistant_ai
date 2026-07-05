@@ -11,7 +11,6 @@ DIPLOMAS_FILE = BASE_DIR / "data" / "diplomas.json"
 
 
 def load_diplomas():
-
     with open(DIPLOMAS_FILE, "r", encoding="utf-8") as file:
         return json.load(file)
 

@@ -13,7 +13,8 @@ class Offre(db.Model):
     # Éléments indispensables pour l'upload du fichier PDF de l'offre
     nom_fichier = db.Column(db.String(255), nullable=False)
     chemin_fichier = db.Column(db.String(500), nullable=False)
-    contenu_texte = db.Column(db.Text, nullable=True)
+    
+    #contenu_texte = db.Column(db.Text, nullable=True)
 
     # Suivi temporel moderne en UTC
     date_creation = db.Column(

@@ -8,7 +8,7 @@ class CV(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom_fichier = db.Column(db.String(255), nullable=False)
     chemin_fichier = db.Column(db.String(500), nullable=False)
-    contenu_texte = db.Column(db.Text, nullable=True)
+    #contenu_texte = db.Column(db.Text, nullable=True)
     
     date_upload = db.Column(
         db.DateTime(timezone=True), 

@@ -3,7 +3,10 @@ from werkzeug.utils import secure_filename
 from config.database import db
 from models.offre import Offre
 from models.offre_analyser import OffreAnalyser
-from services.file_service import extract_text, analyseur_texte_extrait
+from services.file_service import extract_text
+from services.analyser_dict_service import analyseur_texte_extrait
+#from services.ai_service import analyseur_texte_extrait
+
 
 def save_offre(fichier, recruteur, titre, description, date_limite, departement_id):
     nom_fichier = secure_filename(fichier.filename)
@@ -20,10 +23,9 @@ def save_offre(fichier, recruteur, titre, description, date_limite, departement_
     # Création complète de l'Offre liée au Recruteur
     offre = Offre(
         titre=titre,
-        description=description if description else texte_extrait[:500],
+        description=description if description else texte_extrait[:100],
         nom_fichier=nom_fichier,          
         chemin_fichier=chemin_fichier,      
-        contenu_texte=texte_extrait,
         date_limite=date_limite,
         recruteur_id=recruteur.id,
         departement_id=departement_id
@@ -36,6 +38,7 @@ def save_offre(fichier, recruteur, titre, description, date_limite, departement_
 
     # Utilisation des nouveaux champs et clés en français
     synthese_competences_offre = OffreAnalyser(
+        contenu_texte=texte_extrait,
         competences=informations_extraites["competences"],        
         diplomes=informations_extraites["diplomes"],    
         experiences=informations_extraites["experiences"], 

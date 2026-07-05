@@ -3,7 +3,9 @@ from werkzeug.utils import secure_filename
 from config.database import db
 from models.cv import CV
 from models.cv_analyser import CVAnalyser
-from services.file_service import analyseur_texte_extrait, extract_text
+from services.file_service import extract_text
+from services.analyser_dict_service import analyseur_texte_extrait
+#from services.ai_service import analyseur_texte_extrait
 
 def save_cv(fichier, candidat): 
     nom_fichier = secure_filename(fichier.filename)
@@ -22,7 +24,6 @@ def save_cv(fichier, candidat):
     cv = CV(
         nom_fichier=nom_fichier,
         chemin_fichier=chemin_fichier,
-        contenu_texte=texte_extrait,
         candidat_id=candidat.id
     )
 
@@ -33,8 +34,9 @@ def save_cv(fichier, candidat):
     # Analyser le texte du CV avec l'assistant IA (Retourne les clés en français)
     informations_extraites = analyseur_texte_extrait(texte_extrait)
 
-    # 🟢 CORRECTION : Utilisation des nouveaux champs et clés en français
+    # Utilisation des nouveaux champs et clés en français
     synthese_competences_cv = CVAnalyser(
+        contenu_texte=texte_extrait,
         competences=informations_extraites["competences"],
         diplomes=informations_extraites["diplomes"],
         experiences=informations_extraites["experiences"],

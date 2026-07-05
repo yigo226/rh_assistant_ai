@@ -9,6 +9,8 @@ class CVAnalyser(db.Model):
     __tablename__ = "cv_analyses"
 
     id = db.Column(db.Integer, primary_key=True)
+    
+    contenu_texte = db.Column(db.Text, nullable=True)
 
     competences = db.Column(db.JSON, nullable=True)
     diplomes = db.Column(db.JSON, nullable=True)

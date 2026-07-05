@@ -37,3 +37,20 @@ def clean_text(text: str) -> str:
 def normalize_text(text: str) -> str:
     #Met le texte en minuscules
     return text.lower()
+
+
+# services/
+# │
+# ├── ai/
+# │   ├── __init__.py
+# │   ├── analyseur.py          # Point d'entrée principal
+# │   ├── preprocessing.py      # Nettoyage et segmentation
+# │   ├── embedding.py          # SentenceTransformer
+# │   ├── esco_service.py       # Chargement des compétences ESCO
+# │   ├── vector_index.py       # Construction et recherche FAISS
+# │   ├── normalizer.py         # Déduplication / normalisation
+# │   └── gliner_service.py     # Diplômes, métiers...
+# │
+# ├── cv_service.py
+# ├── offre_service.py
+# └── ...

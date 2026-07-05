@@ -18,7 +18,7 @@ Le matching repose actuellement uniquement sur les compétences
 - les soft skills
 - un score pondéré
 """
-
+# Calcul du score de V1.
 def calculer_matching(analyse_cv, analyse_offre):
     """
     Compare de manière exhaustive les compétences, diplômes et expériences

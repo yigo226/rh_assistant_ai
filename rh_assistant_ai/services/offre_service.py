@@ -4,9 +4,9 @@ from config.database import db
 from models.offre import Offre
 from models.offre_analyser import OffreAnalyser
 from services.file_service import extract_text
-from services.analyser_dict_service import analyseur_texte_extrait
-#from services.ai_service import analyseur_texte_extrait
-
+# from services.analyser_dict_service import analyseur_texte_extrait # V1
+#from services.analyseur_ai_service import analyseur_texte_extrait
+from services.analyseur_ai_service import analyseur_texte_extrait  # V2.1.0
 
 def save_offre(fichier, recruteur, titre, description, date_limite, departement_id):
     nom_fichier = secure_filename(fichier.filename)
@@ -35,7 +35,7 @@ def save_offre(fichier, recruteur, titre, description, date_limite, departement_
 
     # Analyse IA automatique du texte extrait du PDF
     informations_extraites = analyseur_texte_extrait(texte_extrait)
-
+    print(f"🧠 [OFFRE SERVICE] Analyse IA terminée pour l'offre '{titre}'. Résultat : {informations_extraites}")
     # Utilisation des nouveaux champs et clés en français
     synthese_competences_offre = OffreAnalyser(
         contenu_texte=texte_extrait,

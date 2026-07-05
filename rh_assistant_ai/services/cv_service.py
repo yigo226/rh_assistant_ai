@@ -4,8 +4,8 @@ from config.database import db
 from models.cv import CV
 from models.cv_analyser import CVAnalyser
 from services.file_service import extract_text
-from services.analyser_dict_service import analyseur_texte_extrait
-#from services.ai_service import analyseur_texte_extrait
+#from services.analyser_dict_service import analyseur_texte_extrait # V1
+from services.analyseur_ai_service import analyseur_texte_extrait
 
 def save_cv(fichier, candidat): 
     nom_fichier = secure_filename(fichier.filename)
@@ -19,6 +19,8 @@ def save_cv(fichier, candidat):
     
     # Extraire le texte du PDF
     texte_extrait = extract_text(chemin_fichier)
+
+
 
     # Création du CV lié à la table enfant candidats
     cv = CV(

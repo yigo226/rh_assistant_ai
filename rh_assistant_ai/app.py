@@ -11,6 +11,7 @@ from routes.match_routes import matching_bp
 #from routes.routes_global import global_bp  
 from routes.recruteur_route import recruteur_bp
 from routes.candidat_route import candidat_bp
+
 def create_app():
 
     app = Flask(__name__)

@@ -58,6 +58,9 @@ class Offre(db.Model):
         cascade="all, delete-orphan"
     )
 
+    # back_populates indique à SQLAlchemy de chercher la variable 'offre' dans QuestionEntretien
+    questions = db.relationship('QuestionEntretien', back_populates='offre', cascade='all, delete-orphan')
+
     # Relation bidirectionnelle avec Candidature
     candidatures = db.relationship(
         "Candidature",

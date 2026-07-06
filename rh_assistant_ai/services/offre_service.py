@@ -1,12 +1,15 @@
 import os
+import json
 from werkzeug.utils import secure_filename
 from config.database import db
 from models.offre import Offre
 from models.offre_analyser import OffreAnalyser
-from services.file_service import extract_text
-# from services.analyser_dict_service import analyseur_texte_extrait # V1
-#from services.analyseur_ai_service import analyseur_texte_extrait
-from services.analyseur_ai_service import analyseur_texte_extrait  # V2.1.0
+from models.question_entretien import QuestionEntretien
+from .file_service import extract_text
+from .question_entretien_service import generer_questions_entretien
+
+from .analyser_dict_service import analyseur_texte_extrait # V1
+#from services.analyseur_ai_service import analyseur_texte_extrait  # V2.1.0
 
 def save_offre(fichier, recruteur, titre, description, date_limite, departement_id):
     nom_fichier = secure_filename(fichier.filename)
@@ -35,7 +38,6 @@ def save_offre(fichier, recruteur, titre, description, date_limite, departement_
 
     # Analyse IA automatique du texte extrait du PDF
     informations_extraites = analyseur_texte_extrait(texte_extrait)
-    print(f"🧠 [OFFRE SERVICE] Analyse IA terminée pour l'offre '{titre}'. Résultat : {informations_extraites}")
     # Utilisation des nouveaux champs et clés en français
     synthese_competences_offre = OffreAnalyser(
         contenu_texte=texte_extrait,
@@ -47,5 +49,18 @@ def save_offre(fichier, recruteur, titre, description, date_limite, departement_
 
     db.session.add(synthese_competences_offre)
     db.session.commit()
+
+    # Dans votre fichier offre_service.py après avoir créé l'offre en BDD :
+    resultat_ia = generer_questions_entretien(texte_extrait)
+    print("\n 🤖 [IA QWEN] Résultat de la génération de questions : \n", resultat_ia)
+    for q in resultat_ia.get("questions", []):
+        nouvelle_question = QuestionEntretien(
+            offre_id=offre.id, # L'ID de l'offre tout juste créée
+            donnees_json=json.dumps(resultat_ia)
+        )
+        db.session.add(nouvelle_question)
+
+    db.session.commit()
+
 
     return offre, synthese_competences_offre, informations_extraites

@@ -6,9 +6,10 @@ load_dotenv()
 
 
 class Config:
-
     SECRET_KEY = os.getenv("SECRET_KEY")
-
+    
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+    
     password = quote_plus(os.getenv("DB_PASSWORD"))
 
     SQLALCHEMY_DATABASE_URI = (

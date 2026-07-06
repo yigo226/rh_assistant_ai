@@ -6,3 +6,4 @@ from .offre_analyser import OffreAnalyser
 from .match_result import MatchResult
 from .entreprise_model import Entreprise, Departement
 from .candidature import Candidature, LesRecrutEntreprise, Entretien
+from .question_entretien import QuestionEntretien

@@ -158,3 +158,59 @@ def voir_pdf(offre_id):
         mimetype="application/pdf",
         as_attachment=False
     )
+
+# ============================================================
+# GRILLE DE QUESTIONS D'ENTRETIEN (DEPUIS LA BDD)
+# ============================================================
+import json
+from flask import render_template, request, flash, redirect, url_for
+from flask_login import current_user, login_required
+# Importez vos modèles selon votre structure (ex: from models import Offre, QuestionEntretien)
+
+@offre_bp.route("/questions_entretien", methods=["GET"])
+@login_required
+@role_required("recruteur")
+def questions_entretien():
+    # 1. Sécurité : Récupérer uniquement les offres de l'entreprise du recruteur connecté
+    offres = Offre.query\
+        .join(Recruteur)\
+        .filter(Recruteur.entreprise_id == current_user.entreprise_id)\
+        .all()
+        
+    # 2. Récupérer l'ID de l'offre sélectionnée dans l'URL (ex: /questions_entretien?offre_id=5)
+    offre_id_arg = request.args.get("offre_id", type=int)
+    
+    offre_selectionnee = None
+    questions_list = []
+
+    if offre_id_arg:
+        # Charger l'offre demandée
+        offre_selectionnee = Offre.query.get(offre_id_arg)
+        
+        # Vérification de sécurité : l'offre appartient-elle bien à l'entreprise du recruteur ?
+        if offre_selectionnee and offre_selectionnee.recruteur.entreprise_id == current_user.entreprise_id:
+            
+            # Récupérer l'enregistrement de la table questions_entretien lié à cette offre
+            # (Utilise la relation back_populates='questions' définie dans votre modèle)
+            question_record = offre_selectionnee.questions  # Peut retourner une liste ou un objet selon votre backref
+            
+            # Si la relation retourne une liste (cas standard), on prend le premier élément
+            if isinstance(question_record, list) and len(question_record) > 0:
+                question_record = question_record[0]
+                
+            if question_record and question_record.donnees_json:
+                try:
+                    # Décoder le texte JSON pour l'envoyer sous forme de dictionnaire/liste au template
+                    questions_list = json.loads(question_record.donnees_json)
+                except json.JSONDecodeError:
+                    flash("Erreur lors de la lecture des questions (Format JSON invalide).", "danger")
+        else:
+            flash("Action non autorisée ou offre introuvable.", "danger")
+            return redirect(url_for("offre.questions_entretien"))
+
+    return render_template(
+        "offre/questions_entretien.html",
+        offres=offres,
+        offre_selectionnee=offre_selectionnee,
+        questions=questions_list
+    )

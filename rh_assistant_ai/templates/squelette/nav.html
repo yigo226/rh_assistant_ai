@@ -1,74 +1,78 @@
-
 <nav class="sidebar" id="sidebar">
 
-    <!-- Bouton commun (Recruteur et Candidat) -->
-  <button class="nav-btn active" onclick="window.location='{{ url_for('matching.start_match') }}'">
+  {% if current_user.is_authenticated %}
+    
+    <!-- SECTION CONTEXTUELLE DE L'UTILISATEUR -->
+    <div class="sidebar-section-label" style="text-transform: uppercase; font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 8px;">
+      {% if current_user.est_recruteur() %}
+        Espace Recruteur
+      {% else %}
+        Espace Candidat
+      {% endif %}
+    </div>
+
+    {% if current_user.est_recruteur() %}
+      <!-- BOUTONS RECRUTEUR -->
+      <a href="{{ url_for('recruteur.dashboard') }}" class="nav-btn {% if request.path == url_for('recruteur.dashboard') %}active{% endif %}" style="text-decoration: none;">
+        <i class="nav-icon ti ti-dashboard"></i>
+        <span>Tableau de bord</span>
+      </a>
+
+      <a href="{{ url_for('offre.creer_offre') }}" class="nav-btn {% if request.path == url_for('offre.creer_offre') %}active{% endif %}" style="text-decoration: none;">
+        <i class="nav-icon ti ti-plus"></i>
+        <span>Créer une offre</span>
+      </a>
+
+      <a href="{{ url_for('recruteur.questions_entretien') }}" class="nav-btn {% if request.path == url_for('recruteur.questions_entretien') %}active{% endif %}" style="text-decoration: none;">
+        <i class="nav-icon ti ti-sparkles"></i>
+        <span>Questions d'entretien IA</span>
+      </a>
+
+      <a href="{{ url_for('recruteur.registre_recrutements') }}" class="nav-btn {% if request.path == url_for('recruteur.registre_recrutements') %}active{% endif %}" style="text-decoration: none;">
+        <i class="nav-icon ti ti-archive"></i>
+        <span>Registre Recrutements</span>
+      </a>
+
+    {% else %}
+      <!-- BOUTONS CANDIDAT -->
+      <a href="{{ url_for('matching.start_match') }}" class="nav-btn {% if request.path == url_for('matching.start_match') %}active{% endif %}" style="text-decoration: none;">
         <i class="nav-icon ti ti-file-text"></i>
-        <span>Analyser</span>
-  </button>
+        <span>Analyser mon CV</span>
+      </a>
 
+      <a href="{{ url_for('candidat.historique_candidatures') }}" class="nav-btn {% if request.path == url_for('candidat.historique_candidatures') %}active{% endif %}" style="text-decoration: none;">
+        <i class="nav-icon ti ti-history"></i>
+        <span>Mes candidatures</span>
+      </a>
+    {% endif %}
 
-  <button class="nav-btn"
-      onclick="window.location='{{url_for('offre.upload_offre') }}'">
-      <i class="nav-icon ti ti-briefcase"></i>
-      <span>Analyser une offre</span>
-  </button>
+    <!-- SECTION COMPTE COMMUNE -->
+    <div class="sidebar-divider" style="height: 1px; background-color: #e2e8f0; margin: 15px 0;"></div>
+    <div class="sidebar-section-label" style="text-transform: uppercase; font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 8px;">Mon Compte</div>
 
-  <!-- Conteneur où les boutons vont apparaître -->
-  <div id="options-offre" class="mt-3"></div>
-  <!-- script pour afficher les options d'offre -->
+    <a href="{{ url_for('auth.profil') }}" class="nav-btn {% if request.path == url_for('auth.profil') %}active{% endif %}" style="text-decoration: none;">
+      <i class="nav-icon ti ti-user"></i>
+      <span>Gérer mon profil</span>
+    </a>
 
-  <button class="nav-btn" 
-    onclick="window.location='{{url_for('cv.history') }}'">
-    <i class="nav-icon ti ti-history"></i>
-    <span>Historique des analyses</span>
-  </button>
+    <a href="{{ url_for('auth.logout') }}" class="nav-btn text-danger" style="text-decoration: none;">
+      <i class="nav-icon ti ti-logout text-danger"></i>
+      <span>Déconnexion</span>
+    </a>
 
-  <!-- Utilisation d'une balise <a> pour activer le lien URL -->
-  <a href="{{ url_for('candidat.historique_candidatures') }}" class="nav-btn" data-action="comparaison" style="text-decoration: none;">
-    <i class="nav-icon ti ti-arrows-maximize"></i>
-    <span>Mes candidatures</span>
-  </a>
+  {% else %}
+    <!-- ACCÈS INVITÉ / NON CONNECTÉ -->
+    <div class="sidebar-section-label" style="text-transform: uppercase; font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 8px;">Authentification</div>
+    
+    <a href="{{ url_for('auth.login') }}" class="nav-btn {% if request.path == url_for('auth.login') %}active{% endif %}" style="text-decoration: none;">
+      <i class="nav-icon ti ti-login"></i>
+      <span>Se connecter</span>
+    </a>
 
-
- <button class="nav-btn"
-        onclick="">
-    <i class="nav-icon ti ti-arrows-diff"></i>
-    <span>Matching CV / Offre</span>
-</button>
-
-
-  <div class="sidebar-divider"></div>
-  <div class="sidebar-section-label">Outils RH</div>
-
-  <button class="nav-btn" data-action="grille-entretien">
-    <i class="nav-icon ti ti-list-check"></i>
-    <span>Grille d'entretien</span>
-  </button>
-
-  <button class="nav-btn" data-action="mail-rh">
-    <i class="nav-icon ti ti-mail"></i>
-    <span>Rédiger un mail RH</span>
-  </button>
-
-  <button class="nav-btn" data-action="rapport">
-    <i class="nav-icon ti ti-chart-bar"></i>
-    <span>Rapport de recrutement</span>
-  </button>
-
-  <div class="sidebar-divider"></div>
-  <div class="sidebar-section-label">Compte</div>
-
-  <button class="nav-btn" data-action="preferences">
-    <i class="nav-icon ti ti-settings"></i>
-    <span>Préférences</span>
-  </button>
-
-  <button class="nav-btn" 
-    onclick="window.location='{{url_for('auth.logout') }}'">
-    <i class="nav-icon ti ti-logout"></i>
-    <span>Déconnexion</span>
-  
-  </button>
+    <a href="{{ url_for('auth.register') }}" class="nav-btn {% if request.path == url_for('auth.register') %}active{% endif %}" style="text-decoration: none;">
+      <i class="nav-icon ti ti-user-plus"></i>
+      <span>S'inscrire</span>
+    </a>
+  {% endif %}
 
 </nav>

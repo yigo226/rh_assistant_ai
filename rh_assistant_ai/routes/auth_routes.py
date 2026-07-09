@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required, login_user, logout_user
+from flask_login import login_required, login_user, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from config.database import db
+
+# Importation de la classe mère et des deux classes enfants exclusivités
+from models.utilisateur import Utilisateur, Recruteur, Candidat
 
 # Importation de la classe mère et des deux classes enfants exclusivités
 from models.utilisateur import Utilisateur, Recruteur, Candidat
@@ -90,3 +93,41 @@ def logout():
     logout_user()
     flash("Déconnexion réussie", "success")
     return redirect(url_for("auth.login"))
+
+
+# ============================================================
+# GESTION DU PROFIL
+# ============================================================
+@auth_bp.route("/profil", methods=["GET", "POST"])
+@login_required
+def profil():
+    if request.method == "POST":
+        nom = request.form.get("nom")
+        prenom = request.form.get("prenom")
+        email = request.form.get("email")
+        telephone = request.form.get("telephone")
+        bio = request.form.get("bio")
+        nouveau_mdp = request.form.get("nouveau_mot_de_passe")
+        
+        # Vérification si l'email est déjà utilisé par un autre utilisateur
+        utilisateur_existant = Utilisateur.query.filter(Utilisateur.email == email, Utilisateur.id != current_user.id).first()
+        if utilisateur_existant:
+            flash("Cette adresse e-mail est déjà utilisée par un autre compte.", "danger")
+            return redirect(url_for("auth.profil"))
+        
+        # Mise à jour des informations
+        current_user.nom = nom
+        current_user.prenom = prenom
+        current_user.email = email
+        current_user.telephone = telephone
+        current_user.bio = bio
+        
+        # Si un nouveau mot de passe est renseigné
+        if nouveau_mdp:
+            current_user.mot_de_passe = generate_password_hash(nouveau_mdp)
+            
+        db.session.commit()
+        flash("Votre profil a été mis à jour avec succès !", "success")
+        return redirect(url_for("auth.profil"))
+        
+    return render_template("auth/profil.html")

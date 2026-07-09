@@ -1,0 +1,139 @@
+{% extends "squelette/base.html" %}
+
+{% block title %}Mon Profil — Assistant RH{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      
+      <!-- En-tête Profil -->
+      <div class="card border-0 shadow-sm mb-4 bg-white" style="border-radius: var(--radius-lg);">
+        <div class="card-body p-4">
+          <div class="d-flex flex-column flex-sm-row align-items-center gap-4">
+            
+            <!-- Avatar Géant -->
+            <div class="d-flex align-items-center justify-content-center bg-light border text-secondary shadow-sm" 
+                 style="width: 80px; height: 80px; border-radius: 50%; font-size: 2.5rem;">
+              <i class="ti ti-user"></i>
+            </div>
+            
+            <!-- Détails Utilisateur -->
+            <div class="text-center text-sm-start flex-grow-1">
+              <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-sm-start gap-2 mb-1">
+                <h3 class="m-0 fw-bold text-dark">{{ current_user.prenom }} {{ current_user.nom }}</h3>
+                <span class="badge text-white px-3 py-1 bg-success" style="font-size: 0.8rem; border-radius: var(--radius-pill);">
+                  {% if current_user.est_recruteur() %}
+                    Recruteur
+                  {% else %}
+                    Candidat
+                  {% endif %}
+                </span>
+              </div>
+              <p class="text-muted m-0 small mb-2">
+                <i class="ti ti-mail me-1"></i> {{ current_user.email }}
+              </p>
+              {% if current_user.est_recruteur() and current_user.entreprise %}
+                <p class="text-secondary m-0 small">
+                  <i class="ti ti-building me-1"></i> Entreprise : <strong>{{ current_user.entreprise.nom }}</strong>
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Formulaire de modification -->
+      <div class="card border-0 shadow-sm bg-white" style="border-radius: var(--radius-lg);">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+          <h5 class="fw-bold m-0 text-dark"><i class="ti ti-settings me-2 text-success"></i>Informations personnelles</h5>
+          <hr class="my-3 text-muted opacity-25">
+        </div>
+        
+        <div class="card-body p-4 pt-2">
+          <form method="POST" action="{{ url_for('auth.profil') }}">
+            
+            <div class="row g-3">
+              <!-- Prénom -->
+              <div class="col-md-6">
+                <label for="prenom" class="form-label small fw-bold text-secondary">Prénom <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="ti ti-user-circle text-muted"></i></span>
+                  <input type="text" name="prenom" id="prenom" class="form-control border-start-0" 
+                         value="{{ current_user.prenom }}" required>
+                </div>
+              </div>
+              
+              <!-- Nom -->
+              <div class="col-md-6">
+                <label for="nom" class="form-label small fw-bold text-secondary">Nom de famille <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="ti ti-user text-muted"></i></span>
+                  <input type="text" name="nom" id="nom" class="form-control border-start-0" 
+                         value="{{ current_user.nom }}" required>
+                </div>
+              </div>
+              
+              <!-- Email -->
+              <div class="col-md-6">
+                <label for="email" class="form-label small fw-bold text-secondary">Adresse e-mail <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="ti ti-mail text-muted"></i></span>
+                  <input type="email" name="email" id="email" class="form-control border-start-0" 
+                         value="{{ current_user.email }}" required>
+                </div>
+              </div>
+              
+              <!-- Téléphone -->
+              <div class="col-md-6">
+                <label for="telephone" class="form-label small fw-bold text-secondary">Numéro de téléphone</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="ti ti-phone text-muted"></i></span>
+                  <input type="tel" name="telephone" id="telephone" class="form-control border-start-0" 
+                         value="{{ current_user.telephone or '' }}" placeholder="+33 6 12 34 56 78">
+                </div>
+              </div>
+              
+              <!-- Biographie -->
+              <div class="col-12">
+                <label for="bio" class="form-label small fw-bold text-secondary">Présentation / Biographie</label>
+                <textarea name="bio" id="bio" rows="4" class="form-control" 
+                          placeholder="Décrivez votre parcours, vos aspirations... Cet élément sera utilisé par l'assistant IA.">{{ current_user.bio or '' }}</textarea>
+              </div>
+              
+              <!-- Mot de passe de sécurité -->
+              <div class="col-12 mt-4">
+                <div class="p-3 bg-light rounded border">
+                  <h6 class="fw-bold text-dark mb-2"><i class="ti ti-shield-lock me-1"></i>Sécurité du compte</h6>
+                  <p class="text-muted small mb-3">Laissez ces champs vides si vous ne souhaitez pas modifier votre mot de passe actuel.</p>
+                  
+                  <div class="col-md-8">
+                    <label for="nouveau_mot_de_passe" class="form-label small fw-bold text-secondary">Nouveau mot de passe</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-white border-end-0"><i class="ti ti-key text-muted"></i></span>
+                      <input type="password" name="nouveau_mot_de_passe" id="nouveau_mot_de_passe" class="form-control border-start-0" 
+                             placeholder="••••••••" minlength="6">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+              <a href="javascript:history.back()" class="btn btn-outline-secondary px-4 d-flex align-items-center gap-1" style="border-radius: var(--radius-md);">
+                <i class="ti ti-x"></i> Annuler
+              </a>
+              <button type="submit" class="match-submit-btn px-4 py-2 d-flex align-items-center gap-2" style="border-radius: var(--radius-md);">
+                <i class="ti ti-device-floppy"></i> Enregistrer les modifications
+              </button>
+            </div>
+            
+          </form>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+{% endblock %}

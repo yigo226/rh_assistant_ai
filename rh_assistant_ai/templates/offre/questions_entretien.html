@@ -1,0 +1,138 @@
+{% extends "squelette/base.html" %}
+
+{% block title %}Grille d'Entretien — Assistant RH{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <!-- En-tête -->
+  <div class="matching-header mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-md-items-center gap-3">
+      <div>
+        <h2><i class="ti ti-list-check text-success me-2"></i>Grille d'Entretien Enregistrée</h2>
+        <p class="matching-subtitle m-0">Consultez les questions d'évaluation technique et comportementale associées à vos offres d'emploi.</p>
+      </div>
+      {% if questions %}
+        <button onclick="window.print()" class="btn btn-outline-dark d-flex align-items-center gap-2 align-self-start border rounded-pill px-4 py-2" style="font-size: 0.85rem; font-weight: 600;">
+          <i class="ti ti-printer"></i> Imprimer la grille
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4 d-print-none">
+    <!-- Colonne latérale de sélection -->
+    <div class="col-lg-4">
+      <div class="match-card p-4 bg-white shadow-sm" style="border-radius: var(--radius-lg);">
+        <h5 class="fw-bold text-dark mb-3"><i class="ti ti-briefcase me-2 text-success"></i>Sélection de l'offre</h5>
+        <hr class="my-3 text-muted opacity-25">
+        
+        <!-- Formulaire en GET : recharge automatiquement la page au changement -->
+        <form method="GET" action="{{ url_for('offre.questions_entretien',  offre_id=offre.id) }}" id="form-selection-offre">
+          <div class="mb-4">
+            <label for="offre_id" class="form-label small fw-bold text-secondary">Poste ciblé</label>
+            <select name="offre_id" id="offre_id" class="form-select border-2" style="height: 48px; border-radius: var(--radius-md);" onchange="document.getElementById('form-selection-offre').submit();" required>
+              <option value="" disabled {% if not offre_selectionnee %}selected{% endif %}>-- Choisissez une offre --</option>
+              {% for o in offres %}
+                <option value="{{ o.id }}" {% if offre_selectionnee and offre_selectionnee.id == o.id %}selected{% endif %}>
+                  {{ o.titre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+
+        {% if offre_selectionnee %}
+          <!-- Résumé du profil sélectionné -->
+          <div class="mt-4 p-3 bg-light border rounded" style="border-radius: var(--radius-md);">
+            <h6 class="fw-bold small text-dark mb-2"><i class="ti ti-info-circle me-1"></i>Détails du poste</h6>
+            <p class="m-0 small text-secondary"><strong>Titre :</strong> {{ offre_selectionnee.titre }}</p>
+            <p class="m-0 small text-secondary"><strong>Questions disponibles :</strong> {{ questions | length }}</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Colonne principale d'affichage des questions stockées en BDD -->
+    <div class="col-lg-8">
+      {% if questions %}
+        <div class="card border-0 shadow-sm bg-white" style="border-radius: var(--radius-lg);">
+          
+          <!-- En-tête de la grille -->
+          <div class="card-header bg-success text-white p-4 border-0" style="border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg);">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-white text-success fw-bold px-3 py-1 text-uppercase" style="font-size: 0.7rem; border-radius: var(--radius-pill);">
+                Référentiel Évaluation
+              </span>
+            </div>
+            <h3 class="m-0 fw-bold">Grille de Questions</h3>
+            <p class="m-0 small text-white-50 mt-1">Poste : {{ offre_selectionnee.titre }}</p>
+          </div>
+          
+          <div class="card-body p-4">
+            
+            <!-- Liste des 10 questions extraites du JSON -->
+            <div class="d-flex flex-column gap-4">
+              {% for q in questions %}
+                <div class="border rounded p-3 bg-white hover-shadow transition" style="border-radius: var(--radius-md);">
+                  <div class="d-flex align-items-start gap-2 mb-2">
+                    <span class="badge bg-success-subtle text-success border mt-1">Q{{ loop.index }}</span>
+                    <h6 class="fw-bold text-dark m-0" style="line-height: 1.4;">{{ q.question }}</h6>
+                  </div>
+                  
+                  <div class="ps-4 mt-2">
+                    {% if q.objectif %}
+                      <p class="mb-1 small text-muted"><strong><i class="ti ti-target me-1"></i>Objectif d'évaluation :</strong></p>
+                      <p class="mb-3 small text-secondary">{{ q.objectif }}</p>
+                    {% endif %}
+                    
+                    {% if q.reponse_attendue or q.criteres %}
+                      <p class="mb-1 small text-muted"><strong><i class="ti ti-bulb me-1"></i>Critères de validation / Réponses attendues :</strong></p>
+                      <p class="m-0 small text-success fw-medium">{{ q.reponse_attendue or q.criteres }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      {% else %}
+        {% if offre_selectionnee %}
+          <!-- Cas où l'offre n'a pas encore de JSON configuré -->
+          <div class="alert alert-warning border-0 p-4 shadow-sm" style="border-radius: var(--radius-lg);">
+            <h5 class="fw-bold"><i class="ti ti-alert-triangle me-2"></i>Aucune grille trouvée</h5>
+            <p class="m-0 small">Aucune question n'est configurée pour cette offre d'emploi en base de données.</p>
+          </div>
+        {% else %}
+          <!-- État initial vide -->
+          <div class="text-center p-5 bg-white border border-dashed rounded shadow-sm" style="border-radius: var(--radius-lg);">
+            <i class="ti ti-arrow-left text-muted mb-3" style="font-size: 2.5rem;"></i>
+            <h5 class="fw-bold text-secondary">Sélectionnez une offre</h5>
+            <p class="text-muted small m-0">Veuillez choisir un poste dans le menu de gauche pour afficher son référentiel de questions.</p>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Section dédiée à l'impression (Masquée à l'écran, s'affiche uniquement sur papier) -->
+  {% if questions %}
+    <div class="d-none d-print-block mt-4">
+      <h2 class="fw-bold mb-1">Grille d'Entretien Professionnel</h2>
+      <h4 class="text-muted mb-4">Poste : {{ offre_selectionnee.titre }}</h4>
+      <hr>
+      {% for q in questions %}
+        <div class="mb-4 py-2" style="page-break-inside: avoid;">
+          <h5 class="fw-bold">Question {{ loop.index }} : {{ q.question }}</h5>
+          <p class="small text-muted mb-2"><strong>Objectif :</strong> {{ q.objectif }}</p>
+          <p class="small text-muted mb-3"><strong>Attendu :</strong> {{ q.reponse_attendue or q.criteres }}</p>
+          <div class="border rounded" style="height: 120px; border: 1px solid #ccc !important;"></div>
+          <small class="text-muted italic">Notes du recruteur</small>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

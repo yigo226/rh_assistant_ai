@@ -86,22 +86,32 @@
                     <div class="d-inline-flex gap-2 justify-content-end align-items-center w-100">
                         
                         {% if c.statut == 'a_letude' %}
-                       <!-- Remplacement de update-statut par update_statut -->
+                       <!-- 🟢 CORRECTION : Remplacement de update-statut par update_statut -->
                           <form method="POST" action="{{ url_for('recruteur.update_statut', candidature_id=c.id) }}">
                               <!-- Champ masqué indispensable pour lui indiquer le statut 'entretien' pour ce bouton -->
                               <input type="hidden" name="nouveau_statut" value="entretien">
                               
-                              <!-- type="button" avec la classe btn-ouvrir-entretien -->
+                              <!-- 🟢 CORRECT : type="button" avec la classe btn-ouvrir-entretien -->
                               <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 btn-ouvrir-entretien" 
                                       data-candidature-id="{{ c.id }}"
                                       data-candidat-nom="{{ c.candidat.nom }} {{ c.candidat.prenom }}">
                                 <i class="ti ti-calendar-event"></i> Planifier l'entretien
                               </button>
                           </form>
+                          <a href="{{ url_for('recruteur.questions_entretien', candidature_id=c.id) }}" 
+                             class="btn btn-sm btn-outline-success rounded-pill px-3" 
+                             style="font-size: 0.75rem; font-weight: 600; text-decoration: none;">
+                            <i class="ti ti-sparkles"></i> Questions IA
+                          </a>
 
-                       
+                        
                         {% elif c.statut == 'entretien' %}
-                          <!--  Redirection propre vers la page dédiée de saisie du contrat (Sans aucun JS) -->
+                          <!-- 🟢 RECTIFICATION : Redirection propre vers la page dédiée de saisie du contrat (Sans aucun JS) -->
+                          <a href="{{ url_for('recruteur.questions_entretien', candidature_id=c.id) }}" 
+                             class="btn btn-sm btn-outline-success rounded-pill px-3" 
+                             style="font-size: 0.75rem; font-weight: 600; text-decoration: none; margin-right: 4px;">
+                            <i class="ti ti-sparkles"></i> Questions IA
+                          </a>
                           <a href="{{ url_for('recruteur.finaliser_recrutement', candidature_id=c.id) }}" 
                             class="btn btn-sm btn-success rounded-pill px-3" 
                             style="background-color: #16a34a; border-color: #16a34a; font-size: 0.75rem; font-weight: 600; text-decoration: none; color: white;">
@@ -117,7 +127,7 @@
                         {% endif %}
 
                         {% if c.statut in ['a_letude', 'entretien'] %}
-                        <!-- Changement de candidat.refuser_candidature à recruteur.refuse_candidature -->
+                        <!-- 🟢 CORRECTION 2 : Changement de candidat.refuser_candidature à recruteur.refuse_candidature -->
                         <!-- Note : Vérifiez le nom exact dans recruteur.py, ici aligné sur 'refuser_candidature' -->
                         <form method="POST" action="{{ url_for('recruteur.refuser_candidature', candidature_id=c.id) }}" onsubmit="return confirm('Écarter définitivement ce candidat ?');">
                             <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;" title="Refuser le candidat">

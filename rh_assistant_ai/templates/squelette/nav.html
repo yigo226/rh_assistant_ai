@@ -23,11 +23,6 @@
         <span>Créer une offre</span>
       </a>
 
-      <a href="{{ url_for('recruteur.questions_entretien') }}" class="nav-btn {% if request.path == url_for('recruteur.questions_entretien') %}active{% endif %}" style="text-decoration: none;">
-        <i class="nav-icon ti ti-sparkles"></i>
-        <span>Questions d'entretien IA</span>
-      </a>
-
       <a href="{{ url_for('recruteur.registre_recrutements') }}" class="nav-btn {% if request.path == url_for('recruteur.registre_recrutements') %}active{% endif %}" style="text-decoration: none;">
         <i class="nav-icon ti ti-archive"></i>
         <span>Registre Recrutements</span>

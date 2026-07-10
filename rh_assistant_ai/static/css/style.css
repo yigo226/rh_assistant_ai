@@ -18,42 +18,42 @@
    1. Variables CSS
    ---------------------------------------------------------------- */
 :root {
-  /* Couleurs */
-  --clr-bg:           #f7f7f5;
-  --clr-surface:      #ffffff;
-  --clr-sidebar-bg:   #f0eeeb;
-  --clr-border:       rgba(0, 0, 0, 0.08);
-  --clr-border-md:    rgba(0, 0, 0, 0.14);
+  /* Couleurs - Thème Premium Bleu Corporate Épuré */
+  --clr-bg:           #f8f9fc; /* Gris très clair pour tout le fond */
+  --clr-surface:      #ffffff; /* Blanc pur pour les cartes */
+  --clr-sidebar-bg:   #ffffff; /* Sidebar blanche minimaliste */
+  --clr-border:       #e5e7eb; /* Bordure fine gris clair */
+  --clr-border-md:    #d1d5db; /* Bordure gris moyen */
 
-  --clr-accent:       #1d9e75;
-  --clr-accent-dark:  #0f6e56;
-  --clr-accent-light: #e1f5ee;
-  --clr-accent-text:  #085041;
+  --clr-accent:       #2563eb; /* Bleu vif mais sobre (Couleur primaire) */
+  --clr-accent-dark:  #1d4ed8; /* Bleu survol */
+  --clr-accent-light: rgba(37, 99, 235, 0.08); /* Liseré/fond bleu clair */
+  --clr-accent-text:  #1e40af; /* Bleu foncé pour textes mis en valeur */
 
-  --clr-purple-bg:    #eeedfe;
-  --clr-purple-text:  #3c3489;
+  --clr-purple-bg:    rgba(139, 92, 246, 0.08);
+  --clr-purple-text:  #6d28d9;
 
-  --clr-text-primary:   #1a1a18;
-  --clr-text-secondary: #5a5a56;
-  --clr-text-muted:     #9a9a94;
+  --clr-text-primary:   #1f2937; /* Gris très foncé pour une lecture optimale */
+  --clr-text-secondary: #4b5563; /* Gris moyen pour le texte secondaire */
+  --clr-text-muted:     #9ca3af; /* Gris clair pour les informations discrètes */
 
   /* Typographie */
-  --font-display: 'Syne', sans-serif;
-  --font-body:    'DM Sans', sans-serif;
+  --font-display: 'Poppins', 'Syne', sans-serif;
+  --font-body:    'Inter', 'DM Sans', sans-serif;
 
   /* Dimensions layout */
   --header-h:    56px;
   --footer-h:    44px;
-  --sidebar-w:   224px;
+  --sidebar-w:   240px;
 
   /* Rayons */
-  --radius-sm:   6px;
-  --radius-md:   10px;
-  --radius-lg:   14px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
   --radius-pill: 999px;
 
   /* Transitions */
-  --transition: 0.15s ease;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 
@@ -75,6 +75,104 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ================================================================
+   Compatibilité Thème Épuré & Overrides Utilitaires Bootstrap
+   ================================================================ */
+body, .app-body, .app-wrapper, .chat-wrapper, main {
+  background-color: var(--clr-bg) !important;
+  color: var(--clr-text-primary) !important;
+}
+
+.bg-white, .card, .match-card, .modal-content {
+  background-color: var(--clr-surface) !important;
+  color: var(--clr-text-primary) !important;
+  border: 1px solid var(--clr-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+  transition: transform var(--transition), box-shadow var(--transition);
+  overflow: hidden;
+}
+
+/* Effet de soulèvement discret au survol */
+.card:hover, .match-card:hover, .modal-content:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.08), 0 4px 6px -2px rgba(37, 99, 235, 0.04) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+.bg-light {
+  background-color: #f3f4f6 !important;
+  color: var(--clr-text-primary) !important;
+}
+
+.text-dark {
+  color: var(--clr-text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--clr-text-secondary) !important;
+}
+
+.text-muted {
+  color: var(--clr-text-muted) !important;
+}
+
+/* Formulaires de type Premium */
+.form-control, .form-select, .chat-input {
+  background-color: #ffffff !important;
+  color: var(--clr-text-primary) !important;
+  border: 1px solid var(--clr-border-md) !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 13.5px !important;
+  transition: all var(--transition) !important;
+}
+
+.form-control:focus, .form-select:focus, .chat-input:focus {
+  background-color: #ffffff !important;
+  color: var(--clr-text-primary) !important;
+  border-color: var(--clr-accent) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  outline: none !important;
+}
+
+/* Listes, Tables, Alertes */
+.list-group-item {
+  background-color: var(--clr-surface) !important;
+  color: var(--clr-text-primary) !important;
+  border-color: var(--clr-border) !important;
+}
+
+.alert-success {
+  background-color: #f0fdf4 !important;
+  color: #16a34a !important;
+  border-color: #bbf7d0 !important;
+}
+
+.alert-danger {
+  background-color: #fef2f2 !important;
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+}
+
+.alert-warning {
+  background-color: #fffbeb !important;
+  color: #d97706 !important;
+  border-color: #fde68a !important;
+}
+
+.table {
+  color: var(--clr-text-primary) !important;
+}
+
+.table th, .table td {
+  border-color: var(--clr-border) !important;
+}
+
+.hr, hr {
+  border-color: var(--clr-border) !important;
+  opacity: 0.5;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -87,6 +185,26 @@ button {
   background: transparent;
 }
 
+/* Style de bouton retour premium */
+.btn-retour-propre {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: var(--radius-pill) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all var(--transition) !important;
+}
+
+.btn-retour-propre:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: translateX(-2px) !important;
+}
 
 /* ----------------------------------------------------------------
    3. Layout principal
@@ -106,9 +224,10 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: var(--clr-surface);
-  border-bottom: 1px solid var(--clr-border);
+  background: var(--clr-accent) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
   z-index: 100;
+  color: #ffffff !important;
 }
 
 .header-inner {
@@ -118,44 +237,51 @@ button {
 }
 
 .header-dot {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--clr-accent);
+  background: #fcd34d !important; /* Jaune or comme "La Poste" */
   flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(252, 211, 77, 0.6) !important;
 }
 
 .header-title {
   font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--clr-text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff !important;
 }
 
 .header-badge {
   font-size: 11px;
-  font-weight: 500;
-  padding: 2px 9px;
+  font-weight: 600;
+  padding: 2px 10px;
   border-radius: var(--radius-pill);
-  background: var(--clr-accent-light);
-  color: var(--clr-accent-text);
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.header-badge--ia {
+  background: rgba(252, 211, 77, 0.25) !important;
+  color: #fef08a !important;
+  border: 1px solid rgba(252, 211, 77, 0.4) !important;
 }
 
 .sidebar-toggle {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  color: var(--clr-text-secondary);
+  color: #ffffff !important;
   font-size: 20px;
   transition: background var(--transition);
 }
 
 .sidebar-toggle:hover {
-  background: var(--clr-sidebar-bg);
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Corps */
@@ -172,12 +298,12 @@ button {
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: var(--clr-sidebar-bg);
-  border-right: 1px solid var(--clr-border);
+  background: var(--clr-sidebar-bg) !important;
+  border-right: 1px solid var(--clr-border) !important;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 14px 8px;
+  gap: 4px;
+  padding: 20px 12px;
   overflow-y: auto;
   transition: transform var(--transition);
 }
@@ -187,76 +313,79 @@ button {
   align-items: center;
   gap: 8px;
   padding: 6px 10px 14px;
-  border-bottom: 1px solid var(--clr-border);
-  margin-bottom: 8px;
+  border-bottom: 1px solid var(--clr-border) !important;
+  margin-bottom: 12px;
 }
 
 .brand-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--clr-accent);
+  background: var(--clr-accent) !important;
 }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--clr-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--clr-text-primary) !important;
 }
 
 .brand-badge {
   font-size: 10px;
   padding: 1px 7px;
   border-radius: var(--radius-pill);
-  background: var(--clr-accent-light);
-  color: var(--clr-accent-text);
-  font-weight: 500;
+  background: var(--clr-accent-light) !important;
+  color: var(--clr-accent-text) !important;
+  font-weight: 600 !important;
 }
 
 .sidebar-section-label {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--clr-text-muted);
-  padding: 8px 10px 4px;
+  letter-spacing: 0.05em;
+  color: var(--clr-text-muted) !important;
+  padding: 12px 10px 6px;
 }
 
 .sidebar-divider {
   height: 1px;
-  background: var(--clr-border);
-  margin: 8px 10px;
+  background: var(--clr-border) !important;
+  margin: 12px 10px;
 }
 
 .nav-btn {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   width: 100%;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  border-radius: var(--radius-md) !important;
   font-size: 13px;
-  font-weight: 400;
-  color: var(--clr-text-secondary);
-  transition: background var(--transition), color var(--transition);
+  font-weight: 500;
+  color: var(--clr-text-secondary) !important;
+  transition: all var(--transition);
   text-align: left;
+  border: 1px solid transparent !important;
 }
 
 .nav-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--clr-text-primary);
+  background: #f1f5f9 !important;
+  color: var(--clr-text-primary) !important;
+  transform: translateX(2px) !important;
 }
 
 .nav-btn.active {
-  background: var(--clr-surface);
-  color: var(--clr-text-primary);
-  font-weight: 500;
-  border: 1px solid var(--clr-border-md);
+  background: var(--clr-accent) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-color: var(--clr-accent) !important;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2) !important;
 }
 
 .nav-icon {
-  font-size: 16px;
+  font-size: 18px;
   flex-shrink: 0;
   color: inherit;
 }
@@ -353,15 +482,15 @@ button {
 }
 
 .msg-bot  .msg-bubble {
-  background: var(--clr-sidebar-bg);
-  border: 1px solid var(--clr-border);
-  border-radius: 3px 14px 14px 14px;
+  background: #f1f5f9 !important;
+  border: 1px solid var(--clr-border) !important;
+  border-radius: 4px 16px 16px 16px !important;
 }
 
 .msg-user .msg-bubble {
-  background: var(--clr-accent);
-  color: #fff;
-  border-radius: 14px 3px 14px 14px;
+  background: var(--clr-accent) !important;
+  color: #ffffff !important;
+  border-radius: 16px 4px 16px 16px !important;
 }
 
 /* Indicateur de frappe */
@@ -370,16 +499,16 @@ button {
   align-items: center;
   gap: 4px;
   padding: 12px 16px;
-  background: var(--clr-sidebar-bg);
-  border: 1px solid var(--clr-border);
-  border-radius: 3px 14px 14px 14px;
+  background: #f1f5f9 !important;
+  border: 1px solid var(--clr-border) !important;
+  border-radius: 4px 16px 16px 16px !important;
 }
 
 .typing-indicator span {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--clr-text-muted);
+  background: var(--clr-text-muted) !important;
   animation: typingBounce 1.2s infinite;
 }
 
@@ -391,12 +520,12 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--clr-sidebar-bg);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius-sm);
-  padding: 3px 9px;
+  background: #f1f5f9 !important;
+  border: 1px solid var(--clr-border) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 4px 10px !important;
   font-size: 11px;
-  color: var(--clr-text-secondary);
+  color: var(--clr-text-secondary) !important;
   margin-top: 6px;
 }
 
@@ -463,10 +592,10 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: var(--clr-sidebar-bg);
-  border-top: 1px solid var(--clr-border);
+  background: #0f172a !important; /* Élégant bleu nuit corporate, plus sombre et chic */
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
   font-size: 11px;
-  color: var(--clr-text-muted);
+  color: #94a3b8 !important; /* Gris-bleu clair très lisible */
   gap: 12px;
 }
 
@@ -476,12 +605,12 @@ button {
   gap: 5px;
 }
 
-.footer-icon { font-size: 13px; }
+.footer-icon { font-size: 13px; color: #38bdf8 !important; }
 
 .footer-center .footer-version {
   font-family: var(--font-display);
-  font-weight: 500;
-  color: var(--clr-text-secondary);
+  font-weight: 600;
+  color: #cbd5e1 !important;
 }
 
 .footer-right {
@@ -493,11 +622,11 @@ button {
 .footer-sep { opacity: 0.4; }
 
 .footer-link {
-  color: var(--clr-text-secondary);
+  color: #cbd5e1 !important;
   transition: color var(--transition);
 }
 
-.footer-link:hover { color: var(--clr-accent); }
+.footer-link:hover { color: #38bdf8 !important; }
 
 
 /* ----------------------------------------------------------------

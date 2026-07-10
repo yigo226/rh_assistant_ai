@@ -3,105 +3,6 @@
 {% block content %}
 
 <div class="container mt-4 mb-5">
-
-  <!-- ============================================================
-       EN-TÊTE DU DASHBOARD & INFOS ENTREPRISE
-       ============================================================ -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center border-bottom pb-4 mb-4 gap-3">
-    <div>
-      <span class="badge bg-purple-lt px-3 py-1 rounded-pill mb-2" style="background-color: #f3e8ff; color: #a855f7; font-weight: 600;">
-        <i class="ti ti-building"></i> {{ current_user.entreprise.nom if current_user.entreprise else "Entreprise Partenaire" }}
-      </span>
-      <h2 class="font-weight-bold mb-1">Ravi de vous revoir, {{ current_user.prenom }} 👋</h2>
-      <p class="text-muted small mb-0">Pilotez vos campagnes de recrutement et analysez les candidatures par IA.</p>
-    </div>
-    
-    <!-- Boutons d'actions rapides supérieurs -->
-    <div class="d-flex gap-2">
-      <!-- 1. Publication d'offre -->
-      <button type="button" 
-        class="btn btn-primary d-flex align-items-center gap-2" 
-        style="background-color: #0d9488; border-color: #0d9488;" 
-        onclick="window.location.href='{{ url_for('offre.creer_offre') }}'">
-        <i class="ti ti-plus"></i> Publier une offre
-      </button>
-      
-      <!-- 2. 🟢 AJOUT : Le bouton vers le Registre Officiel des Embauches -->
-      <a href="{{ url_for('recruteur.registre_recrutements') }}" 
-         class="btn btn-outline-secondary d-flex align-items-center gap-2"
-         style="color: #475569; border-color: #cbd5e1; font-weight: 500; text-decoration: none;">
-        <i class="ti ti-address-book"></i> Registre des Embauches
-      </a>
-
-    </div>
-
-  </div>
-
-  <!-- ============================================================
-       BLOC DES STATISTIQUES EN CARTES (KPIs)
-       ============================================================ -->
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-4">
-    <!-- Stat 1 : Offres Actives -->
-    <div class="col">
-      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Offres Actives</span>
-            <h3 class="font-weight-bold text-dark mb-0">{{ offres | length if offres else 0 }}</h3>
-          </div>
-          <div class="p-3 bg-light text-primary rounded-circle" style="background-color: #eff6ff !important; color: #3b82f6 !important;">
-            <i class="ti ti-briefcase h3 mb-0"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stat 2 : Total Candidatures Évaluées -->
-    <div class="col">
-      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Analyses IA</span>
-            <h3 class="font-weight-bold text-dark mb-0">{{ total_matchings if total_matchings else 0 }}</h3>
-          </div>
-          <div class="p-3 bg-light text-teal rounded-circle" style="background-color: #f0fdfa !important; color: #0d9488 !important;">
-            <i class="ti ti-arrows-diff h3 mb-0"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stat 3 : Employés / Candidats Retenus -->
-    <div class="col">
-      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Talents Retenus</span>
-            <h3 class="font-weight-bold text-dark mb-0">{{ total_employes if total_employes else 0 }}</h3>
-          </div>
-          <div class="p-3 bg-light text-success rounded-circle" style="background-color: #f0fdf4 !important; color: #22c55e !important;">
-            <i class="ti ti-user-check h3 mb-0"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stat 4 : Nombre de départements -->
-    <div class="col">
-      <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 12px;">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <span class="text-muted small font-weight-bold text-uppercase d-block mb-1">Services Internes</span>
-            <h3 class="font-weight-bold text-dark mb-0">{{ departements | length if departements else 0 }}</h3>
-          </div>
-          <div class="p-3 bg-light text-purple rounded-circle" style="background-color: #f3e8ff !important; color: #a855f7 !important;">
-            <i class="ti ti-hierarchy h3 mb-0"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div class="row">
     <!-- ============================================================
          SECTION PRINCIPALE GAUCHE : LISTE DES OFFRES EN COURS
@@ -109,7 +10,10 @@
     <div class="col-lg-8 mb-4">
       <div class="match-card p-4 h-100">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h3 class="h4 font-weight-bold mb-0"><i class="ti ti-list text-teal"></i> Vos campagnes de recrutement</h3>
+          <h3 class="h4 font-weight-bold mb-0"><i class="ti ti-list text-teal"></i> Les campagnes de recrutement de </h3>
+          <span class="badge bg-purple-lt px-3 py-1 rounded-pill mb-2" style="background-color: #f3e8ff; color: #a855f7; font-weight: 600;">
+            <i class="ti ti-building"></i> {{ current_user.entreprise.nom if current_user.entreprise else "Entreprise Partenaire" }}
+          </span>
           <span class="text-muted small">Trier par date</span>
         </div>
 
@@ -205,120 +109,212 @@
         </div>
       </div>
 
-      <!-- Liste des Collaborateurs de la même équipe -->
-     
-      <!-- Liste des Collaborateurs de la même équipe -->
-<div class="match-card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="h5 font-weight-bold mb-0">
-            <i class="ti ti-users-group text-primary"></i>
-            Équipe Recrutement
-        </h4>
 
-        <span class="badge bg-light text-secondary">
-            {{ equipe|length if equipe else 0 }}
-        </span>
+        <!-- Liste des Collaborateurs de la même équipe -->
+      <div class="match-card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="h5 font-weight-bold mb-0">
+                  <i class="ti ti-users-group text-primary"></i>
+                  Équipe Recrutement
+              </h4>
+
+              <span class="badge bg-light text-secondary">
+                  {{ equipe|length if equipe else 0 }}
+              </span>
+          </div>
+
+          <div
+              class="d-flex flex-column gap-3"
+              style="max-height: 250px; overflow-y: auto;"
+          >
+
+              {% if equipe %}
+
+                  {% for membre in equipe %}
+
+                      <div class="d-flex align-items-center justify-content-between border rounded p-2">
+
+                          <div class="d-flex align-items-center">
+
+                              <div
+                                  class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2"
+                                  style="width:40px;height:40px;"
+                              >
+                                  <i class="ti ti-user"></i>
+                              </div>
+
+                              <div>
+                                  <div class="fw-bold">
+                                      {{ membre.prenom }}
+                                      {{ membre.nom }}
+                                  </div>
+
+                                  <small class="text-muted">
+                                      {{ membre.role }}
+                                  </small>
+                              </div>
+
+                          </div>
+
+                          <span class="badge bg-success-lt">
+                              Actif
+                          </span>
+
+                      </div>
+
+                  {% endfor %}
+
+              {% else %}
+
+                  <div class="text-center py-3">
+                      <i class="ti ti-users text-muted"></i>
+                      <p class="small text-muted mb-0">
+                          Aucun collaborateur enregistré.
+                      </p>
+                  </div>
+
+              {% endif %}
+
+          </div>
+      </div>
+
+      <div class="match-card p-4 mt-4">
+
+          <h4 class="h5 font-weight-bold mb-3">
+              <i class="ti ti-clock-hour-4 text-warning"></i>
+              Activités récentes
+          </h4>
+
+          {% if derniers_matchings %}
+
+              <div class="d-flex flex-column gap-3">
+
+                  {% for matching in derniers_matchings %}
+
+                      <div class="border-bottom pb-2">
+
+                          <div class="fw-bold">
+                              Matching CV ↔ Offre
+                          </div>
+
+                          <small class="text-muted">
+                              Score :
+                              {{ matching.score }}%
+                          </small>
+
+                          <br>
+
+                          <small class="text-muted">
+                              {{ matching.created_at.strftime('%d/%m/%Y %H:%M') }}
+                          </small>
+
+                      </div>
+
+                  {% endfor %}
+
+              </div>
+
+          {% else %}
+
+              <p class="text-muted small mb-0">
+                  Aucune activité récente.
+              </p>
+
+          {% endif %}
+
+      </div>
+            <!-- ============================================================
+          STATISTIQUES RH
+      ============================================================ -->
+      <div class="match-card p-4 mb-4">
+
+          <h4 class="h5 font-weight-bold mb-3">
+              <i class="ti ti-chart-bar text-primary"></i>
+              Statistiques RH
+          </h4>
+
+          <div class="d-flex flex-column gap-3">
+
+              <!-- Analyses IA -->
+              <div class="d-flex justify-content-between align-items-center border rounded p-3">
+
+                  <div class="d-flex align-items-center">
+
+                      <div
+                          class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                          style="width:45px;height:45px;background:#f0fdfa;color:#0d9488;"
+                      >
+                          <i class="ti ti-arrows-diff"></i>
+                      </div>
+
+                      <div>
+                          <div class="small text-muted">
+                              Analyses IA
+                          </div>
+
+                          <div class="fw-bold fs-5">
+                              {{ total_matchings if total_matchings else 0 }}
+                          </div>
+                      </div>
+
+                  </div>
+
+              </div>
+
+              <!-- Talents retenus -->
+              <div class="d-flex justify-content-between align-items-center border rounded p-3">
+
+                  <div class="d-flex align-items-center">
+
+                      <div
+                          class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                          style="width:45px;height:45px;background:#f0fdf4;color:#22c55e;"
+                      >
+                          <i class="ti ti-user-check"></i>
+                      </div>
+
+                      <div>
+                          <div class="small text-muted">
+                              Talents retenus
+                          </div>
+
+                          <div class="fw-bold fs-5">
+                              {{ total_employes if total_employes else 0 }}
+                          </div>
+                      </div>
+
+                  </div>
+
+              </div>
+
+              <!-- Services internes -->
+              <div class="d-flex justify-content-between align-items-center border rounded p-3">
+
+                  <div class="d-flex align-items-center">
+
+                      <div
+                          class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                          style="width:45px;height:45px;background:#f3e8ff;color:#a855f7;"
+                      >
+                          <i class="ti ti-hierarchy"></i>
+                      </div>
+
+                      <div>
+                          <div class="small text-muted">
+                              Services internes
+                          </div>
+
+                          <div class="fw-bold fs-5">
+                              {{ departements|length if departements else 0 }}
+                          </div>
+                      </div>
+
+                  </div>
+
+              </div>
+
+          </div>
+
+      </div>
     </div>
-
-    <div
-        class="d-flex flex-column gap-3"
-        style="max-height: 250px; overflow-y: auto;"
-    >
-
-        {% if equipe %}
-
-            {% for membre in equipe %}
-
-                <div class="d-flex align-items-center justify-content-between border rounded p-2">
-
-                    <div class="d-flex align-items-center">
-
-                        <div
-                            class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2"
-                            style="width:40px;height:40px;"
-                        >
-                            <i class="ti ti-user"></i>
-                        </div>
-
-                        <div>
-                            <div class="fw-bold">
-                                {{ membre.prenom }}
-                                {{ membre.nom }}
-                            </div>
-
-                            <small class="text-muted">
-                                {{ membre.role }}
-                            </small>
-                        </div>
-
-                    </div>
-
-                    <span class="badge bg-success-lt">
-                        Actif
-                    </span>
-
-                </div>
-
-            {% endfor %}
-
-        {% else %}
-
-            <div class="text-center py-3">
-                <i class="ti ti-users text-muted"></i>
-                <p class="small text-muted mb-0">
-                    Aucun collaborateur enregistré.
-                </p>
-            </div>
-
-        {% endif %}
-
-    </div>
-</div>
-
-<div class="match-card p-4 mt-4">
-
-    <h4 class="h5 font-weight-bold mb-3">
-        <i class="ti ti-clock-hour-4 text-warning"></i>
-        Activités récentes
-    </h4>
-
-    {% if derniers_matchings %}
-
-        <div class="d-flex flex-column gap-3">
-
-            {% for matching in derniers_matchings %}
-
-                <div class="border-bottom pb-2">
-
-                    <div class="fw-bold">
-                        Matching CV ↔ Offre
-                    </div>
-
-                    <small class="text-muted">
-                        Score :
-                        {{ matching.score }}%
-                    </small>
-
-                    <br>
-
-                    <small class="text-muted">
-                        {{ matching.created_at.strftime('%d/%m/%Y %H:%M') }}
-                    </small>
-
-                </div>
-
-            {% endfor %}
-
-        </div>
-
-    {% else %}
-
-        <p class="text-muted small mb-0">
-            Aucune activité récente.
-        </p>
-
-    {% endif %}
-
-</div>
-
 {% endblock %}

@@ -232,3 +232,4 @@ def generer_questions_entretien(contenu_texte: str) -> dict:
     return {
         "questions": questions[:10],   # on s'assure de ne jamais dépasser 10
     }
+

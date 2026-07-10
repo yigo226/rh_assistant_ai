@@ -155,12 +155,13 @@
 
             <!-- ÉLÉMENT DROIT : Le nouveau bouton Postuler (Candidature) -->
             {% if offre.id in offres_postulees %}
-              <!-- CAS 1 : Le candidat a DÉJÀ validé sa candidature pour ce poste -->
-              <button type="button" class="btn btn-sm btn-secondary px-2 rounded-pill" 
-                      style="background-color: #e2e8f0; border-color: #cbd5e1; color: #475569; font-weight: 600; font-size: 0.75rem; white-space: nowrap; cursor: not-allowed;" 
-                      disabled>
-                <i class="ti ti-circle-check-filled"></i> Déjà postulé
-              </button>
+              <!-- CAS 1 : Le candidat a DÉJÀ validé sa candidature pour ce poste -> Voir la grille de questions -->
+              <a href="{{ url_for('offre.questions_entretien', offre_id=offre.id) }}" 
+                 class="btn btn-sm btn-outline-success px-2 rounded-pill" 
+                 style="font-weight: 600; font-size: 0.75rem; white-space: nowrap; text-decoration: none;"
+                 title="Voir les questions d'entretien pour ce poste">
+                <i class="ti ti-list-check"></i>Quest. entretien
+              </a>
 
             {% elif offre.id in scores_deja_calcules %}
               <!-- CAS 2 : Comparaison faite mais pas encore postulé -> Postulation directe classique ultra-rapide -->
